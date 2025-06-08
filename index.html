@@ -436,4 +436,43 @@
     link.href = encodeURI(csv);
     link.download = "FirstAirBuilder_Export.csv";
     document.body.appendChild(link);
-    link.click
+    link.click();
+    document.body.removeChild(link);
+
+    await Promise.all(deletePromises);
+
+    alert("Export complete and data cleared.");
+    goHome();
+  };
+
+  function vibrate() {
+    if ("vibrate" in navigator) navigator.vibrate(150);
+  }
+
+  // Go to scanning after pressing start on allocate screen
+  document.querySelector("#allocateStart button:nth-of-type(1)").onclick = startAllocate;
+
+  // Go to offload scanning after pressing start on offload screen
+  document.querySelector("#offloadStart button:nth-of-type(1)").onclick = () => {
+    const pos = document.getElementById("offloadPositionId").value.trim();
+    if (!pos) {
+      alert("Enter Position ID");
+      return;
+    }
+    positionId = pos;
+    document.getElementById("offloadPosition").innerText = positionId;
+    document.getElementById("offloadUser").innerText = currentUser;
+    document.getElementById("offloadMessage").innerText = '';
+    switchScreen("offloadScan");
+    loadOffloadAWBs(positionId);
+    document.getElementById("offloadInput").value = '';
+    document.getElementById("offloadInput").focus();
+  };
+
+  // On page load focus user name
+  window.onload = () => {
+    document.getElementById("userName").focus();
+  };
+</script>
+</body>
+</html>
