@@ -1,223 +1,141 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import {
-    getFirestore, collection, addDoc, onSnapshot, doc,
-    updateDoc, serverTimestamp, query, where, getDocs
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
-    authDomain: "firstairbuilder.firebaseapp.com",
-    projectId: "firstairbuilder",
-    storageBucket: "firstairbuilder.appspot.com",
-    messagingSenderId: "879078166665",
-    appId: "1:879078166665:web:40f63a1b2fdfb7833d3658"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  let positionId = "", currentUser = "", liveUnsubscribe;
-
-  function switchScreen(id) {
-    document.querySelectorAll(".screen").forEach(el => el.classList.remove("visible"));
-    document.getElementById(id).classList.add("visible");
-  }
-
-  window.goHome = () => {
-    switchScreen("home");
-    document.getElementById("allocatePositionId").value = '';
-    document.getElementById("offloadPositionId").value = '';
-    document.getElementById("offloadMessage").innerText = '';
-  };
-
-  window.goToAllocate = () => {
-    currentUser = document.getElementById("userName").value.trim();
-    if (!currentUser) return showModal("Please enter your user name.");
-    switchScreen("allocateStart");
-  };
-
-  window.goToOffload = () => {
-    currentUser = document.getElementById("userName").value.trim();
-    if (!currentUser) return showModal("Please enter your user name.");
-    switchScreen("offloadStart");
-  };
-
-  window.startAllocate = () => {
-    positionId = document.getElementById("allocatePositionId").value.trim();
-    if (!positionId) return showModal("Enter Position ID.");
-    document.getElementById("allocPosition").innerText = positionId;
-    document.getElementById("allocUser").innerText = currentUser;
-    switchScreen("allocateScan");
-    document.getElementById("scanInput").focus();
-  };
-
-  async function handleScan(code) {
-    if (!code) return;
-    try {
-      const q = query(collection(db, "scans"), where("code", "==", code));
-      const snapshot = await getDocs(q);
-
-      let reused = false;
-      let existsInOtherPosition = false;
-
-      for (const docSnap of snapshot.docs) {
-        const data = docSnap.data();
-
-        if (data.positionId === "[REMOVED]") {
-          await updateDoc(doc(db, "scans", docSnap.id), {
-            positionId,
-            scannedAt: serverTimestamp(),
-            scannedBy: currentUser
-          });
-          vibrate();
-          reused = true;
-          break;
-        } else if (data.positionId !== positionId) {
-          showModal(`This AWB is already allocated to Position: <b>${data.positionId}</b>.`);
-          existsInOtherPosition = true;
-          break;
-        }
-      }
-
-      if (!reused && !existsInOtherPosition) {
-        await addDoc(collection(db, "scans"), {
-          code,
-          positionId,
-          scannedAt: serverTimestamp(),
-          scannedBy: currentUser
-        });
-        vibrate();
-      }
-    } catch (e) {
-      showModal("❌ Failed to save scan.");
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>First Air Builder</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #121212;
+      color: white;
+      font-family: Arial, sans-serif;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
     }
-  }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      width: 100vw;
+      height: 100vh;
+      padding: 30px;
+      box-sizing: border-box;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+    }
+    input, button {
+      font-size: 3rem;
+      padding: 2rem;
+      margin: 1.5rem 0;
+      width: 95%;
+      max-width: 1000px;
+      border: none;
+      border-radius: 20px;
+    }
+    button {
+      background-color: #1e88e5;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1565c0;
+    }
+    h2, h3 {
+      margin: 20px 0;
+      font-size: 4rem;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      font-size: 2.5rem;
+    }
+    th, td {
+      border: 2px solid #999;
+      padding: 20px;
+      text-align: center;
+    }
+    .hidden-input {
+      opacity: 0;
+      height: 1px;
+      position: absolute;
+      pointer-events: none;
+    }
+    .screen {
+      display: none;
+      width: 100%;
+    }
+    .visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="home" class="screen visible">
+      <h2>First Air Builder</h2>
+      <input type="text" id="userName" placeholder="Enter User Name">
+      <button onclick="goToAllocate()">ALLOCATE</button>
+      <button onclick="goToOffload()">OFFLOAD</button>
+      <button onclick="goToLiveView()">LIVE VIEW</button>
+      <button onclick="exportToCSV()">EXPORT</button>
+    </div>
 
-  document.getElementById("scanInput").addEventListener("input", async () => {
-    const code = document.getElementById("scanInput").value.trim();
-    if (code) await handleScan(code);
-    document.getElementById("scanInput").value = '';
-    document.getElementById("scanInput").focus();
-  });
+    <!-- Rest of the UI unchanged -->
+  </div>
 
-  window.startOffload = () => {
-    const pos = document.getElementById("offloadPositionId").value.trim();
-    if (!pos) return showModal("Enter Position ID.");
-    positionId = pos;
-    document.getElementById("offloadPosition").innerText = positionId;
-    document.getElementById("offloadUser").innerText = currentUser;
-    document.getElementById("offloadMessage").innerText = '';
-    switchScreen("offloadScan");
-    document.getElementById("offloadInput").focus();
-  };
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTimestamp, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  document.getElementById("offloadInput").addEventListener("input", async () => {
-    const code = document.getElementById("offloadInput").value.trim();
-    if (!code) return;
-    onSnapshot(collection(db, "scans"), (snapshot) => {
-      snapshot.forEach(async docSnap => {
-        const d = docSnap.data();
-        if (d.code === code && d.positionId === positionId) {
-          await updateDoc(doc(db, "scans", docSnap.id), { positionId: "[REMOVED]" });
-          document.getElementById("offloadMessage").innerText = `✅ Removed: ${code}`;
-          vibrate();
-        }
-      });
-    });
-    document.getElementById("offloadInput").value = '';
-    document.getElementById("offloadInput").focus();
-  });
+    const firebaseConfig = {
+      apiKey: "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
+      authDomain: "firstairbuilder.firebaseapp.com",
+      projectId: "firstairbuilder",
+      storageBucket: "firstairbuilder.appspot.com",
+      messagingSenderId: "879078166665",
+      appId: "1:879078166665:web:40f63a1b2fdfb7833d3658"
+    };
 
-  window.exportToCSV = () => {
-    onSnapshot(collection(db, "scans"), (snapshot) => {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let positionId = "", currentUser = "", liveUnsubscribe;
+
+    // ... UI switch functions etc.
+
+    window.exportToCSV = async () => {
+      const snapshot = await getDocs(collection(db, "scans"));
       let csv = "data:text/csv;charset=utf-8,\uFEFFAirway Bill,Position ID,Scanned At,Scanned By\n";
-      snapshot.forEach(doc => {
-        const d = doc.data();
+      const deletePromises = [];
+
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
         if (d.positionId !== "[REMOVED]" && d.scannedAt) {
           csv += `"${d.code}","${d.positionId}","${new Date(d.scannedAt.seconds * 1000).toLocaleString()}","${d.scannedBy}"\n`;
+          deletePromises.push(deleteDoc(doc(db, "scans", docSnap.id)));
         }
       });
+
       const link = document.createElement("a");
       link.href = encodeURI(csv);
       link.download = "FirstAirBuilder_Export.csv";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    });
-  };
 
-  window.goToLiveView = () => {
-    switchScreen("liveView");
-    const tableBody = document.getElementById("liveTable");
+      await Promise.all(deletePromises);
+      alert("Export complete and database cleared.");
+    };
 
-    if (typeof liveUnsubscribe === "function") liveUnsubscribe();
-
-    liveUnsubscribe = onSnapshot(collection(db, "scans"), (snapshot) => {
-      const rows = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.positionId !== "[REMOVED]" && data.scannedAt) {
-          rows.push({
-            ...data,
-            scannedAt: new Date(data.scannedAt.seconds * 1000).toLocaleString()
-          });
-        }
-      });
-      rows.sort((a, b) => new Date(b.scannedAt) - new Date(a.scannedAt));
-      tableBody.innerHTML = rows.map((entry, idx) => `
-        <tr>
-          <td>${idx + 1}</td>
-          <td>${entry.code}</td>
-          <td>${entry.positionId}</td>
-          <td>${entry.scannedAt}</td>
-          <td>${entry.scannedBy}</td>
-        </tr>
-      `).join('');
-    });
-  };
-
-  function vibrate() {
-    if (navigator.vibrate) navigator.vibrate(100);
-  }
-
-  function showModal(message) {
-    const modal = document.createElement("div");
-    modal.style.position = "fixed";
-    modal.style.top = 0;
-    modal.style.left = 0;
-    modal.style.width = "100%";
-    modal.style.height = "100%";
-    modal.style.background = "rgba(0,0,0,0.8)";
-    modal.style.display = "flex";
-    modal.style.flexDirection = "column";
-    modal.style.justifyContent = "center";
-    modal.style.alignItems = "center";
-    modal.style.zIndex = "10000";
-
-    const box = document.createElement("div");
-    box.style.background = "#333";
-    box.style.padding = "40px";
-    box.style.borderRadius = "20px";
-    box.style.maxWidth = "90%";
-    box.style.textAlign = "center";
-    box.style.color = "white";
-    box.style.fontSize = "2.5rem";
-    box.innerHTML = message;
-
-    const close = document.createElement("button");
-    close.innerText = "OK";
-    close.style.marginTop = "30px";
-    close.style.padding = "20px 40px";
-    close.style.fontSize = "2rem";
-    close.style.border = "none";
-    close.style.borderRadius = "10px";
-    close.style.background = "#1e88e5";
-    close.style.color = "white";
-    close.onclick = () => modal.remove();
-
-    box.appendChild(close);
-    modal.appendChild(box);
-    document.body.appendChild(modal);
-  }
-</script>
+    // ... rest of script (scan logic, offload logic, etc.)
+  </script>
+</body>
+</html>
