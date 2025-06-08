@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>First Air Builder</title>
   <style>
     html, body {
@@ -79,73 +79,77 @@
 </head>
 <body>
   <div class="container">
-    <!-- Home Screen -->
     <div id="home" class="screen visible">
       <h2>First Air Builder</h2>
-      <input type="text" id="userName" placeholder="Enter User Name">
+      <input type="text" id="userName" placeholder="Enter User Name" />
       <button onclick="goToAllocate()">ALLOCATE</button>
       <button onclick="goToOffload()">OFFLOAD</button>
-      <button onclick="goToLiveView()">LIVE VIEW</button>
       <button onclick="exportToCSV()">EXPORT</button>
+      <button onclick="goToLive()">LIVE SCANNING</button>
     </div>
 
-    <!-- Allocate Start -->
+    <div id="liveScreen" class="screen">
+      <h3>Live Scanning Overview</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Position ID</th>
+            <th>Airway Bill</th>
+            <th>Scanned At</th>
+            <th>Scanned By</th>
+          </tr>
+        </thead>
+        <tbody id="liveTableBody"></tbody>
+      </table>
+      <button onclick="goHome()">⬅ BACK</button>
+    </div>
+
     <div id="allocateStart" class="screen">
       <h3>Allocate Airway Bills</h3>
-      <input type="text" id="allocatePositionId" placeholder="Enter Position ID">
+      <input type="text" id="allocatePositionId" placeholder="Enter Position ID" />
       <button onclick="startAllocate()">Start Scanning</button>
       <button onclick="goHome()">⬅ BACK</button>
     </div>
 
-    <!-- Allocate Scan -->
     <div id="allocateScan" class="screen">
       <h3>Scanning: <span id="allocPosition"></span> | User: <span id="allocUser"></span></h3>
-      <input type="text" id="scanInput" class="hidden-input">
+      <input type="text" id="scanInput" class="hidden-input" />
       <table>
-        <thead><tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr></thead>
+        <thead>
+          <tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr>
+        </thead>
         <tbody id="scanTable"></tbody>
       </table>
       <button onclick="goHome()">⬅ BACK</button>
     </div>
 
-    <!-- Offload Start -->
     <div id="offloadStart" class="screen">
       <h3>Offload Airway Bills</h3>
-      <input type="text" id="offloadPositionId" placeholder="Enter Position ID">
+      <input type="text" id="offloadPositionId" placeholder="Enter Position ID" />
       <button onclick="startOffload()">Start Offloading</button>
       <button onclick="goHome()">⬅ BACK</button>
     </div>
 
-    <!-- Offload Scan -->
     <div id="offloadScan" class="screen">
       <h3>Offloading: <span id="offloadPosition"></span> | User: <span id="offloadUser"></span></h3>
-      <input type="text" id="offloadInput" class="hidden-input">
+      <input type="text" id="offloadInput" class="hidden-input" />
       <div id="offloadMessage"></div>
       <table>
-        <thead><tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr></thead>
-        <tbody id="offloadTable"></tbody>
-      </table>
-      <button onclick="goHome()">⬅ BACK</button>
-    </div>
-
-    <!-- Live View -->
-    <div id="liveView" class="screen">
-      <h3>Live Scans Overview</h3>
-      <table>
         <thead>
-          <tr><th>#</th><th>Airway Bill</th><th>Position ID</th><th>Scanned At</th><th>Scanned By</th></tr>
+          <tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr>
         </thead>
-        <tbody id="liveTable"></tbody>
+        <tbody id="offloadTable"></tbody>
       </table>
       <button onclick="goHome()">⬅ BACK</button>
     </div>
   </div>
 
-  <!-- Firebase SDKs and Scripts -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
+  <script>
+    // Your Firebase config here
     const firebaseConfig = {
       apiKey: "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
       authDomain: "firstairbuilder.firebaseapp.com",
@@ -155,9 +159,11 @@
       appId: "1:879078166665:web:40f63a1b2fdfb7833d3658"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
+    let allScans = {}; // local cache for scans
     let positionId = "", scannedCodes = [], currentUser = "";
 
     function switchScreen(id) {
@@ -165,127 +171,208 @@
       document.getElementById(id).classList.add("visible");
     }
 
-    window.goHome = () => {
+    function goHome() {
       switchScreen("home");
       document.getElementById("allocatePositionId").value = '';
       document.getElementById("offloadPositionId").value = '';
       document.getElementById("offloadMessage").innerText = '';
-    };
+      stopLiveListener();
+    }
 
-    window.goToAllocate = () => {
+    function goToAllocate() {
       currentUser = document.getElementById("userName").value.trim();
       if (!currentUser) return alert("Please enter user name");
       switchScreen("allocateStart");
-    };
+    }
 
-    window.goToOffload = () => {
+    function goToOffload() {
       currentUser = document.getElementById("userName").value.trim();
       if (!currentUser) return alert("Please enter user name");
       switchScreen("offloadStart");
-    };
-
-    window.startAllocate = () => {
-      positionId = document.getElementById("allocatePositionId").value.trim();
-      if (!positionId) return alert("Enter Position ID");
-      document.getElementById("allocPosition").innerText = positionId;
-      document.getElementById("allocUser").innerText = currentUser;
-      switchScreen("allocateScan");
-      document.getElementById("scanInput").focus();
-    };
-
-    async function handleScan(code) {
-      if (!code) return;
-      const timestamp = new Date().toLocaleString();
-      try {
-        await addDoc(collection(db, "scans"), {
-          code,
-          positionId,
-          scannedAt: timestamp,
-          scannedBy: currentUser
-        });
-        vibrate();
-      } catch (e) {
-        alert("Failed to save scan.");
-      }
     }
 
-    document.getElementById("scanInput").addEventListener("input", async () => {
-      const code = document.getElementById("scanInput").value.trim();
-      if (code) await handleScan(code);
+    function startAllocate() {
+      positionId = document.getElementById("allocatePositionId").value.trim();
+      if (!positionId) return alert("Enter Position ID");
+
+      scannedCodes = [];
+      // Load existing scans for position from Firestore
+      db.collection("positions").doc(positionId).collection("scans")
+        .get()
+        .then(snapshot => {
+          scannedCodes = snapshot.docs.map(doc => doc.data());
+          renderScansTable();
+          document.getElementById("allocPosition").innerText = positionId;
+          document.getElementById("allocUser").innerText = currentUser;
+          switchScreen("allocateScan");
+          document.getElementById("scanInput").focus();
+        });
+    }
+
+    function handleScan(code) {
+      if (!code) return;
+
+      // Check duplicates locally
+      for (let pos in allScans) {
+        if (allScans[pos].some(e => e.code === code)) {
+          alert(`❌ Duplicate Airway Bill in position: ${pos}`);
+          return;
+        }
+      }
+
+      const timestamp = new Date().toLocaleString();
+      const entry = { code, scannedAt: timestamp, scannedBy: currentUser };
+      scannedCodes.push(entry);
+
+      // Save to Firestore
+      db.collection("positions").doc(positionId).collection("scans").doc(code).set(entry)
+        .then(() => {
+          allScans[positionId] = scannedCodes;
+          renderScansTable();
+          vibrate();
+        });
+    }
+
+    document.getElementById("scanInput").addEventListener("input", () => {
+      let code = document.getElementById("scanInput").value.trim();
+      if (code) handleScan(code);
       document.getElementById("scanInput").value = '';
       document.getElementById("scanInput").focus();
     });
 
-    window.startOffload = () => {
-      const pos = document.getElementById("offloadPositionId").value.trim();
-      if (!pos) return alert("Enter Position ID");
-      positionId = pos;
-      document.getElementById("offloadPosition").innerText = positionId;
-      document.getElementById("offloadUser").innerText = currentUser;
-      document.getElementById("offloadMessage").innerText = '';
-      switchScreen("offloadScan");
-      document.getElementById("offloadInput").focus();
-    };
+    function renderScansTable() {
+      const tbody = document.getElementById("scanTable");
+      tbody.innerHTML = "";
+      scannedCodes.forEach((e, i) => {
+        tbody.innerHTML += `<tr><td>${i + 1}</td><td>${e.code}</td><td>${e.scannedAt}</td><td>${e.scannedBy}</td></tr>`;
+      });
+    }
 
-    document.getElementById("offloadInput").addEventListener("input", async () => {
-      const code = document.getElementById("offloadInput").value.trim();
-      if (!code) return;
-      const querySnapshot = await onSnapshot(collection(db, "scans"), (snapshot) => {
-        snapshot.forEach(async docSnap => {
-          const d = docSnap.data();
-          if (d.code === code && d.positionId === positionId) {
-            await updateDoc(doc(db, "scans", docSnap.id), { positionId: "[REMOVED]" });
+    function startOffload() {
+      let pos = document.getElementById("offloadPositionId").value.trim();
+      if (!pos) return alert("Enter Position ID");
+
+      // Load scans from Firestore
+      db.collection("positions").doc(pos).collection("scans")
+        .get()
+        .then(snapshot => {
+          scannedCodes = snapshot.docs.map(doc => doc.data());
+          if (scannedCodes.length === 0) return alert("No scans found for this position");
+
+          positionId = pos;
+          document.getElementById("offloadPosition").innerText = pos;
+          document.getElementById("offloadUser").innerText = currentUser;
+          document.getElementById("offloadMessage").innerText = '';
+          switchScreen("offloadScan");
+          renderOffloadList();
+          document.getElementById("offloadInput").focus();
+        });
+    }
+
+    function renderOffloadList() {
+      const tbody = document.getElementById("offloadTable");
+      tbody.innerHTML = "";
+      scannedCodes.forEach((e, i) => {
+        tbody.innerHTML += `<tr><td>${i + 1}</td><td>${e.code}</td><td>${e.scannedAt}</td><td>${e.scannedBy}</td></tr>`;
+      });
+    }
+
+    document.getElementById("offloadInput").addEventListener("input", () => {
+      let code = document.getElementById("offloadInput").value.trim();
+      let index = scannedCodes.findIndex(e => e.code === code);
+      if (index !== -1) {
+        // Remove from Firestore
+        db.collection("positions").doc(positionId).collection("scans").doc(code).delete()
+          .then(() => {
+            scannedCodes.splice(index, 1);
+            allScans[positionId] = scannedCodes;
             document.getElementById("offloadMessage").innerText = `✅ Removed: ${code}`;
             vibrate();
-          }
-        });
-      });
+            renderOffloadList();
+            renderScansTable();
+          });
+      } else {
+        document.getElementById("offloadMessage").innerText = `❌ Not found in position`;
+      }
       document.getElementById("offloadInput").value = '';
       document.getElementById("offloadInput").focus();
     });
 
-    window.exportToCSV = () => {
-      onSnapshot(collection(db, "scans"), (snapshot) => {
-        let csv = "data:text/csv;charset=utf-8,\uFEFFAirway Bill,Position ID,Scanned At,Scanned By\n";
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          if (d.positionId !== "[REMOVED]") {
-            csv += `"${d.code}","${d.positionId}","${d.scannedAt}","${d.scannedBy}"\n`;
-          }
+    function exportToCSV() {
+      function csvEscape(value) {
+        if (!value) return '';
+        return `"${value.toString().replace(/"/g, '""')}"`;
+      }
+      let csv = "data:text/csv;charset=utf-8,\uFEFFAirway Bill,Position ID,Scanned At,Scanned By\n";
+      for (let pos in allScans) {
+        (allScans[pos] || []).forEach(e => {
+          csv += [
+            csvEscape(e.code),
+            csvEscape(pos),
+            csvEscape(e.scannedAt),
+            csvEscape(e.scannedBy)
+          ].join(",") + "\n";
         });
-        const link = document.createElement("a");
-        link.href = encodeURI(csv);
-        link.download = "FirstAirBuilder_Export.csv";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      });
-    };
-
-    window.goToLiveView = () => {
-      switchScreen("liveView");
-      const tableBody = document.getElementById("liveTable");
-      onSnapshot(collection(db, "scans"), (snapshot) => {
-        const rows = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.positionId !== "[REMOVED]") rows.push(data);
-        });
-        rows.sort((a, b) => new Date(a.scannedAt) - new Date(b.scannedAt));
-        tableBody.innerHTML = rows.map((entry, idx) => `
-          <tr>
-            <td>${idx + 1}</td>
-            <td>${entry.code}</td>
-            <td>${entry.positionId}</td>
-            <td>${entry.scannedAt}</td>
-            <td>${entry.scannedBy}</td>
-          </tr>
-        `).join('');
-      });
-    };
+      }
+      const link = document.createElement("a");
+      link.href = encodeURI(csv);
+      link.download = "FirstAirBuilder_Export.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
     function vibrate() {
       if (navigator.vibrate) navigator.vibrate(100);
+    }
+
+    // --- LIVE SCANNING SCREEN ---
+
+    let liveUnsub = null; // unsubscribe function for live listener
+
+    function goToLive() {
+      currentUser = document.getElementById("userName").value.trim();
+      if (!currentUser) return alert("Please enter user name");
+      switchScreen("liveScreen");
+      startLiveListener();
+    }
+
+    function startLiveListener() {
+      if (liveUnsub) liveUnsub(); // unsubscribe previous
+
+      liveUnsub = db.collection("positions").onSnapshot(snapshot => {
+        allScans = {}; // reset cache
+        const liveTableBody = document.getElementById("liveTableBody");
+        liveTableBody.innerHTML = '';
+
+        let promises = [];
+
+        snapshot.forEach(doc => {
+          const posId = doc.id;
+          // For each position, get scans subcollection
+          const scansPromise = db.collection("positions").doc(posId).collection("scans").get()
+            .then(scanSnapshot => {
+              allScans[posId] = scanSnapshot.docs.map(d => d.data());
+            });
+          promises.push(scansPromise);
+        });
+
+        Promise.all(promises).then(() => {
+          // After all data loaded, render live table
+          for (let pos in allScans) {
+            allScans[pos].forEach(e => {
+              liveTableBody.innerHTML += `<tr><td>${pos}</td><td>${e.code}</td><td>${e.scannedAt}</td><td>${e.scannedBy}</td></tr>`;
+            });
+          }
+        });
+      });
+    }
+
+    function stopLiveListener() {
+      if (liveUnsub) {
+        liveUnsub();
+        liveUnsub = null;
+      }
     }
   </script>
 </body>
