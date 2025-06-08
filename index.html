@@ -1,274 +1,285 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>First Air Builder</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background-color: #121212;
-      color: white;
-      font-family: Arial, sans-serif;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>First Air Builder</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 24px;
+    margin: 0;
+    padding: 10px;
+    background: #f9f9f9;
+  }
+  .screen { display: none; }
+  .visible { display: block; }
+  input, button {
+    font-size: 24px;
+    padding: 10px;
+    margin: 10px 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 22px;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  th {
+    background: #eee;
+  }
+  #scanInput, #offloadInput {
+    letter-spacing: 2px;
+  }
+  #offloadMessage {
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  button {
+    cursor: pointer;
+  }
+</style>
 
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .container {
-      width: 100vw;
-      height: 100vh;
-      padding: 30px;
-      box-sizing: border-box;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      overflow-y: auto;
-    }
-
-    input, button {
-      font-size: 3rem;
-      padding: 2rem;
-      margin: 1.5rem 0;
-      width: 95%;
-      max-width: 1000px;
-      border: none;
-      border-radius: 20px;
-    }
-
-    button {
-      background-color: #1e88e5;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #1565c0;
-    }
-
-    h2, h3 {
-      margin: 20px 0;
-      font-size: 4rem;
-    }
-
-    table {
-      width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
-      font-size: 2.5rem;
-    }
-
-    th, td {
-      border: 2px solid #999;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .hidden-input {
-      opacity: 0;
-      height: 1px;
-      position: absolute;
-      pointer-events: none;
-    }
-
-    .screen {
-      display: none;
-      width: 100%;
-    }
-
-    .visible {
-      display: block;
-    }
-  </style>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
-  <div class="container">
-    <div id="home" class="screen visible">
-      <h2>First Air Builder</h2>
-      <input type="text" id="userName" placeholder="Enter User Name">
-      <button onclick="goToAllocate()">ALLOCATE</button>
-      <button onclick="goToOffload()">OFFLOAD</button>
-      <button onclick="exportToCSV()">EXPORT</button>
-    </div>
 
-    <div id="allocateStart" class="screen">
-      <h3>Allocate Airway Bills</h3>
-      <input type="text" id="allocatePositionId" placeholder="Enter Position ID">
-      <button onclick="startAllocate()">Start Scanning</button>
-      <button onclick="goHome()">⬅ BACK</button>
-    </div>
+<div id="home" class="screen visible">
+  <h1>First Air Builder</h1>
+  <label for="userName">Enter Your Name:</label>
+  <input type="text" id="userName" placeholder="Your name here" autocomplete="off" />
+  <button onclick="goToAllocate()">ALLOCATE</button>
+  <button onclick="goToOffload()">OFFLOAD</button>
+</div>
 
-    <div id="allocateScan" class="screen">
-      <h3>Scanning: <span id="allocPosition"></span> | User: <span id="allocUser"></span></h3>
-      <input type="text" id="scanInput" class="hidden-input">
-      <table>
-        <thead><tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr></thead>
-        <tbody id="scanTable"></tbody>
-      </table>
-      <button onclick="goHome()">⬅ BACK</button>
-    </div>
+<!-- Allocate Position Entry -->
+<div id="allocateStart" class="screen">
+  <h2>Allocate: Enter Position ID</h2>
+  <input type="text" id="allocatePositionId" placeholder="Position ID" autocomplete="off" />
+  <button onclick="startAllocate()">Start Scanning</button>
+  <button onclick="goHome()">Back</button>
+</div>
 
-    <div id="offloadStart" class="screen">
-      <h3>Offload Airway Bills</h3>
-      <input type="text" id="offloadPositionId" placeholder="Enter Position ID">
-      <button onclick="startOffload()">Start Offloading</button>
-      <button onclick="goHome()">⬅ BACK</button>
-    </div>
+<!-- Allocate Scan Screen -->
+<div id="allocateScan" class="screen">
+  <h2>Allocating Position: <span id="allocPosition"></span></h2>
+  <h3>User: <span id="allocUser"></span></h3>
+  <input type="text" id="scanInput" placeholder="Scan Airway Bill Here" autocomplete="off" autofocus />
+  <table>
+    <thead>
+      <tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr>
+    </thead>
+    <tbody id="scanTable"></tbody>
+  </table>
+  <button onclick="exportToCSV()">Export CSV</button>
+  <button onclick="goHome()">Back</button>
+</div>
 
-    <div id="offloadScan" class="screen">
-      <h3>Offloading: <span id="offloadPosition"></span> | User: <span id="offloadUser"></span></h3>
-      <input type="text" id="offloadInput" class="hidden-input">
-      <div id="offloadMessage"></div>
-      <table>
-        <thead><tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr></thead>
-        <tbody id="offloadTable"></tbody>
-      </table>
-      <button onclick="goHome()">⬅ BACK</button>
-    </div>
-  </div>
+<!-- Offload Position Entry -->
+<div id="offloadStart" class="screen">
+  <h2>Offload: Enter Position ID</h2>
+  <input type="text" id="offloadPositionId" placeholder="Position ID" autocomplete="off" />
+  <button onclick="startOffload()">Start Offloading</button>
+  <button onclick="goHome()">Back</button>
+</div>
 
-  <script>
-    let allScans = {}; // { position: [ {code, scannedAt, scannedBy} ] }
-    let positionId = "", scannedCodes = [], currentUser = "";
+<!-- Offload Scan Screen -->
+<div id="offloadScan" class="screen">
+  <h2>Offloading Position: <span id="offloadPosition"></span></h2>
+  <h3>User: <span id="offloadUser"></span></h3>
+  <input type="text" id="offloadInput" placeholder="Scan Airway Bill to Remove" autocomplete="off" autofocus />
+  <div id="offloadMessage"></div>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr>
+    </thead>
+    <tbody id="offloadTable"></tbody>
+  </table>
+  <button onclick="exportToCSV()">Export CSV</button>
+  <button onclick="goHome()">Back</button>
+</div>
 
-    function switchScreen(id) {
-      document.querySelectorAll(".screen").forEach(el => el.classList.remove("visible"));
-      document.getElementById(id).classList.add("visible");
-    }
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
+    authDomain: "firstairbuilder.firebaseapp.com",
+    databaseURL: "https://firstairbuilder-default-rtdb.firebaseio.com",
+    projectId: "firstairbuilder",
+    storageBucket: "firstairbuilder.firebasestorage.app",
+    messagingSenderId: "879078166665",
+    appId: "1:879078166665:web:40f63a1b2fdfb7833d3658"
+  };
 
-    function goHome() {
-      switchScreen("home");
-      document.getElementById("allocatePositionId").value = '';
-      document.getElementById("offloadPositionId").value = '';
-      document.getElementById("offloadMessage").innerText = '';
-    }
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    function goToAllocate() {
-      currentUser = document.getElementById("userName").value.trim();
-      if (!currentUser) return alert("Please enter user name");
-      switchScreen("allocateStart");
-    }
+  let allScans = {}; // cache all positions data
+  let positionId = "", scannedCodes = [], currentUser = "";
 
-    function goToOffload() {
-      currentUser = document.getElementById("userName").value.trim();
-      if (!currentUser) return alert("Please enter user name");
-      switchScreen("offloadStart");
-    }
-
-    function startAllocate() {
-      positionId = document.getElementById("allocatePositionId").value.trim();
-      if (!positionId) return alert("Enter Position ID");
-      scannedCodes = allScans[positionId] || [];
-      document.getElementById("allocPosition").innerText = positionId;
-      document.getElementById("allocUser").innerText = currentUser;
-      switchScreen("allocateScan");
+  // Listen for any changes to all positions
+  db.ref("positions").on("value", (snapshot) => {
+    allScans = snapshot.val() || {};
+    if (positionId && allScans[positionId]) {
+      scannedCodes = allScans[positionId];
       renderScansTable();
-      document.getElementById("scanInput").focus();
+      renderOffloadList();
+    }
+  });
+
+  function saveToFirebase() {
+    db.ref("positions/" + positionId).set(scannedCodes);
+  }
+
+  function switchScreen(id) {
+    document.querySelectorAll(".screen").forEach(el => el.classList.remove("visible"));
+    document.getElementById(id).classList.add("visible");
+  }
+
+  function goHome() {
+    switchScreen("home");
+    document.getElementById("allocatePositionId").value = '';
+    document.getElementById("offloadPositionId").value = '';
+    document.getElementById("offloadMessage").innerText = '';
+    currentUser = "";
+    positionId = "";
+    scannedCodes = [];
+  }
+
+  function goToAllocate() {
+    currentUser = document.getElementById("userName").value.trim();
+    if (!currentUser) return alert("Please enter your name");
+    switchScreen("allocateStart");
+  }
+
+  function goToOffload() {
+    currentUser = document.getElementById("userName").value.trim();
+    if (!currentUser) return alert("Please enter your name");
+    switchScreen("offloadStart");
+  }
+
+  function startAllocate() {
+    positionId = document.getElementById("allocatePositionId").value.trim();
+    if (!positionId) return alert("Please enter Position ID");
+    scannedCodes = allScans[positionId] || [];
+    document.getElementById("allocPosition").innerText = positionId;
+    document.getElementById("allocUser").innerText = currentUser;
+    switchScreen("allocateScan");
+    renderScansTable();
+    document.getElementById("scanInput").focus();
+  }
+
+  function handleScan(code) {
+    if (!code) return;
+
+    // Check duplicates across all positions
+    for (let pos in allScans) {
+      if ((allScans[pos] || []).some(e => e.code === code)) {
+        alert(`❌ Duplicate Airway Bill in position: ${pos}`);
+        return;
+      }
     }
 
-    function handleScan(code) {
-      if (!code) return;
-      for (let pos in allScans) {
-        if (allScans[pos].some(e => e.code === code)) {
-          alert(`❌ Duplicate Airway Bill in position: ${pos}`);
-          return;
-        }
-      }
-      const timestamp = new Date().toLocaleString();
-      const entry = { code, scannedAt: timestamp, scannedBy: currentUser };
-      scannedCodes.push(entry);
+    const timestamp = new Date().toLocaleString();
+    const entry = { code, scannedAt: timestamp, scannedBy: currentUser };
+    scannedCodes.push(entry);
+    allScans[positionId] = scannedCodes;
+    renderScansTable();
+    saveToFirebase();
+    vibrate();
+  }
+
+  document.getElementById("scanInput").addEventListener("input", () => {
+    let code = document.getElementById("scanInput").value.trim();
+    if (code) handleScan(code);
+    document.getElementById("scanInput").value = '';
+    document.getElementById("scanInput").focus();
+  });
+
+  function renderScansTable() {
+    const tbody = document.getElementById("scanTable");
+    tbody.innerHTML = "";
+    scannedCodes.forEach((e, i) => {
+      tbody.innerHTML += `<tr><td>${i + 1}</td><td>${e.code}</td><td>${e.scannedAt}</td><td>${e.scannedBy}</td></tr>`;
+    });
+  }
+
+  function startOffload() {
+    let pos = document.getElementById("offloadPositionId").value.trim();
+    if (!pos) return alert("Please enter Position ID");
+    if (!allScans[pos]) return alert("Position ID not found");
+    positionId = pos;
+    scannedCodes = allScans[pos];
+    document.getElementById("offloadPosition").innerText = pos;
+    document.getElementById("offloadUser").innerText = currentUser;
+    document.getElementById("offloadMessage").innerText = '';
+    switchScreen("offloadScan");
+    renderOffloadList();
+    document.getElementById("offloadInput").focus();
+  }
+
+  function renderOffloadList() {
+    const tbody = document.getElementById("offloadTable");
+    tbody.innerHTML = "";
+    scannedCodes.forEach((e, i) => {
+      tbody.innerHTML += `<tr><td>${i + 1}</td><td>${e.code}</td><td>${e.scannedAt}</td><td>${e.scannedBy}</td></tr>`;
+    });
+  }
+
+  document.getElementById("offloadInput").addEventListener("input", () => {
+    let code = document.getElementById("offloadInput").value.trim();
+    let index = scannedCodes.findIndex(e => e.code === code);
+    if (index !== -1) {
+      scannedCodes.splice(index, 1);
       allScans[positionId] = scannedCodes;
-      renderScansTable();
+      document.getElementById("offloadMessage").innerText = `✅ Removed: ${code}`;
+      saveToFirebase();
       vibrate();
+    } else {
+      document.getElementById("offloadMessage").innerText = `❌ Not found in position`;
     }
+    document.getElementById("offloadInput").value = '';
+    document.getElementById("offloadInput").focus();
+    renderOffloadList();
+    renderScansTable();
+  });
 
-    document.getElementById("scanInput").addEventListener("input", () => {
-      let code = document.getElementById("scanInput").value.trim();
-      if (code) handleScan(code);
-      document.getElementById("scanInput").value = '';
-      document.getElementById("scanInput").focus();
-    });
-
-    function renderScansTable() {
-      const tbody = document.getElementById("scanTable");
-      tbody.innerHTML = "";
-      scannedCodes.forEach((e, i) => {
-        tbody.innerHTML += `<tr><td>${i+1}</td><td>${e.code}</td><td>${e.scannedAt}</td><td>${e.scannedBy}</td></tr>`;
+  function exportToCSV() {
+    function csvEscape(value) {
+      if (!value) return '';
+      return `"${value.toString().replace(/"/g, '""')}"`;
+    }
+    let csv = "data:text/csv;charset=utf-8,\uFEFFAirway Bill,Position ID,Scanned At,Scanned By\n";
+    for (let pos in allScans) {
+      (allScans[pos] || []).forEach(e => {
+        csv += [
+          csvEscape(e.code),
+          csvEscape(pos),
+          csvEscape(e.scannedAt),
+          csvEscape(e.scannedBy)
+        ].join(",") + "\n";
       });
     }
+    const link = document.createElement("a");
+    link.href = encodeURI(csv);
+    link.download = "FirstAirBuilder_Export.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
-    function startOffload() {
-      let pos = document.getElementById("offloadPositionId").value.trim();
-      if (!pos || !allScans[pos]) return alert("Invalid or empty position");
-      positionId = pos;
-      scannedCodes = allScans[pos];
-      document.getElementById("offloadPosition").innerText = pos;
-      document.getElementById("offloadUser").innerText = currentUser;
-      document.getElementById("offloadMessage").innerText = '';
-      switchScreen("offloadScan");
-      renderOffloadList();
-      document.getElementById("offloadInput").focus();
-    }
+  function vibrate() {
+    if (navigator.vibrate) navigator.vibrate(100);
+  }
+</script>
 
-    function renderOffloadList() {
-      const tbody = document.getElementById("offloadTable");
-      tbody.innerHTML = "";
-      scannedCodes.forEach((e, i) => {
-        tbody.innerHTML += `<tr><td>${i+1}</td><td>${e.code}</td><td>${e.scannedAt}</td><td>${e.scannedBy}</td></tr>`;
-      });
-    }
-
-    document.getElementById("offloadInput").addEventListener("input", () => {
-      let code = document.getElementById("offloadInput").value.trim();
-      let index = scannedCodes.findIndex(e => e.code === code);
-      if (index !== -1) {
-        scannedCodes.splice(index, 1);
-        allScans[positionId] = scannedCodes;
-        document.getElementById("offloadMessage").innerText = `✅ Removed: ${code}`;
-        vibrate();
-      } else {
-        document.getElementById("offloadMessage").innerText = `❌ Not found in position`;
-      }
-      document.getElementById("offloadInput").value = '';
-      document.getElementById("offloadInput").focus();
-      renderOffloadList();
-      renderScansTable();
-    });
-
-    function exportToCSV() {
-      function csvEscape(value) {
-        if (!value) return '';
-        return `"${value.toString().replace(/"/g, '""')}"`;
-      }
-      let csv = "data:text/csv;charset=utf-8,\uFEFFAirway Bill,Position ID,Scanned At,Scanned By\n";
-      for (let pos in allScans) {
-        (allScans[pos] || []).forEach(e => {
-          csv += [
-            csvEscape(e.code),
-            csvEscape(pos),
-            csvEscape(e.scannedAt),
-            csvEscape(e.scannedBy)
-          ].join(",") + "\n";
-        });
-      }
-      const link = document.createElement("a");
-      link.href = encodeURI(csv);
-      link.download = "FirstAirBuilder_Export.csv";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    function vibrate() {
-      if (navigator.vibrate) navigator.vibrate(100);
-    }
-  </script>
 </body>
 </html>
