@@ -5,11 +5,13 @@
   <title>First Air Builder</title>
   <style>
     html, body {
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       background-color: #121212;
       color: white;
       font-family: Arial, sans-serif;
-      width: 100vw; height: 100vh;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
     }
     body {
@@ -93,17 +95,12 @@
       <input type="text" id="allocatePositionId" placeholder="Enter Position ID">
       <button onclick="startAllocate()">Start Scanning</button>
       <button onclick="goHome()">⬅ BACK</button>
-      <h3>Already allocated AWBs for this Position:</h3>
-      <table>
-        <thead><tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr></thead>
-        <tbody id="allocatedList"></tbody>
-      </table>
     </div>
 
     <!-- Allocate Scan -->
     <div id="allocateScan" class="screen">
       <h3>Scanning: <span id="allocPosition"></span> | User: <span id="allocUser"></span></h3>
-      <input type="text" id="scanInput" class="hidden-input" autocomplete="off" autofocus>
+      <input type="text" id="scanInput" class="hidden-input">
       <table>
         <thead><tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr></thead>
         <tbody id="scanTable"></tbody>
@@ -117,23 +114,17 @@
       <input type="text" id="offloadPositionId" placeholder="Enter Position ID">
       <button onclick="startOffload()">Start Offloading</button>
       <button onclick="goHome()">⬅ BACK</button>
-      <h3>AWBs currently allocated to this Position:</h3>
-      <table>
-        <thead><tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr></thead>
-        <tbody id="offloadList"></tbody>
-      </table>
-      <div id="offloadMessage" style="margin-top: 20px; font-size: 2.5rem;"></div>
     </div>
 
     <!-- Offload Scan -->
     <div id="offloadScan" class="screen">
       <h3>Offloading: <span id="offloadPosition"></span> | User: <span id="offloadUser"></span></h3>
-      <input type="text" id="offloadInput" class="hidden-input" autocomplete="off" autofocus>
+      <input type="text" id="offloadInput" class="hidden-input">
+      <div id="offloadMessage" style="margin:1rem 0; font-size:2.5rem;"></div>
       <table>
         <thead><tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr></thead>
         <tbody id="offloadTable"></tbody>
       </table>
-      <div id="offloadMessage" style="margin-top: 20px; font-size: 2.5rem;"></div>
       <button onclick="goHome()">⬅ BACK</button>
     </div>
 
@@ -150,101 +141,280 @@
     </div>
   </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import {
-    getFirestore, collection, addDoc, onSnapshot, doc, updateDoc,
-    serverTimestamp, getDocs, deleteDoc, query, where
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTimestamp, 
+      query, where, getDocs, deleteDoc 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
-    authDomain: "firstairbuilder.firebaseapp.com",
-    projectId: "firstairbuilder",
-    storageBucket: "firstairbuilder.appspot.com",
-    messagingSenderId: "879078166665",
-    appId: "1:879078166665:web:40f63a1b2fdfb7833d3658"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
+      authDomain: "firstairbuilder.firebaseapp.com",
+      projectId: "firstairbuilder",
+      storageBucket: "firstairbuilder.appspot.com",
+      messagingSenderId: "879078166665",
+      appId: "1:879078166665:web:40f63a1b2fdfb7833d3658"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  let positionId = "", currentUser = "", liveUnsubscribe;
+    let positionId = "", currentUser = "", liveUnsubscribe;
 
-  function switchScreen(id) {
-    document.querySelectorAll(".screen").forEach(el => el.classList.remove("visible"));
-    document.getElementById(id).classList.add("visible");
-  }
-
-  window.goHome = () => {
-    switchScreen("home");
-    document.getElementById("allocatePositionId").value = '';
-    document.getElementById("offloadPositionId").value = '';
-    document.getElementById("offloadMessage").innerText = '';
-    document.getElementById("liveView").classList.remove("visible");
-    if (typeof liveUnsubscribe === "function") {
-      liveUnsubscribe();
-      liveUnsubscribe = null;
+    function switchScreen(id) {
+      document.querySelectorAll(".screen").forEach(el => el.classList.remove("visible"));
+      document.getElementById(id).classList.add("visible");
     }
-    clearTables();
-  };
 
-  function setupLiveViewListener() {
-    if (typeof liveUnsubscribe === "function") liveUnsubscribe();
+    window.goHome = () => {
+      switchScreen("home");
+      document.getElementById("allocatePositionId").value = '';
+      document.getElementById("offloadPositionId").value = '';
+      document.getElementById("offloadMessage").innerText = '';
+      document.getElementById("scanTable").innerHTML = '';
+      document.getElementById("offloadTable").innerHTML = '';
+      positionId = "";
+      currentUser = "";
+    };
 
-    liveUnsubscribe = onSnapshot(collection(db, "scans"), (snapshot) => {
-      const rows = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.positionId !== "[REMOVED]" && data.scannedAt) {
-          rows.push({
-            ...data,
-            scannedAt: new Date(data.scannedAt.seconds * 1000).toLocaleString()
-          });
-        }
+    window.goToAllocate = () => {
+      currentUser = document.getElementById("userName").value.trim();
+      if (!currentUser) return alert("Please enter user name");
+      switchScreen("allocateStart");
+    };
+
+    window.goToOffload = () => {
+      currentUser = document.getElementById("userName").value.trim();
+      if (!currentUser) return alert("Please enter user name");
+      switchScreen("offloadStart");
+    };
+
+    // Load AWBs allocated to a position for Allocate Scan screen
+    async function loadAllocateAWBs(posId) {
+      const scanTableBody = document.getElementById("scanTable");
+      scanTableBody.innerHTML = "Loading...";
+      const scansCol = collection(db, "scans");
+      const q = query(scansCol, where("positionId", "==", posId));
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        scanTableBody.innerHTML = `<tr><td colspan="4">No AWBs allocated to Position ID: ${posId}</td></tr>`;
+        return;
+      }
+      let rowsHTML = "";
+      let idx = 1;
+      querySnapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        const scannedAtStr = d.scannedAt ? new Date(d.scannedAt.seconds * 1000).toLocaleString() : "N/A";
+        rowsHTML += `
+          <tr>
+            <td>${idx++}</td>
+            <td>${d.code}</td>
+            <td>${scannedAtStr}</td>
+            <td>${d.scannedBy}</td>
+          </tr>
+        `;
       });
-      rows.sort((a, b) => new Date(b.scannedAt) - new Date(a.scannedAt));
-      const tableBody = document.getElementById("liveTable");
-      tableBody.innerHTML = rows.map((entry, idx) => `
-        <tr>
-          <td>${idx + 1}</td>
-          <td>${entry.code}</td>
-          <td>${entry.positionId}</td>
-          <td>${entry.scannedAt}</td>
-          <td>${entry.scannedBy}</td>
-        </tr>
-      `).join('');
-    });
-    document.getElementById("liveView").classList.add("visible");
-  }
-
-  // ↪ INCLUDE THE REST OF YOUR FUNCTIONS AS THEY ARE, then:
-  // ⬇️ Example: update this function to include live view
-
-  window.startAllocate = async () => {
-    positionId = document.getElementById("allocatePositionId").value.trim();
-    if (!positionId) {
-      alert("Enter Position ID");
-      return;
+      scanTableBody.innerHTML = rowsHTML;
     }
-    await loadAllocatedAWBs(positionId);
-    document.getElementById("allocPosition").innerText = positionId;
-    document.getElementById("allocUser").innerText = currentUser;
-    switchScreen("allocateScan");
-    document.getElementById("scanInput").value = '';
-    document.getElementById("scanInput").focus();
 
-    await updateScannedTable();
-    setupLiveViewListener(); // 👈 Live view enabled
-  };
+    window.startAllocate = async () => {
+      positionId = document.getElementById("allocatePositionId").value.trim();
+      if (!positionId) return alert("Enter Position ID");
+      document.getElementById("allocPosition").innerText = positionId;
+      document.getElementById("allocUser").innerText = currentUser;
+      switchScreen("allocateScan");
+      await loadAllocateAWBs(positionId);
+      document.getElementById("scanInput").value = '';
+      document.getElementById("scanInput").focus();
+    };
 
-  // ⬆️ Do the same in `startOffload()`:
-  // Just call `setupLiveViewListener();` at the end.
+    async function handleScan(code) {
+      if (!code) return;
 
-  // On page load focus user name
-  window.onload = () => {
-    document.getElementById("userName").focus();
-  };
-</script>
+      // Check for duplicate code anywhere, show alert if found and mention positionId
+      const scansCol = collection(db, "scans");
+      const q = query(scansCol, where("code", "==", code));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        let duplicateDoc = null;
+        querySnapshot.forEach(docSnap => {
+          const d = docSnap.data();
+          if (d.positionId !== "[REMOVED]") duplicateDoc = d;
+        });
+        if (duplicateDoc) {
+          alert(`Duplicate AWB scanned!\nAWB: ${code} is already allocated to Position ID: ${duplicateDoc.positionId}`);
+          document.getElementById("scanInput").value = '';
+          document.getElementById("scanInput").focus();
+          return;
+        }
+      }
+
+      try {
+        await addDoc(collection(db, "scans"), {
+          code,
+          positionId,
+          scannedAt: serverTimestamp(),
+          scannedBy: currentUser
+        });
+        await loadAllocateAWBs(positionId);
+        vibrate();
+      } catch (e) {
+        alert("Failed to save scan.");
+      }
+    }
+
+    document.getElementById("scanInput").addEventListener("input", async () => {
+      const code = document.getElementById("scanInput").value.trim();
+      if (code) await handleScan(code);
+      document.getElementById("scanInput").value = '';
+      document.getElementById("scanInput").focus();
+    });
+
+    // Load AWBs allocated to a position for Offload Scan screen
+    async function loadOffloadAWBs(posId) {
+      const offloadTableBody = document.getElementById("offloadTable");
+      offloadTableBody.innerHTML = "Loading...";
+      const scansCol = collection(db, "scans");
+      const q = query(scansCol, where("positionId", "==", posId));
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        offloadTableBody.innerHTML = `<tr><td colspan="4">No AWBs found for Position ID: ${posId}</td></tr>`;
+        return;
+      }
+      let rowsHTML = "";
+      let idx = 1;
+      querySnapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        const scannedAtStr = d.scannedAt ? new Date(d.scannedAt.seconds * 1000).toLocaleString() : "N/A";
+        rowsHTML += `
+          <tr>
+            <td>${idx++}</td>
+            <td>${d.code}</td>
+            <td>${scannedAtStr}</td>
+            <td>${d.scannedBy}</td>
+          </tr>
+        `;
+      });
+      offloadTableBody.innerHTML = rowsHTML;
+    }
+
+    window.startOffload = async () => {
+      const pos = document.getElementById("offloadPositionId").value.trim();
+      if (!pos) {
+        alert("Enter Position ID");
+        return;
+      }
+      positionId = pos;
+      document.getElementById("offloadPosition").innerText = positionId;
+      document.getElementById("offloadUser").innerText = currentUser;
+      document.getElementById("offloadMessage").innerText = '';
+      switchScreen("offloadScan");
+      await loadOffloadAWBs(positionId);
+      document.getElementById("offloadInput").value = '';
+      document.getElementById("offloadInput").focus();
+    };
+
+    document.getElementById("offloadInput").addEventListener("input", async () => {
+      const code = document.getElementById("offloadInput").value.trim();
+      if (!code) return;
+
+      const scansCol = collection(db, "scans");
+      const q = query(scansCol, where("code", "==", code));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        document.getElementById("offloadMessage").innerText = `❌ AWB ${code} not found.`;
+        document.getElementById("offloadInput").value = '';
+        document.getElementById("offloadInput").focus();
+        return;
+      }
+
+      let foundForPosition = false;
+      for (const docSnap of querySnapshot.docs) {
+        const d = docSnap.data();
+        if (d.positionId === positionId) {
+          // Remove allocation by setting positionId to "[REMOVED]"
+          await updateDoc(doc(db, "scans", docSnap.id), { positionId: "[REMOVED]" });
+          document.getElementById("offloadMessage").innerText = `✅ Removed: ${code}`;
+          foundForPosition = true;
+          vibrate();
+          break;
+        }
+      }
+
+      if (!foundForPosition) {
+        document.getElementById("offloadMessage").innerText = `❌ AWB ${code} is not allocated to Position ID: ${positionId}`;
+      }
+
+      await loadOffloadAWBs(positionId);
+
+      document.getElementById("offloadInput").value = '';
+      document.getElementById("offloadInput").focus();
+    });
+
+    window.exportToCSV = () => {
+      onSnapshot(collection(db, "scans"), async (snapshot) => {
+        let csv = "data:text/csv;charset=utf-8,\uFEFFAirway Bill,Position ID,Scanned At,Scanned By\n";
+        const batchDeletePromises = [];
+
+        snapshot.forEach(docSnap => {
+          const d = docSnap.data();
+          if (d.positionId !== "[REMOVED]" && d.scannedAt) {
+            csv += `"${d.code}","${d.positionId}","${new Date(d.scannedAt.seconds * 1000).toLocaleString()}","${d.scannedBy}"\n`;
+            // Schedule document for deletion after export
+            batchDeletePromises.push(deleteDoc(doc(db, "scans", docSnap.id)));
+          }
+        });
+
+        const link = document.createElement("a");
+        link.href = encodeURI(csv);
+        link.download = "FirstAirBuilder_Export.csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Delete all exported docs
+        await Promise.all(batchDeletePromises);
+
+        alert("Export complete and all exported data cleared.");
+      }, { once: true });
+    };
+
+    window.goToLiveView = () => {
+      switchScreen("liveView");
+      const tableBody = document.getElementById("liveTable");
+
+      if (typeof liveUnsubscribe === "function") liveUnsubscribe();
+
+      liveUnsubscribe = onSnapshot(collection(db, "scans"), (snapshot) => {
+        const rows = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.positionId !== "[REMOVED]" && data.scannedAt) {
+            rows.push({
+              ...data,
+              scannedAt: new Date(data.scannedAt.seconds * 1000).toLocaleString()
+            });
+          }
+        });
+        rows.sort((a, b) => new Date(b.scannedAt) - new Date(a.scannedAt));
+        tableBody.innerHTML = rows.map((entry, idx) => `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${entry.code}</td>
+            <td>${entry.positionId}</td>
+            <td>${entry.scannedAt}</td>
+            <td>${entry.scannedBy}</td>
+          </tr>
+        `).join('');
+      });
+    };
+
+    function vibrate() {
+      if (navigator.vibrate) navigator.vibrate(100);
+    }
+  </script>
 </body>
 </html>
