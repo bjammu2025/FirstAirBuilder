@@ -15,496 +15,310 @@
   <style>
 
     html, body {
-
       margin: 0;
       padding: 0;
-
       background-color: #121212;
       color: white;
-
       font-family: Arial, sans-serif;
-
       width: 100%;
       min-height: 100%;
-
       overflow-x: hidden;
     }
 
-
     body {
-
       display: flex;
       justify-content: center;
       align-items: flex-start;
     }
 
-
     .container {
-
       width: 100%;
       min-height: 100vh;
-
       padding: 12px;
-
       box-sizing: border-box;
-
       text-align: center;
-
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
-
     input,
     button {
-
       font-size: 2rem;
-
       padding: 1.1rem;
-
       margin: 0.7rem 0;
-
       width: 95%;
       max-width: 1000px;
-
       border: none;
-
       border-radius: 18px;
-
       box-sizing: border-box;
     }
 
-
     input {
-
       background: white;
       color: black;
     }
 
-
     button {
-
       background-color: #1e88e5;
-
       color: white;
-
       cursor: pointer;
     }
 
-
     button:hover {
-
       background-color: #1565c0;
     }
 
-
     .cameraButton {
-
       background-color: #00897b;
     }
 
-
     .cameraButton:hover {
-
       background-color: #00695c;
     }
 
-
     .readButton {
-
       background-color: #43a047;
     }
 
-
     .stopButton {
-
       background-color: #d32f2f;
     }
 
-
     .backButton {
-
       background-color: #555;
     }
 
-
     h2 {
-
-      margin: 15px 0;
-
+      margin: 15px 0 4px;
       font-size: 3.5rem;
     }
 
-
     h3 {
-
       margin: 10px 0;
-
       font-size: 2.5rem;
     }
 
+    /* ======================================================
+       VERSION NUMBER
+       ====================================================== */
+
+    .version {
+      font-size: 0.85rem;
+      color: #777;
+      margin-bottom: 15px;
+    }
 
     table {
-
       width: 100%;
-
       margin-top: 10px;
-
       border-collapse: collapse;
-
       font-size: 1.4rem;
     }
 
-
     th,
     td {
-
       border: 2px solid #999;
-
       padding: 10px;
-
       text-align: center;
     }
 
-
     .screen {
-
       display: none;
-
       width: 100%;
     }
 
-
     .visible {
-
       display: block;
     }
-
 
     /* ======================================================
        CAMERA
        ====================================================== */
 
-    /*
-       IMPORTANT:
-
-       We no longer display the entire camera.
-
-       The viewport below represents ONLY the area that
-       was previously inside the green scanning box.
-    */
-
     .cameraContainer {
-
       display: none;
-
       width: 100%;
-
       max-width: 1000px;
-
       margin: 10px auto;
-
       position: relative;
-
       background: black;
-
       border-radius: 15px;
-
       overflow: hidden;
-
-      /*
-         Green box was approximately:
-         84% camera width
-         30% camera height
-
-         The visible area therefore becomes a
-         wide horizontal scanning window.
-      */
-
       aspect-ratio: 4.98 / 1;
     }
 
-
     .cameraContainer.active {
-
       display: block;
     }
 
-
     /*
-       The video is enlarged and positioned so that
-       only the original green-box area is visible.
+       Only the area that was previously inside
+       the green scanning box is displayed.
     */
 
     .cameraContainer video {
-
       position: absolute;
-
       width: 119.05%;
-
       height: auto;
-
       max-width: none;
-
       left: -9.525%;
-
       top: -116.67%;
-
       display: block;
-
       background: black;
     }
 
-
-    /*
-       No green box is needed anymore because the
-       entire visible camera area IS the green box.
-    */
-
     .scanBox {
-
       display: none;
     }
 
-
     .scanText {
-
       position: absolute;
-
       left: 0;
-
       right: 0;
-
       bottom: 8px;
-
       text-align: center;
-
       font-size: 1.2rem;
-
       color: white;
-
       text-shadow:
         0 2px 4px black,
         0 2px 8px black;
-
       pointer-events: none;
     }
 
-
     .cameraStatus {
-
       font-size: 1.4rem;
-
       margin: 6px 0;
-
       min-height: 2rem;
     }
 
-
     .success {
-
       color: #00e676;
     }
 
-
     .error {
-
       color: #ff5252;
     }
 
-
     .scanning {
-
       color: #ffeb3b;
     }
 
-
     .hidden {
-
       display: none !important;
     }
 
-
     /* ======================================================
-       VERIFICATION MODAL
+       VERIFICATION BOX
        ====================================================== */
 
     .verificationOverlay {
-
       position: fixed;
-
       top: 0;
       left: 0;
-
       width: 100vw;
       height: 100vh;
-
       background: rgba(0, 0, 0, 0.88);
-
       display: none;
-
       align-items: center;
-
       justify-content: center;
-
       z-index: 9999;
-
       padding: 20px;
-
       box-sizing: border-box;
     }
 
-
     .verificationOverlay.active {
-
       display: flex;
     }
 
-
     .verificationBox {
-
       width: 95%;
-
       max-width: 700px;
-
       background: #1e1e1e;
-
       border: 4px solid #00e676;
-
       border-radius: 25px;
-
       padding: 30px 20px;
-
       box-sizing: border-box;
-
       text-align: center;
-
       box-shadow:
         0 0 30px rgba(0, 230, 118, 0.4);
     }
 
-
     .verificationTitle {
-
       font-size: 2.8rem;
-
       font-weight: bold;
-
       color: #00e676;
-
       margin-bottom: 20px;
     }
 
-
     .verificationLabel {
-
       font-size: 1.5rem;
-
       color: #bbb;
-
       margin-bottom: 10px;
     }
 
-
     .verificationAWB {
-
       font-size: 3.5rem;
-
       font-weight: bold;
-
       color: white;
-
       background: #000;
-
       border-radius: 15px;
-
       padding: 20px 10px;
-
       margin: 15px 0 25px;
-
       letter-spacing: 3px;
-
       word-break: break-all;
     }
 
-
     .verifyButton {
-
       background-color: #00a152;
-
       font-weight: bold;
     }
-
 
     .cancelVerifyButton {
-
       background-color: #d32f2f;
-
       font-weight: bold;
     }
-
 
     @media (max-width: 600px) {
 
       h2 {
-
         font-size: 2.5rem;
       }
 
-
       h3 {
-
         font-size: 1.7rem;
       }
 
-
       input,
       button {
-
         font-size: 1.35rem;
-
         padding: 0.9rem;
       }
 
-
       table {
-
         font-size: 0.9rem;
       }
 
-
       th,
       td {
-
         padding: 7px;
       }
 
-
       .cameraContainer {
-
         aspect-ratio: 4.98 / 1;
-
         border-radius: 10px;
       }
 
-
       .cameraStatus {
-
         font-size: 1.1rem;
       }
 
-
       .verificationTitle {
-
         font-size: 2.2rem;
       }
 
-
       .verificationAWB {
-
         font-size: 2.6rem;
-
         padding: 18px 5px;
       }
 
@@ -518,7 +332,6 @@
 
 <div class="container">
 
-
   <!-- ======================================================
        HOME
        ====================================================== -->
@@ -526,6 +339,12 @@
   <div id="home" class="screen visible">
 
     <h2>First Air Builder</h2>
+
+    <!-- VERSION -->
+
+    <div class="version">
+      v2.1
+    </div>
 
 
     <input
@@ -620,8 +439,6 @@
     </button>
 
 
-    <!-- ONLY GREEN BOX AREA IS DISPLAYED -->
-
     <div
       id="allocateCameraContainer"
       class="cameraContainer">
@@ -679,19 +496,13 @@
       <thead>
 
         <tr>
-
           <th>#</th>
-
           <th>Airway Bill</th>
-
           <th>Scanned At</th>
-
           <th>Scanned By</th>
-
         </tr>
 
       </thead>
-
 
       <tbody id="scanTable"></tbody>
 
@@ -727,9 +538,7 @@
 
 
     <button onclick="startOffload()">
-
       START
-
     </button>
 
 
@@ -772,8 +581,6 @@
 
     </button>
 
-
-    <!-- ONLY GREEN BOX AREA IS DISPLAYED -->
 
     <div
       id="offloadCameraContainer"
@@ -832,15 +639,10 @@
       <thead>
 
         <tr>
-
           <th>#</th>
-
           <th>Airway Bill</th>
-
           <th>Scanned At</th>
-
           <th>Scanned By</th>
-
         </tr>
 
       </thead>
@@ -876,17 +678,11 @@
       <thead>
 
         <tr>
-
           <th>#</th>
-
           <th>Airway Bill</th>
-
           <th>Position ID</th>
-
           <th>Scanned At</th>
-
           <th>Scanned By</th>
-
         </tr>
 
       </thead>
@@ -967,7 +763,6 @@
 
 <script type="module">
 
-
   // ============================================================
   // FIREBASE
   // ============================================================
@@ -979,25 +774,15 @@
   import {
 
     getFirestore,
-
     collection,
-
     addDoc,
-
     onSnapshot,
-
     doc,
-
     updateDoc,
-
     serverTimestamp,
-
     query,
-
     where,
-
     getDocs,
-
     deleteDoc
 
   } from
@@ -1053,10 +838,6 @@
 
   let ocrBusy = false;
 
-  /*
-     Holds the AWB waiting for verification.
-  */
-
   let pendingAWB = null;
 
 
@@ -1068,12 +849,13 @@
 
     document
       .querySelectorAll(".screen")
-      .forEach(
-        el =>
-          el.classList.remove(
-            "visible"
-          )
-      );
+      .forEach(el => {
+
+        el.classList.remove(
+          "visible"
+        );
+
+      });
 
 
     document
@@ -1201,7 +983,7 @@
 
 
   // ============================================================
-  // EXTRACT FULL 518 AWB
+  // EXTRACT 518 AWB
   // ============================================================
 
   function extract518Number(
@@ -1209,9 +991,7 @@
   ) {
 
     if (!rawText) {
-
       return null;
-
     }
 
 
@@ -1228,8 +1008,6 @@
         .trim();
 
 
-    // Exact format
-
     let match =
       text.match(
         /\b518-[A-Z]{3}-\d{8}\b/
@@ -1237,13 +1015,9 @@
 
 
     if (match) {
-
       return match[0];
-
     }
 
-
-    // Spaces instead of hyphens
 
     match =
       text.match(
@@ -1259,8 +1033,6 @@
 
     }
 
-
-    // OCR may use incorrect characters
 
     match =
       text.match(
@@ -1301,25 +1073,15 @@
 
 
   // ============================================================
-  // CONVERT TO SAVED AWB
+  // GET SAVED AWB
   // ============================================================
-
-  /*
-     518-YWG-13634095
-
-     becomes
-
-     13634095
-  */
 
   function getSavedAWB(
     fullAWB
   ) {
 
     if (!fullAWB) {
-
       return null;
-
     }
 
 
@@ -1332,9 +1094,7 @@
 
 
     if (!match) {
-
       return null;
-
     }
 
 
@@ -1344,15 +1104,13 @@
 
 
   // ============================================================
-  // OCR INITIALIZATION
+  // OCR
   // ============================================================
 
   async function initializeOCR() {
 
     if (ocrWorker) {
-
       return true;
-
     }
 
 
@@ -1397,7 +1155,6 @@
 
 
       return true;
-
 
     } catch (error) {
 
@@ -1650,7 +1407,7 @@
 
 
   // ============================================================
-  // OPEN ALLOCATE CAMERA
+  // OPEN CAMERAS
   // ============================================================
 
   window.openAllocateCamera =
@@ -1662,10 +1419,6 @@
 
     };
 
-
-  // ============================================================
-  // OPEN OFFLOAD CAMERA
-  // ============================================================
 
   window.openOffloadCamera =
     async () => {
@@ -1700,24 +1453,18 @@
       }
 
 
-      const allocateVideo =
-        document.getElementById(
+      document
+        .getElementById(
           "allocateVideo"
-        );
+        )
+        .srcObject = null;
 
 
-      const offloadVideo =
-        document.getElementById(
+      document
+        .getElementById(
           "offloadVideo"
-        );
-
-
-      allocateVideo.srcObject =
-        null;
-
-
-      offloadVideo.srcObject =
-        null;
+        )
+        .srcObject = null;
 
 
       document
@@ -1799,7 +1546,7 @@
 
 
   // ============================================================
-  // CAPTURE ONLY GREEN BOX AREA
+  // CAPTURE ONLY GREEN BOX
   // ============================================================
 
   function captureFrame() {
@@ -1842,11 +1589,6 @@
       video.videoHeight;
 
 
-    /*
-       EXACTLY THE SAME AREA THAT
-       WAS INSIDE THE GREEN BOX.
-    */
-
     const cropWidth =
       Math.floor(
         width * 0.84
@@ -1864,11 +1606,6 @@
         (width - cropWidth) / 2
       );
 
-
-    /*
-       Original green box starts
-       at 35% of camera height.
-    */
 
     const cropY =
       Math.floor(
@@ -1919,7 +1656,7 @@
 
 
   // ============================================================
-  // PAUSE CAMERA FOR VERIFICATION
+  // PAUSE / RESUME CAMERA
   // ============================================================
 
   function pauseCamera() {
@@ -1942,10 +1679,6 @@
   }
 
 
-  // ============================================================
-  // RESUME CAMERA
-  // ============================================================
-
   function resumeCamera() {
 
     if (cameraStream) {
@@ -1967,7 +1700,7 @@
 
 
   // ============================================================
-  // SHOW VERIFICATION
+  // VERIFICATION
   // ============================================================
 
   function showVerification(
@@ -2000,10 +1733,6 @@
   }
 
 
-  // ============================================================
-  // CANCEL VERIFICATION
-  // ============================================================
-
   window.cancelVerification =
     () => {
 
@@ -2031,27 +1760,17 @@
     };
 
 
-  // ============================================================
-  // CONFIRM VERIFICATION
-  // ============================================================
-
   window.confirmVerification =
     async () => {
 
       if (!pendingAWB) {
-
         return;
-
       }
 
 
       const awb =
         pendingAWB;
 
-
-      /*
-         Close verification box first.
-      */
 
       document
         .getElementById(
@@ -2107,10 +1826,6 @@
         null;
 
 
-      /*
-         Return to camera automatically.
-      */
-
       resumeCamera();
 
 
@@ -2129,16 +1844,12 @@
   async function readAWB() {
 
     if (ocrBusy) {
-
       return;
-
     }
 
 
     if (pendingAWB) {
-
       return;
-
     }
 
 
@@ -2149,9 +1860,7 @@
 
 
       if (!loaded) {
-
         return;
-
       }
 
     }
@@ -2220,16 +1929,6 @@
       }
 
 
-      /*
-         Convert:
-
-         518-YWG-13634095
-
-         to:
-
-         13634095
-      */
-
       const savedAWB =
         getSavedAWB(
           fullAWB
@@ -2248,10 +1947,6 @@
 
       }
 
-
-      /*
-         Show ONLY the number that will be saved.
-      */
 
       showVerification(
         savedAWB
@@ -2281,10 +1976,6 @@
   }
 
 
-  // ============================================================
-  // ALLOCATE READ BUTTON
-  // ============================================================
-
   window.readAllocateAWB =
     async () => {
 
@@ -2292,9 +1983,7 @@
         currentCameraMode !==
         "allocate"
       ) {
-
         return;
-
       }
 
 
@@ -2303,10 +1992,6 @@
     };
 
 
-  // ============================================================
-  // OFFLOAD READ BUTTON
-  // ============================================================
-
   window.readOffloadAWB =
     async () => {
 
@@ -2314,9 +1999,7 @@
         currentCameraMode !==
         "offload"
       ) {
-
         return;
-
       }
 
 
@@ -2485,15 +2168,9 @@
   ) {
 
     if (!code) {
-
       return;
-
     }
 
-
-    /*
-       CODE IS ALREADY ONLY THE 8 DIGITS.
-    */
 
     const q =
       query(
@@ -2549,8 +2226,7 @@
 
         setStatus(
 
-          `❌ Duplicate AWB!\n` +
-          `Already allocated to Position ID: ${duplicate.positionId}`,
+          `❌ Duplicate AWB! Already allocated to Position ID: ${duplicate.positionId}`,
 
           "error"
 
@@ -2577,12 +2253,6 @@
         ),
 
         {
-
-          /*
-             SAVE ONLY:
-
-             13634095
-          */
 
           code:
             code,
@@ -2790,9 +2460,7 @@
   ) {
 
     if (!code) {
-
       return;
-
     }
 
 
@@ -3192,7 +2860,6 @@
 
     }
   );
-
 
 </script>
 
