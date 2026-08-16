@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>First Air Builder</title>
+
   <style>
     html, body {
       margin: 0;
@@ -14,11 +15,13 @@
       height: 100vh;
       overflow: hidden;
     }
+
     body {
       display: flex;
       justify-content: center;
       align-items: center;
     }
+
     .container {
       width: 100vw;
       height: 100vh;
@@ -30,6 +33,7 @@
       align-items: center;
       overflow-y: auto;
     }
+
     input, button {
       font-size: 3rem;
       padding: 2rem;
@@ -39,382 +43,1135 @@
       border: none;
       border-radius: 20px;
     }
+
     button {
       background-color: #1e88e5;
       color: white;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #1565c0;
     }
+
     h2, h3 {
       margin: 20px 0;
       font-size: 4rem;
     }
+
     table {
       width: 100%;
       margin-top: 20px;
       border-collapse: collapse;
       font-size: 2.5rem;
     }
+
     th, td {
       border: 2px solid #999;
       padding: 20px;
       text-align: center;
     }
+
     .hidden-input {
       opacity: 0;
       height: 1px;
       position: absolute;
       pointer-events: none;
     }
+
     .screen {
       display: none;
       width: 100%;
     }
+
     .visible {
       display: block;
     }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <!-- Home Screen -->
-    <div id="home" class="screen visible">
-      <h2>First Air Builder</h2>
-      <input type="text" id="userName" placeholder="Enter User Name">
-      <button onclick="goToAllocate()">ALLOCATE</button>
-      <button onclick="goToOffload()">OFFLOAD</button>
-      <button onclick="goToLiveView()">LIVE VIEW</button>
-      <button onclick="exportToCSV()">EXPORT</button>
-    </div>
 
-    <!-- Allocate Start -->
-    <div id="allocateStart" class="screen">
-      <h3>Allocate Airway Bills</h3>
-      <input type="text" id="allocatePositionId" placeholder="Enter Position ID">
-      <button onclick="startAllocate()">Start Scanning</button>
-      <button onclick="goHome()">⬅ BACK</button>
-    </div>
+<div class="container">
 
-    <!-- Allocate Scan -->
-    <div id="allocateScan" class="screen">
-      <h3>Scanning: <span id="allocPosition"></span> | User: <span id="allocUser"></span></h3>
-      <input type="text" id="scanInput" class="hidden-input">
-      <table>
-        <thead><tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr></thead>
-        <tbody id="scanTable"></tbody>
-      </table>
-      <button onclick="goHome()">⬅ BACK</button>
-    </div>
+  <!-- Home Screen -->
+  <div id="home" class="screen visible">
+    <h2>First Air Builder</h2>
 
-    <!-- Offload Start -->
-    <div id="offloadStart" class="screen">
-      <h3>Offload Airway Bills</h3>
-      <input type="text" id="offloadPositionId" placeholder="Enter Position ID">
-      <button onclick="startOffload()">Start Offloading</button>
-      <button onclick="goHome()">⬅ BACK</button>
-    </div>
+    <input type="text" id="userName" placeholder="Enter User Name">
 
-    <!-- Offload Scan -->
-    <div id="offloadScan" class="screen">
-      <h3>Offloading: <span id="offloadPosition"></span> | User: <span id="offloadUser"></span></h3>
-      <input type="text" id="offloadInput" class="hidden-input">
-      <div id="offloadMessage" style="margin:1rem 0; font-size:2.5rem;"></div>
-      <table>
-        <thead><tr><th>#</th><th>Airway Bill</th><th>Scanned At</th><th>Scanned By</th></tr></thead>
-        <tbody id="offloadTable"></tbody>
-      </table>
-      <button onclick="goHome()">⬅ BACK</button>
-    </div>
-
-    <!-- Live View -->
-    <div id="liveView" class="screen">
-      <h3>Live Scans Overview</h3>
-      <table>
-        <thead>
-          <tr><th>#</th><th>Airway Bill</th><th>Position ID</th><th>Scanned At</th><th>Scanned By</th></tr>
-        </thead>
-        <tbody id="liveTable"></tbody>
-      </table>
-      <button onclick="goHome()">⬅ BACK</button>
-    </div>
+    <button onclick="goToAllocate()">ALLOCATE</button>
+    <button onclick="goToOffload()">OFFLOAD</button>
+    <button onclick="goToLiveView()">LIVE VIEW</button>
+    <button onclick="exportToCSV()">EXPORT</button>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { 
-      getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTimestamp, 
-      query, where, getDocs, deleteDoc 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
-      authDomain: "firstairbuilder.firebaseapp.com",
-      projectId: "firstairbuilder",
-      storageBucket: "firstairbuilder.appspot.com",
-      messagingSenderId: "879078166665",
-      appId: "1:879078166665:web:40f63a1b2fdfb7833d3658"
-    };
+  <!-- Allocate Start -->
+  <div id="allocateStart" class="screen">
+    <h3>Allocate Airway Bills</h3>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    <input
+      type="text"
+      id="allocatePositionId"
+      placeholder="Enter Position ID"
+    >
 
-    let positionId = "", currentUser = "", liveUnsubscribe;
+    <button onclick="startAllocate()">Start Scanning</button>
+    <button onclick="goHome()">⬅ BACK</button>
+  </div>
 
-    function switchScreen(id) {
-      document.querySelectorAll(".screen").forEach(el => el.classList.remove("visible"));
-      document.getElementById(id).classList.add("visible");
+
+  <!-- Allocate Scan -->
+  <div id="allocateScan" class="screen">
+
+    <h3>
+      Scanning:
+      <span id="allocPosition"></span>
+      |
+      User:
+      <span id="allocUser"></span>
+    </h3>
+
+    <input
+      type="text"
+      id="scanInput"
+      class="hidden-input"
+      autocomplete="off"
+    >
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Airway Bill</th>
+          <th>Scanned At</th>
+          <th>Scanned By</th>
+        </tr>
+      </thead>
+
+      <tbody id="scanTable"></tbody>
+    </table>
+
+    <button onclick="goHome()">⬅ BACK</button>
+  </div>
+
+
+  <!-- Offload Start -->
+  <div id="offloadStart" class="screen">
+
+    <h3>Offload Airway Bills</h3>
+
+    <input
+      type="text"
+      id="offloadPositionId"
+      placeholder="Enter Position ID"
+    >
+
+    <button onclick="startOffload()">Start Offloading</button>
+    <button onclick="goHome()">⬅ BACK</button>
+  </div>
+
+
+  <!-- Offload Scan -->
+  <div id="offloadScan" class="screen">
+
+    <h3>
+      Offloading:
+      <span id="offloadPosition"></span>
+      |
+      User:
+      <span id="offloadUser"></span>
+    </h3>
+
+    <input
+      type="text"
+      id="offloadInput"
+      class="hidden-input"
+      autocomplete="off"
+    >
+
+    <div
+      id="offloadMessage"
+      style="margin:1rem 0; font-size:2.5rem;"
+    ></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Airway Bill</th>
+          <th>Scanned At</th>
+          <th>Scanned By</th>
+        </tr>
+      </thead>
+
+      <tbody id="offloadTable"></tbody>
+    </table>
+
+    <button onclick="goHome()">⬅ BACK</button>
+  </div>
+
+
+  <!-- Live View -->
+  <div id="liveView" class="screen">
+
+    <h3>Live Scans Overview</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Airway Bill</th>
+          <th>Position ID</th>
+          <th>Scanned At</th>
+          <th>Scanned By</th>
+        </tr>
+      </thead>
+
+      <tbody id="liveTable"></tbody>
+    </table>
+
+    <button onclick="goHome()">⬅ BACK</button>
+  </div>
+
+</div>
+
+
+<script type="module">
+
+  import { initializeApp } from
+    "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    onSnapshot,
+    doc,
+    updateDoc,
+    serverTimestamp,
+    query,
+    where,
+    getDocs,
+    deleteDoc
+  } from
+    "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+
+  // ============================================================
+  // FIREBASE
+  // ============================================================
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
+    authDomain: "firstairbuilder.firebaseapp.com",
+    projectId: "firstairbuilder",
+    storageBucket: "firstairbuilder.appspot.com",
+    messagingSenderId: "879078166665",
+    appId: "1:879078166665:web:40f63a1b2fdfb7833d3658"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+
+  // ============================================================
+  // GLOBAL VARIABLES
+  // ============================================================
+
+  let positionId = "";
+  let currentUser = "";
+  let liveUnsubscribe;
+
+  // Used to wait for the complete OCR/scanner input
+  let scanTimer = null;
+
+  // Change this if you want a different prefix
+  const REQUIRED_PREFIX = "518";
+
+
+  // ============================================================
+  // SCREEN CONTROL
+  // ============================================================
+
+  function switchScreen(id) {
+
+    document
+      .querySelectorAll(".screen")
+      .forEach(el => el.classList.remove("visible"));
+
+    document
+      .getElementById(id)
+      .classList.add("visible");
+  }
+
+
+  // ============================================================
+  // HOME
+  // ============================================================
+
+  window.goHome = () => {
+
+    switchScreen("home");
+
+    document.getElementById("allocatePositionId").value = "";
+    document.getElementById("offloadPositionId").value = "";
+
+    document.getElementById("offloadMessage").innerText = "";
+
+    document.getElementById("scanTable").innerHTML = "";
+    document.getElementById("offloadTable").innerHTML = "";
+
+    document.getElementById("scanInput").value = "";
+    document.getElementById("offloadInput").value = "";
+
+    positionId = "";
+    currentUser = "";
+  };
+
+
+  // ============================================================
+  // ALLOCATE
+  // ============================================================
+
+  window.goToAllocate = () => {
+
+    currentUser =
+      document.getElementById("userName").value.trim();
+
+    if (!currentUser) {
+      alert("Please enter user name");
+      return;
     }
 
-    window.goHome = () => {
-      switchScreen("home");
-      document.getElementById("allocatePositionId").value = '';
-      document.getElementById("offloadPositionId").value = '';
-      document.getElementById("offloadMessage").innerText = '';
-      document.getElementById("scanTable").innerHTML = '';
-      document.getElementById("offloadTable").innerHTML = '';
-      positionId = "";
-      currentUser = "";
-    };
+    switchScreen("allocateStart");
+  };
 
-    window.goToAllocate = () => {
-      currentUser = document.getElementById("userName").value.trim();
-      if (!currentUser) return alert("Please enter user name");
-      switchScreen("allocateStart");
-    };
 
-    window.goToOffload = () => {
-      currentUser = document.getElementById("userName").value.trim();
-      if (!currentUser) return alert("Please enter user name");
-      switchScreen("offloadStart");
-    };
+  // ============================================================
+  // OFFLOAD
+  // ============================================================
 
-    // Load AWBs allocated to a position for Allocate Scan screen
-    async function loadAllocateAWBs(posId) {
-      const scanTableBody = document.getElementById("scanTable");
-      scanTableBody.innerHTML = "Loading...";
-      const scansCol = collection(db, "scans");
-      const q = query(scansCol, where("positionId", "==", posId));
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        scanTableBody.innerHTML = `<tr><td colspan="4">No AWBs allocated to Position ID: ${posId}</td></tr>`;
+  window.goToOffload = () => {
+
+    currentUser =
+      document.getElementById("userName").value.trim();
+
+    if (!currentUser) {
+      alert("Please enter user name");
+      return;
+    }
+
+    switchScreen("offloadStart");
+  };
+
+
+  // ============================================================
+  // EXTRACT 518 NUMBER FROM OCR
+  // ============================================================
+
+  function extract518Number(rawText) {
+
+    if (!rawText) return null;
+
+    // Convert everything to uppercase
+    let text = String(rawText).toUpperCase();
+
+    /*
+      OCR may return:
+
+      518-YWG-13634095
+
+      OR
+
+      518 YWG 13634095
+
+      OR
+
+      518-YWG-13634095\n
+
+      OR other surrounding text.
+    */
+
+    // Normalize common OCR spacing
+    text = text
+      .replace(/\r/g, " ")
+      .replace(/\n/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+
+    // ----------------------------------------------------------
+    // FIRST: Exact expected format
+    //
+    // 518-YWG-13634095
+    // ----------------------------------------------------------
+
+    let match = text.match(
+      /\b518-[A-Z]{3}-\d{8}\b/
+    );
+
+    if (match) {
+      return match[0];
+    }
+
+
+    // ----------------------------------------------------------
+    // SECOND: OCR may replace the hyphens with spaces
+    //
+    // 518 YWG 13634095
+    // ----------------------------------------------------------
+
+    match = text.match(
+      /\b518\s*[-]?\s*[A-Z]{3}\s*[-]?\s*\d{8}\b/
+    );
+
+    if (match) {
+
+      let result = match[0]
+        .replace(/\s+/g, "-")
+        .replace(/--+/g, "-");
+
+      return result;
+    }
+
+
+    // ----------------------------------------------------------
+    // THIRD: OCR might put spaces around the hyphens
+    //
+    // 518 - YWG - 13634095
+    // ----------------------------------------------------------
+
+    match = text.match(
+      /\b518\s*-\s*[A-Z]{3}\s*-\s*\d{8}\b/
+    );
+
+    if (match) {
+
+      return match[0]
+        .replace(/\s+/g, "")
+        .trim();
+    }
+
+
+    return null;
+  }
+
+
+  // ============================================================
+  // PROCESS SCANNER / OCR DATA
+  // ============================================================
+
+  async function processScannerInput(rawInput, mode) {
+
+    if (!rawInput) return;
+
+    console.log("Raw Zebra data:", rawInput);
+
+    /*
+      IMPORTANT:
+
+      If the Zebra is configured for OCR,
+      rawInput can contain ALL the text that was read from
+      the label.
+
+      We search that text for:
+
+      518-XXX-########
+    */
+
+    const extracted518 = extract518Number(rawInput);
+
+
+    // ----------------------------------------------------------
+    // OCR FOUND 518 NUMBER
+    // ----------------------------------------------------------
+
+    if (extracted518) {
+
+      console.log(
+        "518 number found:",
+        extracted518
+      );
+
+      if (mode === "allocate") {
+
+        await handleScan(extracted518);
+
+      } else if (mode === "offload") {
+
+        await handleOffload(extracted518);
+      }
+
+      return;
+    }
+
+
+    // ----------------------------------------------------------
+    // NO 518 NUMBER FOUND
+    // ----------------------------------------------------------
+
+    /*
+      We do NOT want to accidentally save the QR code
+      when the QR code does not represent the 518 number.
+
+      Therefore, for OCR scanning, if no 518 number is found,
+      show an error instead of saving random QR data.
+    */
+
+    if (mode === "allocate") {
+
+      alert(
+        "❌ No 518 number found.\n\n" +
+        "Please aim the scanner at the printed number:\n\n" +
+        "518-YWG-13634095"
+      );
+
+      document.getElementById("scanInput").value = "";
+      document.getElementById("scanInput").focus();
+
+    } else {
+
+      document.getElementById("offloadMessage").innerText =
+        "❌ No 518 number found. Please scan the printed 518 number.";
+
+      document.getElementById("offloadInput").value = "";
+      document.getElementById("offloadInput").focus();
+    }
+  }
+
+
+  // ============================================================
+  // LOAD ALLOCATE AWBs
+  // ============================================================
+
+  async function loadAllocateAWBs(posId) {
+
+    const scanTableBody =
+      document.getElementById("scanTable");
+
+    scanTableBody.innerHTML = "Loading...";
+
+    const scansCol = collection(db, "scans");
+
+    const q = query(
+      scansCol,
+      where("positionId", "==", posId)
+    );
+
+    const querySnapshot = await getDocs(q);
+
+
+    if (querySnapshot.empty) {
+
+      scanTableBody.innerHTML =
+        `<tr>
+          <td colspan="4">
+            No AWBs allocated to Position ID: ${posId}
+          </td>
+        </tr>`;
+
+      return;
+    }
+
+
+    let rowsHTML = "";
+    let idx = 1;
+
+
+    querySnapshot.forEach(docSnap => {
+
+      const d = docSnap.data();
+
+      const scannedAtStr =
+        d.scannedAt
+          ? new Date(
+              d.scannedAt.seconds * 1000
+            ).toLocaleString()
+          : "N/A";
+
+
+      rowsHTML += `
+        <tr>
+          <td>${idx++}</td>
+          <td>${d.code}</td>
+          <td>${scannedAtStr}</td>
+          <td>${d.scannedBy}</td>
+        </tr>
+      `;
+    });
+
+
+    scanTableBody.innerHTML = rowsHTML;
+  }
+
+
+  // ============================================================
+  // START ALLOCATE
+  // ============================================================
+
+  window.startAllocate = async () => {
+
+    positionId =
+      document
+        .getElementById("allocatePositionId")
+        .value
+        .trim();
+
+
+    if (!positionId) {
+
+      alert("Enter Position ID");
+      return;
+    }
+
+
+    document.getElementById("allocPosition").innerText =
+      positionId;
+
+    document.getElementById("allocUser").innerText =
+      currentUser;
+
+
+    switchScreen("allocateScan");
+
+    await loadAllocateAWBs(positionId);
+
+
+    const input =
+      document.getElementById("scanInput");
+
+    input.value = "";
+    input.focus();
+  };
+
+
+  // ============================================================
+  // HANDLE ALLOCATE SCAN
+  // ============================================================
+
+  async function handleScan(code) {
+
+    if (!code) return;
+
+
+    console.log("Processing AWB:", code);
+
+
+    // Check duplicate anywhere
+    const scansCol = collection(db, "scans");
+
+    const q = query(
+      scansCol,
+      where("code", "==", code)
+    );
+
+    const querySnapshot = await getDocs(q);
+
+
+    if (!querySnapshot.empty) {
+
+      let duplicateDoc = null;
+
+
+      querySnapshot.forEach(docSnap => {
+
+        const d = docSnap.data();
+
+        if (d.positionId !== "[REMOVED]") {
+          duplicateDoc = d;
+        }
+      });
+
+
+      if (duplicateDoc) {
+
+        alert(
+          `Duplicate AWB scanned!\n\n` +
+          `AWB: ${code}\n` +
+          `Already allocated to Position ID: ${duplicateDoc.positionId}`
+        );
+
+
+        document.getElementById("scanInput").value = "";
+
+        document.getElementById("scanInput").focus();
+
         return;
       }
-      let rowsHTML = "";
-      let idx = 1;
-      querySnapshot.forEach(docSnap => {
-        const d = docSnap.data();
-        const scannedAtStr = d.scannedAt ? new Date(d.scannedAt.seconds * 1000).toLocaleString() : "N/A";
-        rowsHTML += `
-          <tr>
-            <td>${idx++}</td>
-            <td>${d.code}</td>
-            <td>${scannedAtStr}</td>
-            <td>${d.scannedBy}</td>
-          </tr>
-        `;
-      });
-      scanTableBody.innerHTML = rowsHTML;
     }
 
-    window.startAllocate = async () => {
-      positionId = document.getElementById("allocatePositionId").value.trim();
-      if (!positionId) return alert("Enter Position ID");
-      document.getElementById("allocPosition").innerText = positionId;
-      document.getElementById("allocUser").innerText = currentUser;
-      switchScreen("allocateScan");
-      await loadAllocateAWBs(positionId);
-      document.getElementById("scanInput").value = '';
-      document.getElementById("scanInput").focus();
-    };
 
-    async function handleScan(code) {
-      if (!code) return;
+    try {
 
-      // Check for duplicate code anywhere, show alert if found and mention positionId
-      const scansCol = collection(db, "scans");
-      const q = query(scansCol, where("code", "==", code));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        let duplicateDoc = null;
-        querySnapshot.forEach(docSnap => {
-          const d = docSnap.data();
-          if (d.positionId !== "[REMOVED]") duplicateDoc = d;
-        });
-        if (duplicateDoc) {
-          alert(`Duplicate AWB scanned!\nAWB: ${code} is already allocated to Position ID: ${duplicateDoc.positionId}`);
-          document.getElementById("scanInput").value = '';
-          document.getElementById("scanInput").focus();
-          return;
-        }
-      }
-
-      try {
-        await addDoc(collection(db, "scans"), {
+      await addDoc(
+        collection(db, "scans"),
+        {
           code,
           positionId,
           scannedAt: serverTimestamp(),
           scannedBy: currentUser
-        });
-        await loadAllocateAWBs(positionId);
-        vibrate();
-      } catch (e) {
-        alert("Failed to save scan.");
-      }
-    }
-
-    document.getElementById("scanInput").addEventListener("input", async () => {
-      const code = document.getElementById("scanInput").value.trim();
-      if (code) await handleScan(code);
-      document.getElementById("scanInput").value = '';
-      document.getElementById("scanInput").focus();
-    });
-
-    // Load AWBs allocated to a position for Offload Scan screen
-    async function loadOffloadAWBs(posId) {
-      const offloadTableBody = document.getElementById("offloadTable");
-      offloadTableBody.innerHTML = "Loading...";
-      const scansCol = collection(db, "scans");
-      const q = query(scansCol, where("positionId", "==", posId));
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        offloadTableBody.innerHTML = `<tr><td colspan="4">No AWBs found for Position ID: ${posId}</td></tr>`;
-        return;
-      }
-      let rowsHTML = "";
-      let idx = 1;
-      querySnapshot.forEach(docSnap => {
-        const d = docSnap.data();
-        const scannedAtStr = d.scannedAt ? new Date(d.scannedAt.seconds * 1000).toLocaleString() : "N/A";
-        rowsHTML += `
-          <tr>
-            <td>${idx++}</td>
-            <td>${d.code}</td>
-            <td>${scannedAtStr}</td>
-            <td>${d.scannedBy}</td>
-          </tr>
-        `;
-      });
-      offloadTableBody.innerHTML = rowsHTML;
-    }
-
-    window.startOffload = async () => {
-      const pos = document.getElementById("offloadPositionId").value.trim();
-      if (!pos) {
-        alert("Enter Position ID");
-        return;
-      }
-      positionId = pos;
-      document.getElementById("offloadPosition").innerText = positionId;
-      document.getElementById("offloadUser").innerText = currentUser;
-      document.getElementById("offloadMessage").innerText = '';
-      switchScreen("offloadScan");
-      await loadOffloadAWBs(positionId);
-      document.getElementById("offloadInput").value = '';
-      document.getElementById("offloadInput").focus();
-    };
-
-    document.getElementById("offloadInput").addEventListener("input", async () => {
-      const code = document.getElementById("offloadInput").value.trim();
-      if (!code) return;
-
-      const scansCol = collection(db, "scans");
-      const q = query(scansCol, where("code", "==", code));
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        document.getElementById("offloadMessage").innerText = `❌ AWB ${code} not found.`;
-        document.getElementById("offloadInput").value = '';
-        document.getElementById("offloadInput").focus();
-        return;
-      }
-
-      let foundForPosition = false;
-      for (const docSnap of querySnapshot.docs) {
-        const d = docSnap.data();
-        if (d.positionId === positionId) {
-          // Remove allocation by setting positionId to "[REMOVED]"
-          await updateDoc(doc(db, "scans", docSnap.id), { positionId: "[REMOVED]" });
-          document.getElementById("offloadMessage").innerText = `✅ Removed: ${code}`;
-          foundForPosition = true;
-          vibrate();
-          break;
         }
-      }
+      );
 
-      if (!foundForPosition) {
-        document.getElementById("offloadMessage").innerText = `❌ AWB ${code} is not allocated to Position ID: ${positionId}`;
-      }
 
-      await loadOffloadAWBs(positionId);
+      await loadAllocateAWBs(positionId);
 
-      document.getElementById("offloadInput").value = '';
-      document.getElementById("offloadInput").focus();
+      vibrate();
+
+
+    } catch (e) {
+
+      console.error(e);
+
+      alert("Failed to save scan.");
+    }
+  }
+
+
+  // ============================================================
+  // ALLOCATE INPUT
+  // ============================================================
+
+  document
+    .getElementById("scanInput")
+    .addEventListener("input", function () {
+
+      const input = this;
+
+      /*
+        Zebra DataWedge may send OCR text as multiple
+        keystrokes.
+
+        Therefore DO NOT process the first character.
+
+        Wait 300 ms after the last character.
+      */
+
+      clearTimeout(scanTimer);
+
+
+      scanTimer = setTimeout(async () => {
+
+        const rawText =
+          input.value.trim();
+
+
+        if (!rawText) {
+          input.focus();
+          return;
+        }
+
+
+        input.value = "";
+
+
+        await processScannerInput(
+          rawText,
+          "allocate"
+        );
+
+
+        input.focus();
+
+      }, 300);
     });
 
-    window.exportToCSV = () => {
-      onSnapshot(collection(db, "scans"), async (snapshot) => {
-        let csv = "data:text/csv;charset=utf-8,\uFEFFAirway Bill,Position ID,Scanned At,Scanned By\n";
+
+  // ============================================================
+  // LOAD OFFLOAD AWBs
+  // ============================================================
+
+  async function loadOffloadAWBs(posId) {
+
+    const offloadTableBody =
+      document.getElementById("offloadTable");
+
+    offloadTableBody.innerHTML = "Loading...";
+
+
+    const scansCol = collection(db, "scans");
+
+    const q = query(
+      scansCol,
+      where("positionId", "==", posId)
+    );
+
+    const querySnapshot =
+      await getDocs(q);
+
+
+    if (querySnapshot.empty) {
+
+      offloadTableBody.innerHTML =
+        `<tr>
+          <td colspan="4">
+            No AWBs found for Position ID: ${posId}
+          </td>
+        </tr>`;
+
+      return;
+    }
+
+
+    let rowsHTML = "";
+    let idx = 1;
+
+
+    querySnapshot.forEach(docSnap => {
+
+      const d = docSnap.data();
+
+      const scannedAtStr =
+        d.scannedAt
+          ? new Date(
+              d.scannedAt.seconds * 1000
+            ).toLocaleString()
+          : "N/A";
+
+
+      rowsHTML += `
+        <tr>
+          <td>${idx++}</td>
+          <td>${d.code}</td>
+          <td>${scannedAtStr}</td>
+          <td>${d.scannedBy}</td>
+        </tr>
+      `;
+    });
+
+
+    offloadTableBody.innerHTML = rowsHTML;
+  }
+
+
+  // ============================================================
+  // START OFFLOAD
+  // ============================================================
+
+  window.startOffload = async () => {
+
+    const pos =
+      document
+        .getElementById("offloadPositionId")
+        .value
+        .trim();
+
+
+    if (!pos) {
+
+      alert("Enter Position ID");
+      return;
+    }
+
+
+    positionId = pos;
+
+
+    document.getElementById("offloadPosition").innerText =
+      positionId;
+
+    document.getElementById("offloadUser").innerText =
+      currentUser;
+
+    document.getElementById("offloadMessage").innerText =
+      "";
+
+
+    switchScreen("offloadScan");
+
+
+    await loadOffloadAWBs(positionId);
+
+
+    const input =
+      document.getElementById("offloadInput");
+
+    input.value = "";
+    input.focus();
+  };
+
+
+  // ============================================================
+  // HANDLE OFFLOAD
+  // ============================================================
+
+  async function handleOffload(code) {
+
+    if (!code) return;
+
+
+    console.log("Offloading:", code);
+
+
+    const scansCol = collection(db, "scans");
+
+    const q = query(
+      scansCol,
+      where("code", "==", code)
+    );
+
+    const querySnapshot =
+      await getDocs(q);
+
+
+    if (querySnapshot.empty) {
+
+      document.getElementById("offloadMessage").innerText =
+        `❌ AWB ${code} not found.`;
+
+      return;
+    }
+
+
+    let foundForPosition = false;
+
+
+    for (const docSnap of querySnapshot.docs) {
+
+      const d = docSnap.data();
+
+
+      if (d.positionId === positionId) {
+
+        await updateDoc(
+          doc(db, "scans", docSnap.id),
+          {
+            positionId: "[REMOVED]"
+          }
+        );
+
+
+        document.getElementById("offloadMessage").innerText =
+          `✅ Removed: ${code}`;
+
+
+        foundForPosition = true;
+
+        vibrate();
+
+        break;
+      }
+    }
+
+
+    if (!foundForPosition) {
+
+      document.getElementById("offloadMessage").innerText =
+        `❌ AWB ${code} is not allocated to Position ID: ${positionId}`;
+    }
+
+
+    await loadOffloadAWBs(positionId);
+  }
+
+
+  // ============================================================
+  // OFFLOAD INPUT
+  // ============================================================
+
+  document
+    .getElementById("offloadInput")
+    .addEventListener("input", function () {
+
+      const input = this;
+
+
+      clearTimeout(scanTimer);
+
+
+      scanTimer = setTimeout(async () => {
+
+        const rawText =
+          input.value.trim();
+
+
+        if (!rawText) {
+          input.focus();
+          return;
+        }
+
+
+        input.value = "";
+
+
+        await processScannerInput(
+          rawText,
+          "offload"
+        );
+
+
+        input.focus();
+
+      }, 300);
+    });
+
+
+  // ============================================================
+  // EXPORT CSV
+  // ============================================================
+
+  window.exportToCSV = () => {
+
+    onSnapshot(
+      collection(db, "scans"),
+
+      async (snapshot) => {
+
+        let csv =
+          "data:text/csv;charset=utf-8,\uFEFF" +
+          "Airway Bill,Position ID,Scanned At,Scanned By\n";
+
+
         const batchDeletePromises = [];
 
+
         snapshot.forEach(docSnap => {
+
           const d = docSnap.data();
-          if (d.positionId !== "[REMOVED]" && d.scannedAt) {
-            csv += `"${d.code}","${d.positionId}","${new Date(d.scannedAt.seconds * 1000).toLocaleString()}","${d.scannedBy}"\n`;
-            // Schedule document for deletion after export
-            batchDeletePromises.push(deleteDoc(doc(db, "scans", docSnap.id)));
+
+
+          if (
+            d.positionId !== "[REMOVED]" &&
+            d.scannedAt
+          ) {
+
+            csv +=
+              `"${d.code}",` +
+              `"${d.positionId}",` +
+              `"${new Date(
+                d.scannedAt.seconds * 1000
+              ).toLocaleString()}",` +
+              `"${d.scannedBy}"\n`;
+
+
+            batchDeletePromises.push(
+              deleteDoc(
+                doc(db, "scans", docSnap.id)
+              )
+            );
           }
         });
 
-        const link = document.createElement("a");
+
+        const link =
+          document.createElement("a");
+
         link.href = encodeURI(csv);
-        link.download = "FirstAirBuilder_Export.csv";
+
+        link.download =
+          "FirstAirBuilder_Export.csv";
+
         document.body.appendChild(link);
+
         link.click();
+
         document.body.removeChild(link);
 
-        // Delete all exported docs
-        await Promise.all(batchDeletePromises);
 
-        alert("Export complete and all exported data cleared.");
-      }, { once: true });
-    };
+        await Promise.all(
+          batchDeletePromises
+        );
 
-    window.goToLiveView = () => {
-      switchScreen("liveView");
-      const tableBody = document.getElementById("liveTable");
 
-      if (typeof liveUnsubscribe === "function") liveUnsubscribe();
+        alert(
+          "Export complete and all exported data cleared."
+        );
+      },
+      { once: true }
+    );
+  };
 
-      liveUnsubscribe = onSnapshot(collection(db, "scans"), (snapshot) => {
-        const rows = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.positionId !== "[REMOVED]" && data.scannedAt) {
-            rows.push({
-              ...data,
-              scannedAt: new Date(data.scannedAt.seconds * 1000).toLocaleString()
-            });
-          }
-        });
-        rows.sort((a, b) => new Date(b.scannedAt) - new Date(a.scannedAt));
-        tableBody.innerHTML = rows.map((entry, idx) => `
-          <tr>
-            <td>${idx + 1}</td>
-            <td>${entry.code}</td>
-            <td>${entry.positionId}</td>
-            <td>${entry.scannedAt}</td>
-            <td>${entry.scannedBy}</td>
-          </tr>
-        `).join('');
-      });
-    };
 
-    function vibrate() {
-      if (navigator.vibrate) navigator.vibrate(100);
+  // ============================================================
+  // LIVE VIEW
+  // ============================================================
+
+  window.goToLiveView = () => {
+
+    switchScreen("liveView");
+
+
+    const tableBody =
+      document.getElementById("liveTable");
+
+
+    if (typeof liveUnsubscribe === "function") {
+      liveUnsubscribe();
     }
-  </script>
+
+
+    liveUnsubscribe =
+      onSnapshot(
+        collection(db, "scans"),
+
+        (snapshot) => {
+
+          const rows = [];
+
+
+          snapshot.forEach(docSnap => {
+
+            const data =
+              docSnap.data();
+
+
+            if (
+              data.positionId !== "[REMOVED]" &&
+              data.scannedAt
+            ) {
+
+              rows.push({
+                ...data,
+
+                scannedAt:
+                  new Date(
+                    data.scannedAt.seconds * 1000
+                  ).toLocaleString()
+              });
+            }
+          });
+
+
+          rows.sort(
+            (a, b) =>
+              new Date(b.scannedAt) -
+              new Date(a.scannedAt)
+          );
+
+
+          tableBody.innerHTML =
+            rows
+              .map(
+                (entry, idx) => `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td>${entry.code}</td>
+                    <td>${entry.positionId}</td>
+                    <td>${entry.scannedAt}</td>
+                    <td>${entry.scannedBy}</td>
+                  </tr>
+                `
+              )
+              .join("");
+        }
+      );
+  };
+
+
+  // ============================================================
+  // VIBRATION
+  // ============================================================
+
+  function vibrate() {
+
+    if (navigator.vibrate) {
+      navigator.vibrate(100);
+    }
+  }
+
+</script>
+
 </body>
 </html>
