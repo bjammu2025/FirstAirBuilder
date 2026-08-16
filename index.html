@@ -1,190 +1,3971 @@
-window.createNewULD = async function() {
+<!DOCTYPE html>
+<html>
+<head>
 
-  const input =
-    document.getElementById("newULDInput");
+<meta charset="UTF-8">
 
-  const uld =
-    input.value
-      .trim()
-      .toUpperCase();
+<!-- ============================================================
+     FIRST AIR BUILDER
+     CODE VERSION: 10.01
+     ============================================================ -->
 
-  if (!uld) {
+<meta
+  name="viewport"
+  content="width=device-width,
+           initial-scale=1.0,
+           maximum-scale=1.0,
+           user-scalable=no">
 
-    alert("Enter a ULD / Position ID.");
+<title>First Air Builder</title>
 
-    input.focus();
+<style>
 
-    return;
+html, body {
+
+  margin: 0;
+  padding: 0;
+
+  background: #121212;
+  color: white;
+
+  font-family: Arial, sans-serif;
+
+  width: 100%;
+  min-height: 100%;
+
+  overflow-x: hidden;
+}
+
+
+body {
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+
+.container {
+
+  width: 100%;
+  min-height: 100vh;
+
+  padding: 10px;
+
+  box-sizing: border-box;
+
+  text-align: center;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+input,
+button {
+
+  font-size: 1.8rem;
+
+  padding: 1rem;
+
+  margin: .6rem 0;
+
+  width: 95%;
+  max-width: 900px;
+
+  border: none;
+
+  border-radius: 15px;
+
+  box-sizing: border-box;
+}
+
+
+input {
+
+  background: white;
+  color: black;
+}
+
+
+button {
+
+  background: #1e88e5;
+
+  color: white;
+
+  cursor: pointer;
+}
+
+
+button:hover {
+
+  background: #1565c0;
+}
+
+
+.cameraButton {
+
+  background: #00897b;
+}
+
+
+.readButton {
+
+  background: #43a047;
+}
+
+
+.stopButton {
+
+  background: #d32f2f;
+}
+
+
+.backButton {
+
+  background: #555;
+}
+
+
+.barcodeButton {
+
+  background: #8e24aa;
+}
+
+
+h2 {
+
+  margin: 10px 0;
+
+  font-size: 2.7rem;
+}
+
+
+h3 {
+
+  margin: 10px 0;
+
+  font-size: 1.8rem;
+}
+
+
+.version {
+
+  font-size: .8rem;
+
+  color: #777;
+
+  margin-top: 2px;
+
+  margin-bottom: 10px;
+}
+
+
+.screen {
+
+  display: none;
+
+  width: 100%;
+}
+
+
+.visible {
+
+  display: block;
+}
+
+
+/* ============================================================
+   CAMERA VIEW
+   ONLY THE GREEN BOX AREA IS SHOWN
+   ============================================================ */
+
+.cameraOuter {
+
+  width: 100%;
+
+  max-width: 900px;
+
+  margin: 8px auto;
+
+  display: none;
+
+  position: relative;
+
+  background: black;
+
+  overflow: hidden;
+
+  border-radius: 16px;
+
+  /*
+     This is the visible scanning area.
+     The full camera is NOT displayed.
+  */
+
+  aspect-ratio: 16 / 5;
+}
+
+
+.cameraOuter.active {
+
+  display: block;
+}
+
+
+.cameraOuter video {
+
+  position: absolute;
+
+  /*
+     Enlarge the camera image so only
+     the center scanning region is visible.
+  */
+
+  width: 100%;
+
+  height: auto;
+
+  min-height: 100%;
+
+  object-fit: cover;
+
+  left: 0;
+
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  background: black;
+}
+
+
+/*
+   GREEN SCANNING BOX
+
+   The entire visible camera area is effectively
+   the scanning box.
+*/
+
+.scanBox {
+
+  position: absolute;
+
+  left: 2%;
+  right: 2%;
+
+  top: 5%;
+  bottom: 5%;
+
+  border: 4px solid #00ff00;
+
+  border-radius: 12px;
+
+  pointer-events: none;
+
+  box-sizing: border-box;
+
+  z-index: 5;
+
+  box-shadow:
+    0 0 8px #00ff00,
+    inset 0 0 8px #00ff00;
+}
+
+
+.scanText {
+
+  position: absolute;
+
+  left: 0;
+  right: 0;
+
+  bottom: 8px;
+
+  text-align: center;
+
+  font-size: 1rem;
+
+  color: white;
+
+  text-shadow:
+    0 2px 4px black,
+    0 2px 8px black;
+
+  z-index: 6;
+}
+
+
+.cameraStatus {
+
+  min-height: 2rem;
+
+  font-size: 1.25rem;
+
+  margin: 5px;
+
+}
+
+
+.success {
+
+  color: #00e676;
+}
+
+
+.error {
+
+  color: #ff5252;
+}
+
+
+.scanning {
+
+  color: #ffeb3b;
+}
+
+
+.hidden {
+
+  display: none !important;
+}
+
+
+/* ============================================================
+   SCAN TABLE
+   ============================================================ */
+
+table {
+
+  width: 100%;
+
+  margin-top: 10px;
+
+  border-collapse: collapse;
+
+  font-size: 1.15rem;
+}
+
+
+th,
+td {
+
+  border: 1px solid #777;
+
+  padding: 8px;
+
+  text-align: center;
+}
+
+
+th {
+
+  background: #222;
+}
+
+
+/* ============================================================
+   VERIFICATION POPUP
+   ============================================================ */
+
+#verificationOverlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  background: rgba(0,0,0,.82);
+
+  display: none;
+
+  align-items: center;
+
+  justify-content: center;
+
+  z-index: 9999;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+}
+
+
+#verificationOverlay.active {
+
+  display: flex;
+}
+
+
+.verificationBox {
+
+  width: 95%;
+
+  max-width: 650px;
+
+  background: #202020;
+
+  border-radius: 22px;
+
+  padding: 25px;
+
+  box-sizing: border-box;
+
+  border: 3px solid #00e676;
+
+  box-shadow: 0 0 30px rgba(0,255,100,.3);
+}
+
+
+.verificationBox.errorBox {
+
+  border-color: #ff1744;
+
+  box-shadow:
+    0 0 30px rgba(255,0,50,.3);
+}
+
+
+.verificationTitle {
+
+  font-size: 2rem;
+
+  font-weight: bold;
+
+  margin-bottom: 15px;
+}
+
+
+.verificationAWB {
+
+  font-size: 3rem;
+
+  font-weight: bold;
+
+  color: #00e676;
+
+  word-break: break-all;
+
+  margin: 15px 0;
+}
+
+
+.errorBox .verificationAWB {
+
+  color: #ff5252;
+}
+
+
+.verificationMessage {
+
+  font-size: 1.4rem;
+
+  line-height: 1.5;
+
+  margin-bottom: 10px;
+}
+
+
+/* ============================================================
+   BARCODE SCANNER INPUT
+   ============================================================ */
+
+.barcodeInput {
+
+  position: fixed;
+
+  left: -10000px;
+
+  top: -10000px;
+
+  width: 1px;
+
+  height: 1px;
+
+  opacity: 0;
+
+  pointer-events: none;
+}
+
+
+/* ============================================================
+   LIVE VIEW
+   ============================================================ */
+
+.livePosition {
+
+  margin: 15px 0 25px;
+
+  padding: 10px;
+
+  background: #1e1e1e;
+
+  border-radius: 12px;
+
+  border: 1px solid #555;
+}
+
+
+.livePositionTitle {
+
+  font-size: 1.6rem;
+
+  font-weight: bold;
+
+  margin-bottom: 8px;
+
+  color: #00e676;
+}
+
+
+@media (max-width:600px) {
+
+  input,
+  button {
+
+    font-size: 1.4rem;
+
+    padding: .9rem;
   }
+
+
+  h2 {
+
+    font-size: 2.2rem;
+  }
+
+
+  h3 {
+
+    font-size: 1.5rem;
+  }
+
+
+  table {
+
+    font-size: .9rem;
+  }
+
+
+  th,
+  td {
+
+    padding: 6px;
+  }
+
+
+  .verificationAWB {
+
+    font-size: 2.3rem;
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<!-- ============================================================
+     HOME
+     ============================================================ -->
+
+<div id="home" class="screen visible">
+
+  <h2>First Air Builder</h2>
+
+  <div class="version">
+    Version 10.01
+  </div>
+
+
+  <input
+    type="text"
+    id="userName"
+    placeholder="Enter User Name"
+    autocomplete="off">
+
+
+  <button onclick="goToAllocate()">
+    ALLOCATE
+  </button>
+
+
+  <button onclick="goToOffload()">
+    OFFLOAD
+  </button>
+
+
+  <button onclick="goToLiveView()">
+    LIVE VIEW
+  </button>
+
+
+  <button onclick="exportToCSV()">
+    EXPORT
+  </button>
+
+</div>
+
+
+<!-- ============================================================
+     ALLOCATE START
+     ============================================================ -->
+
+<div id="allocateStart" class="screen">
+
+  <h3>Allocate Airway Bills</h3>
+
+  <input
+    type="text"
+    id="allocatePositionId"
+    placeholder="Enter Position ID"
+    autocomplete="off">
+
+
+  <button onclick="startAllocate()">
+    START
+  </button>
+
+
+  <button
+    class="backButton"
+    onclick="goHome()">
+
+    ⬅ BACK
+
+  </button>
+
+</div>
+
+
+<!-- ============================================================
+     ALLOCATE SCAN
+     ============================================================ -->
+
+<div id="allocateScan" class="screen">
+
+  <h3>
+
+    Position:
+    <span id="allocPosition"></span>
+
+    <br>
+
+    User:
+    <span id="allocUser"></span>
+
+  </h3>
+
+
+  <button
+    id="openAllocateCameraButton"
+    class="cameraButton"
+    onclick="openAllocateCamera()">
+
+    📷 OPEN CAMERA
+
+  </button>
+
+
+  <button
+    id="openAllocateBarcodeButton"
+    class="barcodeButton"
+    onclick="openBarcodeScanner('allocate')">
+
+    ▣ BARCODE SCANNER
+
+  </button>
+
+
+  <div
+    id="allocateCameraOuter"
+    class="cameraOuter">
+
+    <video
+      id="allocateVideo"
+      autoplay
+      playsinline
+      muted>
+    </video>
+
+    <div class="scanBox"></div>
+
+    <div class="scanText">
+      Position AWB inside green box
+    </div>
+
+  </div>
+
+
+  <div
+    id="allocateCameraStatus"
+    class="cameraStatus">
+
+    Camera is closed
+
+  </div>
+
+
+  <button
+    id="closeAllocateButton"
+    class="stopButton hidden"
+    onclick="closeCamera()">
+
+    ✖ CLOSE CAMERA
+
+  </button>
+
+
+  <table>
+
+    <thead>
+
+      <tr>
+        <th>#</th>
+        <th>AWB</th>
+        <th>Scanned At</th>
+        <th>Scanned By</th>
+      </tr>
+
+    </thead>
+
+    <tbody id="scanTable"></tbody>
+
+  </table>
+
+
+  <button
+    class="backButton"
+    onclick="goHome()">
+
+    ⬅ BACK
+
+  </button>
+
+</div>
+
+
+<!-- ============================================================
+     OFFLOAD START
+     ============================================================ -->
+
+<div id="offloadStart" class="screen">
+
+  <h3>Offload Airway Bills</h3>
+
+
+  <input
+    type="text"
+    id="offloadPositionId"
+    placeholder="Enter Position ID"
+    autocomplete="off">
+
+
+  <button onclick="startOffload()">
+    START
+  </button>
+
+
+  <button
+    class="backButton"
+    onclick="goHome()">
+
+    ⬅ BACK
+
+  </button>
+
+</div>
+
+
+<!-- ============================================================
+     OFFLOAD SCAN
+     ============================================================ -->
+
+<div id="offloadScan" class="screen">
+
+  <h3>
+
+    Offloading:
+    <span id="offloadPosition"></span>
+
+    <br>
+
+    User:
+    <span id="offloadUser"></span>
+
+  </h3>
+
+
+  <button
+    id="openOffloadCameraButton"
+    class="cameraButton"
+    onclick="openOffloadCamera()">
+
+    📷 OPEN CAMERA
+
+  </button>
+
+
+  <button
+    id="openOffloadBarcodeButton"
+    class="barcodeButton"
+    onclick="openBarcodeScanner('offload')">
+
+    ▣ BARCODE SCANNER
+
+  </button>
+
+
+  <div
+    id="offloadCameraOuter"
+    class="cameraOuter">
+
+    <video
+      id="offloadVideo"
+      autoplay
+      playsinline
+      muted>
+    </video>
+
+    <div class="scanBox"></div>
+
+    <div class="scanText">
+      Position AWB inside green box
+    </div>
+
+  </div>
+
+
+  <div
+    id="offloadCameraStatus"
+    class="cameraStatus">
+
+    Camera is closed
+
+  </div>
+
+
+  <button
+    id="closeOffloadButton"
+    class="stopButton hidden"
+    onclick="closeCamera()">
+
+    ✖ CLOSE CAMERA
+
+  </button>
+
+
+  <table>
+
+    <thead>
+
+      <tr>
+        <th>#</th>
+        <th>AWB</th>
+        <th>Scanned At</th>
+        <th>Scanned By</th>
+      </tr>
+
+    </thead>
+
+    <tbody id="offloadTable"></tbody>
+
+  </table>
+
+
+  <button
+    class="backButton"
+    onclick="goHome()">
+
+    ⬅ BACK
+
+  </button>
+
+</div>
+
+
+<!-- ============================================================
+     LIVE VIEW
+     ============================================================ -->
+
+<div id="liveView" class="screen">
+
+  <h3>Live Scans Overview</h3>
+
+  <div id="liveTables"></div>
+
+
+  <button
+    class="backButton"
+    onclick="goHome()">
+
+    ⬅ BACK
+
+  </button>
+
+</div>
+
+
+</div>
+
+
+<!-- ============================================================
+     HIDDEN ZEBRA BARCODE INPUT
+     ============================================================ -->
+
+<input
+  id="barcodeScannerInput"
+  class="barcodeInput"
+  type="text"
+  autocomplete="off"
+  inputmode="none">
+
+
+<!-- ============================================================
+     VERIFICATION POPUP
+     ============================================================ -->
+
+<div id="verificationOverlay">
+
+  <div
+    id="verificationBox"
+    class="verificationBox">
+
+    <div
+      id="verificationTitle"
+      class="verificationTitle">
+
+      Verification
+
+    </div>
+
+
+    <div
+      id="verificationAWB"
+      class="verificationAWB">
+
+    </div>
+
+
+    <div
+      id="verificationMessage"
+      class="verificationMessage">
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ============================================================
+     TESSERACT
+     ============================================================ -->
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+
+<script type="module">
+
+
+/* ==============================================================
+   CODE VERSION
+   ============================================================== */
+
+const CODE_VERSION = "10.01";
+
+
+/* ==============================================================
+   FIREBASE
+   ============================================================== */
+
+import {
+  initializeApp
+} from
+"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+
+import {
+
+  getFirestore,
+
+  collection,
+
+  addDoc,
+
+  onSnapshot,
+
+  doc,
+
+  updateDoc,
+
+  serverTimestamp,
+
+  query,
+
+  where,
+
+  getDocs,
+
+  deleteDoc
+
+}
+from
+"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+
+const firebaseConfig = {
+
+  apiKey:
+    "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
+
+  authDomain:
+    "firstairbuilder.firebaseapp.com",
+
+  projectId:
+    "firstairbuilder",
+
+  storageBucket:
+    "firstairbuilder.appspot.com",
+
+  messagingSenderId:
+    "879078166665",
+
+  appId:
+    "1:879078166665:web:40f63a1b2fdfb7833d3658"
+
+};
+
+
+const app =
+  initializeApp(firebaseConfig);
+
+
+const db =
+  getFirestore(app);
+
+
+/* ==============================================================
+   GLOBAL VARIABLES
+   ============================================================== */
+
+let positionId = "";
+
+let currentUser = "";
+
+let currentCameraMode = null;
+
+let cameraStream = null;
+
+let ocrWorker = null;
+
+let ocrBusy = false;
+
+let liveUnsubscribe = null;
+
+
+/*
+   Prevent the same AWB from being processed
+   repeatedly while OCR is running.
+*/
+
+let lastDetectedAWB = "";
+
+let lastDetectedTime = 0;
+
+
+/*
+   OCR interval.
+
+   Do NOT make this extremely short.
+   Running Tesseract continuously is what causes
+   the Android device to hang.
+
+   1500 ms = one OCR attempt approximately every
+   1.5 seconds.
+*/
+
+let OCR_INTERVAL = 1500;
+
+let ocrTimer = null;
+
+
+/*
+   Barcode scanner mode.
+*/
+
+let barcodeMode = null;
+
+let barcodeBuffer = "";
+
+let barcodeTimer = null;
+
+
+/* ==============================================================
+   SCREEN CONTROL
+   ============================================================== */
+
+function switchScreen(id) {
+
+  document
+    .querySelectorAll(".screen")
+    .forEach(
+      el =>
+        el.classList.remove("visible")
+    );
+
+
+  document
+    .getElementById(id)
+    .classList.add("visible");
+
+}
+
+
+/* ==============================================================
+   HOME
+   ============================================================== */
+
+window.goHome = async () => {
+
+  await closeCamera();
+
+  stopBarcodeScanner();
+
+
+  if (
+    typeof liveUnsubscribe ===
+    "function"
+  ) {
+
+    liveUnsubscribe();
+
+    liveUnsubscribe = null;
+
+  }
+
+
+  switchScreen("home");
+
+
+  document.getElementById(
+    "allocatePositionId"
+  ).value = "";
+
+
+  document.getElementById(
+    "offloadPositionId"
+  ).value = "";
+
+
+  document.getElementById(
+    "scanTable"
+  ).innerHTML = "";
+
+
+  document.getElementById(
+    "offloadTable"
+  ).innerHTML = "";
+
+
+  positionId = "";
+
+  currentCameraMode = null;
+
+};
+
+
+/* ==============================================================
+   USER
+   ============================================================== */
+
+window.goToAllocate = () => {
+
+  currentUser =
+    document
+      .getElementById("userName")
+      .value
+      .trim();
+
 
   if (!currentUser) {
 
-    alert("Please enter User Name first.");
+    alert("Please enter user name");
 
     return;
+
   }
+
+
+  switchScreen("allocateStart");
+
+};
+
+
+window.goToOffload = () => {
+
+  currentUser =
+    document
+      .getElementById("userName")
+      .value
+      .trim();
+
+
+  if (!currentUser) {
+
+    alert("Please enter user name");
+
+    return;
+
+  }
+
+
+  switchScreen("offloadStart");
+
+};
+
+
+/* ==============================================================
+   AWB EXTRACTION
+   ============================================================== */
+
+function extract518Number(rawText) {
+
+  if (!rawText) return null;
+
+
+  let text =
+    String(rawText)
+      .toUpperCase()
+      .replace(/\r/g, " ")
+      .replace(/\n/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+
+  /*
+     Normal format
+     518-YWG-12345678
+  */
+
+  let match =
+    text.match(
+      /\b518-[A-Z]{3}-\d{8}\b/
+    );
+
+
+  if (match) {
+
+    return match[0];
+
+  }
+
+
+  /*
+     Spaces
+  */
+
+  match =
+    text.match(
+      /\b518\s*[-]?\s*[A-Z]{3}\s*[-]?\s*\d{8}\b/
+    );
+
+
+  if (match) {
+
+    return match[0]
+      .replace(/\s+/g, "-")
+      .replace(/--+/g, "-");
+
+  }
+
+
+  /*
+     OCR errors
+  */
+
+  match =
+    text.match(
+      /\b518\s*[- ]\s*[A-Z]{3}\s*[- ]\s*[0-9A-Z]{8}\b/
+    );
+
+
+  if (match) {
+
+    let result =
+      match[0]
+        .replace(/\s+/g, "-")
+        .replace(/--+/g, "-")
+        .replace(/O/g, "0")
+        .replace(/I/g, "1")
+        .replace(/L/g, "1");
+
+
+    if (
+      /^518-[A-Z]{3}-\d{8}$/
+        .test(result)
+    ) {
+
+      return result;
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/* ==============================================================
+   STORE FORMAT
+   ONLY STORE THE NUMBER AFTER 518-YWG-
+   ============================================================== */
+
+function awbNumberOnly(code) {
+
+  if (!code) return null;
+
+
+  const match =
+    String(code)
+      .toUpperCase()
+      .match(
+        /^518-YWG-(\d{8})$/
+      );
+
+
+  if (match) {
+
+    return match[1];
+
+  }
+
+
+  return code;
+
+}
+
+
+/* ==============================================================
+   NORMALIZE AWB
+   ============================================================== */
+
+function normalizeAWB(raw) {
+
+  if (!raw) return null;
+
+
+  let text =
+    String(raw)
+      .trim()
+      .toUpperCase();
+
+
+  /*
+     Barcode:
+
+     A12345678
+
+     Remove A.
+  */
+
+  if (
+    /^A\d{8}$/.test(text)
+  ) {
+
+    return text.substring(1);
+
+  }
+
+
+  /*
+     Sometimes scanner may append
+     Enter / CR / LF.
+  */
+
+  text =
+    text
+      .replace(/[\r\n]/g, "")
+      .trim();
+
+
+  if (
+    /^A\d{8}$/.test(text)
+  ) {
+
+    return text.substring(1);
+
+  }
+
+
+  /*
+     Camera AWB.
+  */
+
+  const extracted =
+    extract518Number(text);
+
+
+  if (extracted) {
+
+    return awbNumberOnly(
+      extracted
+    );
+
+  }
+
+
+  /*
+     Direct 8 digit barcode.
+  */
+
+  if (
+    /^\d{8}$/.test(text)
+  ) {
+
+    return text;
+
+  }
+
+
+  return null;
+
+}
+
+
+/* ==============================================================
+   OCR INITIALIZATION
+   ============================================================== */
+
+async function initializeOCR() {
+
+  if (ocrWorker) {
+
+    return true;
+
+  }
+
+
+  setStatus(
+    "Loading scanner...",
+    "scanning"
+  );
+
 
   try {
 
-    /*
-      Check whether this ULD already exists.
+    ocrWorker =
+      await Tesseract.createWorker(
+        "eng",
+        1,
+        {
 
-      ULD = Position ID
-    */
+          logger(info) {
 
-    const existingSnapshot =
-      await getDocs(
-        query(
-          collection(db, "ulds"),
-          where("uldId", "==", uld)
-        )
+            console.log(
+              "OCR:",
+              info.status,
+              info.progress
+            );
+
+          }
+
+        }
       );
 
-    let openExists = false;
-    let closedExists = false;
 
-    existingSnapshot.forEach(item => {
+    await ocrWorker.setParameters({
 
-      const data = item.data();
+      tessedit_char_whitelist:
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ",
 
-      if (data.status === "OPEN") {
-        openExists = true;
-      }
-
-      if (data.status === "CLOSED") {
-        closedExists = true;
-      }
+      preserve_interword_spaces:
+        "1"
 
     });
 
 
-    /*
-      Do not allow the same ULD / Position
-      to be opened twice.
-    */
-
-    if (openExists) {
-
-      alert(
-        "ULD / Position ID " +
-        uld +
-        " is already OPEN."
-      );
-
-      return;
-    }
+    return true;
 
 
-    /*
-      If the ULD was previously closed,
-      don't silently create another one.
+  } catch (error) {
 
-      This prevents duplicate ULD records.
-    */
+    console.error(error);
 
-    if (closedExists) {
+    setStatus(
+      "❌ OCR failed to load.",
+      "error"
+    );
 
-      alert(
-        "ULD / Position ID " +
-        uld +
-        " has already been CLOSED.\n\n" +
-        "You cannot create it again."
-      );
+    return false;
 
-      return;
-    }
+  }
+
+}
 
 
-    /*
-      Create the new ULD.
-    */
+/* ==============================================================
+   STATUS
+   ============================================================== */
 
-    const newULDData = {
+function setStatus(
+  message,
+  type = ""
+) {
 
-      uldId: uld,
+  if (
+    currentCameraMode ===
+    "allocate"
+  ) {
 
-      status: "OPEN",
-
-      weightLbs: null,
-
-      weightKg: null,
-
-      createdBy: currentUser,
-
-      createdAt: serverTimestamp(),
-
-      closedAt: null,
-
-      closedBy: null
-
-    };
-
-
-    const newULDRef =
-      await addDoc(
-        collection(db, "ulds"),
-        newULDData
+    const el =
+      document.getElementById(
+        "allocateCameraStatus"
       );
 
 
-    console.log(
-      "ULD created successfully:",
-      newULDRef.id,
-      newULDData
+    el.innerText =
+      message;
+
+
+    el.className =
+      "cameraStatus " + type;
+
+  }
+
+
+  if (
+    currentCameraMode ===
+    "offload"
+  ) {
+
+    const el =
+      document.getElementById(
+        "offloadCameraStatus"
+      );
+
+
+    el.innerText =
+      message;
+
+
+    el.className =
+      "cameraStatus " + type;
+
+  }
+
+}
+
+
+/* ==============================================================
+   OPEN CAMERA
+   ============================================================== */
+
+async function startCamera(mode) {
+
+  await closeCamera();
+
+
+  currentCameraMode =
+    mode;
+
+
+  const video =
+    mode === "allocate"
+
+      ? document.getElementById(
+          "allocateVideo"
+        )
+
+      : document.getElementById(
+          "offloadVideo"
+        );
+
+
+  const container =
+    mode === "allocate"
+
+      ? document.getElementById(
+          "allocateCameraOuter"
+        )
+
+      : document.getElementById(
+          "offloadCameraOuter"
+        );
+
+
+  const openButton =
+    mode === "allocate"
+
+      ? document.getElementById(
+          "openAllocateCameraButton"
+        )
+
+      : document.getElementById(
+          "openOffloadCameraButton"
+        );
+
+
+  const barcodeButton =
+    mode === "allocate"
+
+      ? document.getElementById(
+          "openAllocateBarcodeButton"
+        )
+
+      : document.getElementById(
+          "openOffloadBarcodeButton"
+        );
+
+
+  const closeButton =
+    mode === "allocate"
+
+      ? document.getElementById(
+          "closeAllocateButton"
+        )
+
+      : document.getElementById(
+          "closeOffloadButton"
+        );
+
+
+  try {
+
+    setStatus(
+      "Opening camera...",
+      "scanning"
+    );
+
+
+    cameraStream =
+      await navigator
+        .mediaDevices
+        .getUserMedia({
+
+          video: {
+
+            facingMode: {
+              ideal: "environment"
+            },
+
+            width: {
+              ideal: 1280
+            },
+
+            height: {
+              ideal: 720
+            },
+
+            frameRate: {
+              ideal: 24,
+              max: 30
+            }
+
+          },
+
+          audio: false
+
+        });
+
+
+    video.srcObject =
+      cameraStream;
+
+
+    await video.play();
+
+
+    container.classList.add(
+      "active"
+    );
+
+
+    openButton.classList.add(
+      "hidden"
+    );
+
+
+    barcodeButton.classList.add(
+      "hidden"
+    );
+
+
+    closeButton.classList.remove(
+      "hidden"
+    );
+
+
+    setStatus(
+      "🔎 Automatically scanning...",
+      "scanning"
     );
 
 
     /*
-      Set current ULD / Position ID.
+       Load OCR once.
+
+       After that the camera itself remains
+       responsive because OCR is throttled.
     */
 
-    currentULD = uld;
+    const loaded =
+      await initializeOCR();
 
-    input.value = "";
+
+    if (!loaded) return;
+
+
+    startContinuousOCR();
+
+  } catch (error) {
+
+    console.error(
+      "Camera error:",
+      error
+    );
+
+
+    setStatus(
+      "❌ Camera error: " +
+      error.message,
+      "error"
+    );
+
+
+    alert(
+      "Camera could not be opened.\n\n" +
+      "Make sure Chrome has camera permission."
+    );
+
+  }
+
+}
+
+
+window.openAllocateCamera =
+  async () => {
+
+    await startCamera(
+      "allocate"
+    );
+
+  };
+
+
+window.openOffloadCamera =
+  async () => {
+
+    await startCamera(
+      "offload"
+    );
+
+  };
+
+
+/* ==============================================================
+   CLOSE CAMERA
+   ============================================================== */
+
+window.closeCamera =
+async () => {
+
+  stopContinuousOCR();
+
+
+  if (cameraStream) {
+
+    cameraStream
+      .getTracks()
+      .forEach(
+        track =>
+          track.stop()
+      );
+
+
+    cameraStream = null;
+
+  }
+
+
+  const videos = [
+
+    document.getElementById(
+      "allocateVideo"
+    ),
+
+    document.getElementById(
+      "offloadVideo"
+    )
+
+  ];
+
+
+  videos.forEach(video => {
+
+    if (video) {
+
+      video.srcObject =
+        null;
+
+    }
+
+  });
+
+
+  document
+    .getElementById(
+      "allocateCameraOuter"
+    )
+    .classList.remove("active");
+
+
+  document
+    .getElementById(
+      "offloadCameraOuter"
+    )
+    .classList.remove("active");
+
+
+  document
+    .getElementById(
+      "openAllocateCameraButton"
+    )
+    .classList.remove("hidden");
+
+
+  document
+    .getElementById(
+      "openOffloadCameraButton"
+    )
+    .classList.remove("hidden");
+
+
+  document
+    .getElementById(
+      "openAllocateBarcodeButton"
+    )
+    .classList.remove("hidden");
+
+
+  document
+    .getElementById(
+      "openOffloadBarcodeButton"
+    )
+    .classList.remove("hidden");
+
+
+  document
+    .getElementById(
+      "closeAllocateButton"
+    )
+    .classList.add("hidden");
+
+
+  document
+    .getElementById(
+      "closeOffloadButton"
+    )
+    .classList.add("hidden");
+
+
+  currentCameraMode =
+    null;
+
+};
+
+
+/* ==============================================================
+   CAPTURE ONLY GREEN BOX
+   ============================================================== */
+
+function captureFrame() {
+
+  const video =
+    currentCameraMode === "allocate"
+
+      ? document.getElementById(
+          "allocateVideo"
+        )
+
+      : document.getElementById(
+          "offloadVideo"
+        );
+
+
+  if (
+    !video ||
+    video.readyState <
+      HTMLMediaElement.HAVE_CURRENT_DATA
+  ) {
+
+    return null;
+
+  }
+
+
+  const width =
+    video.videoWidth;
+
+
+  const height =
+    video.videoHeight;
+
+
+  if (!width || !height) {
+
+    return null;
+
+  }
+
+
+  /*
+     GREEN BOX POSITION:
+
+     left/right = 2%
+     top = approximately 35%
+     height = 30%
+
+     This is deliberately calculated
+     from the actual video frame.
+  */
+
+  const cropWidth =
+    Math.floor(
+      width * 0.96
+    );
+
+
+  const cropHeight =
+    Math.floor(
+      height * 0.30
+    );
+
+
+  const cropX =
+    Math.floor(
+      (width - cropWidth) / 2
+    );
+
+
+  const cropY =
+    Math.floor(
+      (height - cropHeight) / 2
+    );
+
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+
+  canvas.width =
+    cropWidth;
+
+
+  canvas.height =
+    cropHeight;
+
+
+  const ctx =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently: true
+      }
+    );
+
+
+  /*
+     Moderate contrast only.
+     Excessive filtering slows OCR.
+  */
+
+  ctx.filter =
+    "contrast(1.15)";
+
+
+  ctx.drawImage(
+
+    video,
+
+    cropX,
+    cropY,
+
+    cropWidth,
+    cropHeight,
+
+    0,
+    0,
+
+    cropWidth,
+    cropHeight
+
+  );
+
+
+  return canvas;
+
+}
+
+
+/* ==============================================================
+   CONTINUOUS OCR
+   ============================================================== */
+
+function startContinuousOCR() {
+
+  stopContinuousOCR();
+
+
+  /*
+     Small initial delay allows camera
+     to focus before OCR starts.
+  */
+
+  setTimeout(
+    performOCR,
+    700
+  );
+
+
+  ocrTimer =
+    setInterval(
+      performOCR,
+      OCR_INTERVAL
+    );
+
+}
+
+
+function stopContinuousOCR() {
+
+  if (ocrTimer) {
+
+    clearInterval(
+      ocrTimer
+    );
+
+    ocrTimer = null;
+
+  }
+
+}
+
+
+/* ==============================================================
+   OCR
+   ============================================================== */
+
+async function performOCR() {
+
+  /*
+     NEVER start another OCR while one
+     is already running.
+
+     This is important for Android 10.
+  */
+
+  if (ocrBusy) {
+
+    return;
+
+  }
+
+
+  if (!ocrWorker) {
+
+    return;
+
+  }
+
+
+  if (!currentCameraMode) {
+
+    return;
+
+  }
+
+
+  ocrBusy = true;
+
+
+  try {
+
+    const canvas =
+      captureFrame();
+
+
+    if (!canvas) {
+
+      return;
+
+    }
+
+
+    const result =
+      await ocrWorker.recognize(
+        canvas
+      );
+
+
+    const awb =
+      extract518Number(
+        result.data.text
+      );
+
+
+    if (!awb) {
+
+      return;
+
+    }
+
+
+    const number =
+      awbNumberOnly(
+        awb
+      );
 
 
     /*
-      Go directly to Allocate scan.
+       Prevent same OCR result from
+       being processed repeatedly.
     */
 
-    await startAllocateScan();
+    const now =
+      Date.now();
+
+
+    if (
+      number === lastDetectedAWB &&
+      now - lastDetectedTime < 5000
+    ) {
+
+      return;
+
+    }
+
+
+    lastDetectedAWB =
+      number;
+
+    lastDetectedTime =
+      now;
+
+
+    /*
+       Pause OCR while verification/
+       database checking occurs.
+    */
+
+    stopContinuousOCR();
+
+
+    if (
+      currentCameraMode ===
+      "allocate"
+    ) {
+
+      await processAllocateAWB(
+        number
+      );
+
+    }
+
+
+    if (
+      currentCameraMode ===
+      "offload"
+    ) {
+
+      await processOffloadAWB(
+        number
+      );
+
+    }
 
 
   } catch (error) {
 
     console.error(
-      "CREATE ULD ERROR:",
+      "OCR error:",
+      error
+    );
+
+  } finally {
+
+    ocrBusy = false;
+
+  }
+
+}
+
+
+/* ==============================================================
+   ALLOCATE START
+   ============================================================== */
+
+window.startAllocate =
+async () => {
+
+  positionId =
+    document
+      .getElementById(
+        "allocatePositionId"
+      )
+      .value
+      .trim();
+
+
+  if (!positionId) {
+
+    alert(
+      "Enter Position ID"
+    );
+
+    return;
+
+  }
+
+
+  document
+    .getElementById(
+      "allocPosition"
+    )
+    .innerText =
+    positionId;
+
+
+  document
+    .getElementById(
+      "allocUser"
+    )
+    .innerText =
+    currentUser;
+
+
+  switchScreen(
+    "allocateScan"
+  );
+
+
+  await loadAllocateAWBs(
+    positionId
+  );
+
+};
+
+
+/* ==============================================================
+   LOAD ALLOCATE
+   ============================================================== */
+
+async function loadAllocateAWBs(
+  posId
+) {
+
+  const table =
+    document.getElementById(
+      "scanTable"
+    );
+
+
+  table.innerHTML =
+    "<tr><td colspan='4'>Loading...</td></tr>";
+
+
+  const q =
+    query(
+
+      collection(
+        db,
+        "scans"
+      ),
+
+      where(
+        "positionId",
+        "==",
+        posId
+      )
+
+    );
+
+
+  const snapshot =
+    await getDocs(q);
+
+
+  if (
+    snapshot.empty
+  ) {
+
+    table.innerHTML =
+      `<tr>
+        <td colspan="4">
+          No AWBs allocated
+        </td>
+      </tr>`;
+
+    return;
+
+  }
+
+
+  let html = "";
+
+  let idx = 1;
+
+
+  snapshot.forEach(
+    docSnap => {
+
+      const d =
+        docSnap.data();
+
+
+      if (
+        d.positionId ===
+        "[REMOVED]"
+      ) {
+
+        return;
+
+      }
+
+
+      const scannedAt =
+        d.scannedAt
+
+          ? new Date(
+              d.scannedAt.seconds *
+              1000
+            ).toLocaleString()
+
+          : "N/A";
+
+
+      html +=
+        `<tr>
+
+          <td>${idx++}</td>
+
+          <td>
+            ${escapeHTML(
+              awbNumberOnly(d.code)
+            )}
+          </td>
+
+          <td>
+            ${scannedAt}
+          </td>
+
+          <td>
+            ${escapeHTML(
+              d.scannedBy || ""
+            )}
+          </td>
+
+        </tr>`;
+
+    }
+  );
+
+
+  table.innerHTML =
+    html || "<tr><td colspan='4'>No AWBs</td></tr>";
+
+}
+
+
+/* ==============================================================
+   ALLOCATE AWB
+   ============================================================== */
+
+async function processAllocateAWB(
+  code
+) {
+
+  if (!code) {
+
+    restartOCR();
+
+    return;
+
+  }
+
+
+  setStatus(
+    "⏳ Checking AWB...",
+    "scanning"
+  );
+
+
+  /*
+     IMPORTANT:
+
+     Search the entire database for the AWB.
+
+     This catches duplicates even when another
+     user scanned it.
+  */
+
+  const q =
+    query(
+
+      collection(
+        db,
+        "scans"
+      ),
+
+      where(
+        "code",
+        "==",
+        code
+      )
+
+    );
+
+
+  const snapshot =
+    await getDocs(q);
+
+
+  let duplicate =
+    null;
+
+
+  snapshot.forEach(
+    docSnap => {
+
+      const d =
+        docSnap.data();
+
+
+      if (
+        d.positionId &&
+        d.positionId !==
+        "[REMOVED]"
+      ) {
+
+        duplicate =
+          d;
+
+      }
+
+    }
+  );
+
+
+  /*
+     DUPLICATE FOUND
+  */
+
+  if (duplicate) {
+
+    await showVerification(
+
+      false,
+
+      code,
+
+      "DUPLICATE AWB",
+
+      `This AWB is already allocated to Position ID ${duplicate.positionId}.`
+
+    );
+
+
+    setStatus(
+      "❌ Duplicate AWB",
+      "error"
+    );
+
+
+    vibrate();
+
+
+    restartOCR();
+
+
+    return;
+
+  }
+
+
+  /*
+     SAVE NEW AWB
+  */
+
+  try {
+
+    await addDoc(
+
+      collection(
+        db,
+        "scans"
+      ),
+
+      {
+
+        /*
+           Store ONLY:
+           13634095
+        */
+
+        code:
+          code,
+
+        positionId:
+          positionId,
+
+        scannedAt:
+          serverTimestamp(),
+
+        scannedBy:
+          currentUser
+
+      }
+
+    );
+
+
+    await loadAllocateAWBs(
+      positionId
+    );
+
+
+    await showVerification(
+
+      true,
+
+      code,
+
+      "AWB VERIFIED",
+
+      `AWB ${code} has been allocated to Position ID ${positionId}.`
+
+    );
+
+
+    setStatus(
+      "🔎 Ready for next AWB",
+      "scanning"
+    );
+
+
+    vibrate();
+
+
+  } catch (error) {
+
+    console.error(
       error
     );
 
 
-    /*
-      Show the actual Firebase error.
-      This is important because if Firestore
-      rules are blocking the write, we will
-      immediately know.
-    */
+    await showVerification(
 
-    let message =
-      "Could not create ULD.";
+      false,
 
-    if (error && error.code) {
+      code,
 
-      message +=
-        "\n\nFirebase error: " +
-        error.code;
+      "SAVE ERROR",
+
+      "The AWB could not be saved. Please try again."
+
+    );
+
+
+  }
+
+
+  restartOCR();
+
+}
+
+
+/* ==============================================================
+   OFFLOAD START
+   ============================================================== */
+
+window.startOffload =
+async () => {
+
+  const pos =
+    document
+      .getElementById(
+        "offloadPositionId"
+      )
+      .value
+      .trim();
+
+
+  if (!pos) {
+
+    alert(
+      "Enter Position ID"
+    );
+
+    return;
+
+  }
+
+
+  positionId =
+    pos;
+
+
+  document
+    .getElementById(
+      "offloadPosition"
+    )
+    .innerText =
+    positionId;
+
+
+  document
+    .getElementById(
+      "offloadUser"
+    )
+    .innerText =
+    currentUser;
+
+
+  switchScreen(
+    "offloadScan"
+  );
+
+
+  await loadOffloadAWBs(
+    positionId
+  );
+
+};
+
+
+/* ==============================================================
+   LOAD OFFLOAD
+   ============================================================== */
+
+async function loadOffloadAWBs(
+  posId
+) {
+
+  const table =
+    document.getElementById(
+      "offloadTable"
+    );
+
+
+  table.innerHTML =
+    "<tr><td colspan='4'>Loading...</td></tr>";
+
+
+  const q =
+    query(
+
+      collection(
+        db,
+        "scans"
+      ),
+
+      where(
+        "positionId",
+        "==",
+        posId
+      )
+
+    );
+
+
+  const snapshot =
+    await getDocs(q);
+
+
+  if (
+    snapshot.empty
+  ) {
+
+    table.innerHTML =
+      `<tr>
+        <td colspan="4">
+          No AWBs found
+        </td>
+      </tr>`;
+
+    return;
+
+  }
+
+
+  let html = "";
+
+  let idx = 1;
+
+
+  snapshot.forEach(
+    docSnap => {
+
+      const d =
+        docSnap.data();
+
+
+      if (
+        d.positionId ===
+        "[REMOVED]"
+      ) {
+
+        return;
+
+      }
+
+
+      const scannedAt =
+        d.scannedAt
+
+          ? new Date(
+              d.scannedAt.seconds *
+              1000
+            ).toLocaleString()
+
+          : "N/A";
+
+
+      html +=
+        `<tr>
+
+          <td>${idx++}</td>
+
+          <td>
+            ${escapeHTML(
+              awbNumberOnly(d.code)
+            )}
+          </td>
+
+          <td>
+            ${scannedAt}
+          </td>
+
+          <td>
+            ${escapeHTML(
+              d.scannedBy || ""
+            )}
+          </td>
+
+        </tr>`;
+
+    }
+  );
+
+
+  table.innerHTML =
+    html || "<tr><td colspan='4'>No AWBs</td></tr>";
+
+}
+
+
+/* ==============================================================
+   OFFLOAD AWB
+   ============================================================== */
+
+async function processOffloadAWB(
+  code
+) {
+
+  if (!code) {
+
+    restartOCR();
+
+    return;
+
+  }
+
+
+  setStatus(
+    "⏳ Checking AWB...",
+    "scanning"
+  );
+
+
+  const q =
+    query(
+
+      collection(
+        db,
+        "scans"
+      ),
+
+      where(
+        "code",
+        "==",
+        code
+      )
+
+    );
+
+
+  const snapshot =
+    await getDocs(q);
+
+
+  if (
+    snapshot.empty
+  ) {
+
+    await showVerification(
+
+      false,
+
+      code,
+
+      "AWB NOT FOUND",
+
+      "This AWB does not exist in the system."
+
+    );
+
+
+    setStatus(
+      "❌ AWB not found",
+      "error"
+    );
+
+
+    vibrate();
+
+    restartOCR();
+
+    return;
+
+  }
+
+
+  let found =
+    false;
+
+
+  for (
+    const docSnap
+    of snapshot.docs
+  ) {
+
+    const d =
+      docSnap.data();
+
+
+    if (
+      d.positionId ===
+      positionId
+    ) {
+
+      await updateDoc(
+
+        doc(
+          db,
+          "scans",
+          docSnap.id
+        ),
+
+        {
+
+          positionId:
+            "[REMOVED]"
+
+        }
+
+      );
+
+
+      found =
+        true;
+
+
+      break;
+
     }
 
-    if (error && error.message) {
+  }
 
-      message +=
-        "\n" +
-        error.message;
+
+  if (found) {
+
+    await loadOffloadAWBs(
+      positionId
+    );
+
+
+    await showVerification(
+
+      true,
+
+      code,
+
+      "AWB OFFLOADED",
+
+      `AWB ${code} has been removed from Position ID ${positionId}.`
+
+    );
+
+
+    setStatus(
+      "🔎 Ready for next AWB",
+      "scanning"
+    );
+
+
+    vibrate();
+
+  } else {
+
+    await showVerification(
+
+      false,
+
+      code,
+
+      "WRONG POSITION",
+
+      `This AWB is not allocated to Position ID ${positionId}.`
+
+    );
+
+
+    setStatus(
+      "❌ Wrong Position ID",
+      "error"
+    );
+
+
+    vibrate();
+
+  }
+
+
+  restartOCR();
+
+}
+
+
+/* ==============================================================
+   RESTART OCR
+   ============================================================== */
+
+function restartOCR() {
+
+  if (!currentCameraMode) {
+
+    return;
+
+  }
+
+
+  setTimeout(
+    () => {
+
+      if (
+        currentCameraMode &&
+        !ocrBusy
+      ) {
+
+        startContinuousOCR();
+
+      }
+
+    },
+    1200
+  );
+
+}
+
+
+/* ==============================================================
+   VERIFICATION POPUP
+   ============================================================== */
+
+function showVerification(
+  success,
+  awb,
+  title,
+  message
+) {
+
+  return new Promise(
+    resolve => {
+
+      const overlay =
+        document.getElementById(
+          "verificationOverlay"
+        );
+
+
+      const box =
+        document.getElementById(
+          "verificationBox"
+        );
+
+
+      const titleEl =
+        document.getElementById(
+          "verificationTitle"
+        );
+
+
+      const awbEl =
+        document.getElementById(
+          "verificationAWB"
+        );
+
+
+      const messageEl =
+        document.getElementById(
+          "verificationMessage"
+        );
+
+
+      box.classList.toggle(
+        "errorBox",
+        !success
+      );
+
+
+      titleEl.innerText =
+        success
+          ? "✓ " + title
+          : "✕ " + title;
+
+
+      awbEl.innerText =
+        awb;
+
+
+      messageEl.innerText =
+        message;
+
+
+      overlay.classList.add(
+        "active"
+      );
+
+
+      /*
+         Successful scan:
+
+         Short verification display.
+
+         Error:
+
+         Longer display so the operator
+         actually sees the error.
+      */
+
+      const displayTime =
+        success
+          ? 1200
+          : 2500;
+
+
+      setTimeout(
+        () => {
+
+          overlay.classList.remove(
+            "active"
+          );
+
+
+          resolve();
+
+        },
+        displayTime
+      );
+
     }
+  );
+
+}
 
 
-    alert(message);
+/* ==============================================================
+   BARCODE SCANNER
+   ==============================================================
+   
+   Zebra scanner is normally configured as
+   keyboard wedge.
+
+   Example scan:
+
+       A12345678
+
+   The scanner sends the characters into
+   the hidden input.
+
+   ENTER / TAB ends the scan.
+   ============================================================== */
+
+window.openBarcodeScanner =
+function(mode) {
+
+  /*
+     Stop camera if running.
+  */
+
+  closeCamera();
+
+
+  barcodeMode =
+    mode;
+
+
+  barcodeBuffer =
+    "";
+
+
+  const input =
+    document.getElementById(
+      "barcodeScannerInput"
+    );
+
+
+  input.value =
+    "";
+
+
+  /*
+     IMPORTANT:
+
+     Physical Zebra scanner needs focus.
+  */
+
+  input.focus();
+
+
+  if (mode === "allocate") {
+
+    setStatus(
+      "▣ Barcode scanner ready. Scan barcode.",
+      "scanning"
+    );
+
+  }
+
+
+  if (mode === "offload") {
+
+    setStatus(
+      "▣ Barcode scanner ready. Scan barcode.",
+      "scanning"
+    );
 
   }
 
 };
+
+
+/* ==============================================================
+   BARCODE INPUT
+   ============================================================== */
+
+const barcodeInput =
+  document.getElementById(
+    "barcodeScannerInput"
+  );
+
+
+barcodeInput.addEventListener(
+  "keydown",
+  async event => {
+
+    if (!barcodeMode) {
+
+      return;
+
+    }
+
+
+    /*
+       Zebra usually sends ENTER
+       after the barcode.
+    */
+
+    if (
+      event.key === "Enter" ||
+      event.key === "Tab"
+    ) {
+
+      event.preventDefault();
+
+
+      const value =
+        barcodeInput.value
+          .trim();
+
+
+      barcodeInput.value =
+        "";
+
+
+      if (value) {
+
+        await processBarcode(
+          value
+        );
+
+      }
+
+
+      /*
+         Immediately refocus.
+
+         This allows the operator to scan
+         another barcode without touching
+         the screen.
+      */
+
+      setTimeout(
+        () => {
+
+          if (barcodeMode) {
+
+            barcodeInput.focus();
+
+          }
+
+        },
+        100
+      );
+
+
+      return;
+
+    }
+
+  }
+);
+
+
+/*
+   Some Zebra configurations may NOT send ENTER.
+
+   This catches normal keyboard-wedge input.
+*/
+
+barcodeInput.addEventListener(
+  "input",
+  () => {
+
+    if (!barcodeMode) {
+
+      return;
+
+    }
+
+
+    clearTimeout(
+      barcodeTimer
+    );
+
+
+    barcodeTimer =
+      setTimeout(
+        async () => {
+
+          const value =
+            barcodeInput.value
+              .trim();
+
+
+          /*
+             A12345678
+
+             Exactly 9 characters.
+
+             Process automatically even
+             without ENTER.
+          */
+
+          if (
+            /^A\d{8}$/.test(value)
+          ) {
+
+            barcodeInput.value =
+              "";
+
+
+            await processBarcode(
+              value
+            );
+
+
+            setTimeout(
+              () => {
+
+                if (barcodeMode) {
+
+                  barcodeInput.focus();
+
+                }
+
+              },
+              100
+            );
+
+          }
+
+        },
+        80
+      );
+
+  }
+);
+
+
+/* ==============================================================
+   PROCESS BARCODE
+   ============================================================== */
+
+async function processBarcode(
+  raw
+) {
+
+  const code =
+    normalizeAWB(raw);
+
+
+  if (!code) {
+
+    await showVerification(
+
+      false,
+
+      raw,
+
+      "INVALID BARCODE",
+
+      "Barcode format is not recognized."
+
+    );
+
+
+    return;
+
+  }
+
+
+  /*
+     Allocate
+  */
+
+  if (
+    barcodeMode ===
+    "allocate"
+  ) {
+
+    await processAllocateAWB(
+      code
+    );
+
+  }
+
+
+  /*
+     Offload
+  */
+
+  if (
+    barcodeMode ===
+    "offload"
+  ) {
+
+    await processOffloadAWB(
+      code
+    );
+
+  }
+
+}
+
+
+/* ==============================================================
+   STOP BARCODE
+   ============================================================== */
+
+function stopBarcodeScanner() {
+
+  barcodeMode =
+    null;
+
+
+  barcodeBuffer =
+    "";
+
+
+  clearTimeout(
+    barcodeTimer
+  );
+
+
+  const input =
+    document.getElementById(
+      "barcodeScannerInput"
+    );
+
+
+  input.value =
+    "";
+
+
+  input.blur();
+
+}
+
+
+/* ==============================================================
+   LIVE VIEW
+   SEPARATE TABLE FOR EACH POSITION ID
+   ============================================================== */
+
+window.goToLiveView =
+() => {
+
+  switchScreen(
+    "liveView"
+  );
+
+
+  const container =
+    document.getElementById(
+      "liveTables"
+    );
+
+
+  container.innerHTML =
+    "Loading...";
+
+
+  if (
+    typeof liveUnsubscribe ===
+    "function"
+  ) {
+
+    liveUnsubscribe();
+
+  }
+
+
+  liveUnsubscribe =
+    onSnapshot(
+
+      collection(
+        db,
+        "scans"
+      ),
+
+      snapshot => {
+
+        const positions =
+          {};
+
+
+        snapshot.forEach(
+          docSnap => {
+
+            const d =
+              docSnap.data();
+
+
+            if (
+              !d.positionId ||
+              d.positionId ===
+              "[REMOVED]"
+            ) {
+
+              return;
+
+            }
+
+
+            if (
+              !positions[d.positionId]
+            ) {
+
+              positions[d.positionId] =
+                [];
+
+            }
+
+
+            positions[d.positionId]
+              .push(d);
+
+          }
+        );
+
+
+        const positionIds =
+          Object.keys(
+            positions
+          )
+          .sort();
+
+
+        if (
+          positionIds.length === 0
+        ) {
+
+          container.innerHTML =
+            "<p>No active AWBs.</p>";
+
+          return;
+
+        }
+
+
+        let html = "";
+
+
+        positionIds.forEach(
+          pos => {
+
+            positions[pos]
+              .sort(
+                (a,b) => {
+
+                  const aTime =
+                    a.scannedAt
+                      ? a.scannedAt.seconds
+                      : 0;
+
+                  const bTime =
+                    b.scannedAt
+                      ? b.scannedAt.seconds
+                      : 0;
+
+                  return bTime - aTime;
+
+                }
+              );
+
+
+            html +=
+              `<div class="livePosition">
+
+                <div class="livePositionTitle">
+                  Position ID: ${escapeHTML(pos)}
+                </div>
+
+                <table>
+
+                  <thead>
+
+                    <tr>
+                      <th>#</th>
+                      <th>AWB</th>
+                      <th>Scanned At</th>
+                      <th>Scanned By</th>
+                    </tr>
+
+                  </thead>
+
+                  <tbody>`;
+
+
+            positions[pos]
+              .forEach(
+                (d,index) => {
+
+                  const scannedAt =
+                    d.scannedAt
+
+                      ? new Date(
+                          d.scannedAt.seconds *
+                          1000
+                        ).toLocaleString()
+
+                      : "N/A";
+
+
+                  html +=
+                    `<tr>
+
+                      <td>
+                        ${index + 1}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          awbNumberOnly(
+                            d.code
+                          )
+                        )}
+                      </td>
+
+                      <td>
+                        ${scannedAt}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          d.scannedBy || ""
+                        )}
+                      </td>
+
+                    </tr>`;
+
+                }
+              );
+
+
+            html +=
+                  `</tbody>
+                </table>
+              </div>`;
+
+          }
+        );
+
+
+        container.innerHTML =
+          html;
+
+      }
+
+    );
+
+};
+
+
+/* ==============================================================
+   EXPORT
+   ============================================================== */
+
+window.exportToCSV =
+async () => {
+
+  try {
+
+    /*
+       ONE getDocs call.
+
+       This is important.
+
+       The previous problem happened because
+       onSnapshot was being used for export.
+    */
+
+    const snapshot =
+      await getDocs(
+
+        collection(
+          db,
+          "scans"
+        )
+
+      );
+
+
+    let rows = [];
+
+
+    snapshot.forEach(
+      docSnap => {
+
+        const d =
+          docSnap.data();
+
+
+        if (
+          d.positionId ===
+          "[REMOVED]"
+        ) {
+
+          return;
+
+        }
+
+
+        if (!d.scannedAt) {
+
+          return;
+
+        }
+
+
+        rows.push({
+
+          code:
+            awbNumberOnly(
+              d.code
+            ),
+
+          positionId:
+            d.positionId || "",
+
+          scannedAt:
+            new Date(
+              d.scannedAt.seconds *
+              1000
+            ).toLocaleString(),
+
+          scannedBy:
+            d.scannedBy || ""
+
+        });
+
+      }
+    );
+
+
+    if (
+      rows.length === 0
+    ) {
+
+      alert(
+        "There is no data to export."
+      );
+
+      return;
+
+    }
+
+
+    let csv =
+      "\uFEFF" +
+      "Airway Bill,Position ID,Scanned At,Scanned By\n";
+
+
+    rows.forEach(
+      row => {
+
+        csv +=
+          `"${csvEscape(row.code)}",` +
+          `"${csvEscape(row.positionId)}",` +
+          `"${csvEscape(row.scannedAt)}",` +
+          `"${csvEscape(row.scannedBy)}"\n`;
+
+      }
+    );
+
+
+    /*
+       ONE FILE ONLY.
+    */
+
+    const blob =
+      new Blob(
+        [csv],
+        {
+          type:
+            "text/csv;charset=utf-8;"
+        }
+      );
+
+
+    const url =
+      URL.createObjectURL(
+        blob
+      );
+
+
+    const link =
+      document.createElement(
+        "a"
+      );
+
+
+    link.href =
+      url;
+
+
+    link.download =
+      "FirstAirBuilder_Export.csv";
+
+
+    document.body.appendChild(
+      link
+    );
+
+
+    link.click();
+
+
+    document.body.removeChild(
+      link
+    );
+
+
+    URL.revokeObjectURL(
+      url
+    );
+
+
+    /*
+       Delete exported records
+       only AFTER the file has been
+       generated.
+    */
+
+    const deletePromises =
+      [];
+
+
+    snapshot.forEach(
+      docSnap => {
+
+        const d =
+          docSnap.data();
+
+
+        if (
+          d.positionId !==
+            "[REMOVED]" &&
+          d.scannedAt
+        ) {
+
+          deletePromises.push(
+
+            deleteDoc(
+
+              doc(
+                db,
+                "scans",
+                docSnap.id
+              )
+
+            )
+
+          );
+
+        }
+
+      }
+    );
+
+
+    await Promise.all(
+      deletePromises
+    );
+
+
+    alert(
+      `Export complete.\n\n${rows.length} AWB(s) exported into ONE file.`
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Export error:",
+      error
+    );
+
+
+    alert(
+      "Export failed.\n\n" +
+      error.message
+    );
+
+  }
+
+};
+
+
+/* ==============================================================
+   CSV ESCAPE
+   ============================================================== */
+
+function csvEscape(value) {
+
+  return String(
+    value ?? ""
+  )
+  .replace(
+    /"/g,
+    '""'
+  );
+
+}
+
+
+/* ==============================================================
+   HTML ESCAPE
+   ============================================================== */
+
+function escapeHTML(value) {
+
+  return String(
+    value ?? ""
+  )
+  .replace(
+    /&/g,
+    "&amp;"
+  )
+  .replace(
+    /</g,
+    "&lt;"
+  )
+  .replace(
+    />/g,
+    "&gt;"
+  )
+  .replace(
+    /"/g,
+    "&quot;"
+  )
+  .replace(
+    /'/g,
+    "&#039;"
+  );
+
+}
+
+
+/* ==============================================================
+   VIBRATION
+   ============================================================== */
+
+function vibrate() {
+
+  if (
+    navigator.vibrate
+  ) {
+
+    navigator.vibrate(
+      [100,50,100]
+    );
+
+  }
+
+}
+
+
+/* ==============================================================
+   CLEANUP
+   ============================================================== */
+
+window.addEventListener(
+  "pagehide",
+  () => {
+
+    closeCamera();
+
+    stopBarcodeScanner();
+
+  }
+);
+
+
+</script>
+
+</body>
+</html>
