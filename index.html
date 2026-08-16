@@ -44,7 +44,7 @@
       width: 100%;
       min-height: 100vh;
 
-      padding: 20px;
+      padding: 12px;
 
       box-sizing: border-box;
 
@@ -61,9 +61,9 @@
 
       font-size: 2rem;
 
-      padding: 1.3rem;
+      padding: 1.1rem;
 
-      margin: 1rem 0;
+      margin: 0.7rem 0;
 
       width: 95%;
       max-width: 1000px;
@@ -131,7 +131,7 @@
 
     h2 {
 
-      margin: 20px 0;
+      margin: 15px 0;
 
       font-size: 3.5rem;
     }
@@ -139,7 +139,7 @@
 
     h3 {
 
-      margin: 15px 0;
+      margin: 10px 0;
 
       font-size: 2.5rem;
     }
@@ -149,11 +149,11 @@
 
       width: 100%;
 
-      margin-top: 20px;
+      margin-top: 10px;
 
       border-collapse: collapse;
 
-      font-size: 1.6rem;
+      font-size: 1.4rem;
     }
 
 
@@ -162,7 +162,7 @@
 
       border: 2px solid #999;
 
-      padding: 15px;
+      padding: 10px;
 
       text-align: center;
     }
@@ -186,23 +186,43 @@
        CAMERA
        ====================================================== */
 
+    /*
+       IMPORTANT:
+
+       We no longer display the entire camera.
+
+       The viewport below represents ONLY the area that
+       was previously inside the green scanning box.
+    */
+
     .cameraContainer {
 
       display: none;
 
       width: 100%;
 
-      max-width: 900px;
+      max-width: 1000px;
 
-      margin: 15px auto;
+      margin: 10px auto;
 
       position: relative;
 
       background: black;
 
-      border-radius: 20px;
+      border-radius: 15px;
 
       overflow: hidden;
+
+      /*
+         Green box was approximately:
+         84% camera width
+         30% camera height
+
+         The visible area therefore becomes a
+         wide horizontal scanning window.
+      */
+
+      aspect-ratio: 4.98 / 1;
     }
 
 
@@ -212,37 +232,39 @@
     }
 
 
-    video {
+    /*
+       The video is enlarged and positioned so that
+       only the original green-box area is visible.
+    */
 
-      width: 100%;
+    .cameraContainer video {
+
+      position: absolute;
+
+      width: 119.05%;
+
+      height: auto;
+
+      max-width: none;
+
+      left: -9.525%;
+
+      top: -116.67%;
 
       display: block;
 
       background: black;
-
-      object-fit: cover;
     }
 
 
+    /*
+       No green box is needed anymore because the
+       entire visible camera area IS the green box.
+    */
+
     .scanBox {
 
-      position: absolute;
-
-      left: 8%;
-
-      right: 8%;
-
-      top: 35%;
-
-      height: 30%;
-
-      border: 4px solid #00ff00;
-
-      border-radius: 15px;
-
-      pointer-events: none;
-
-      box-sizing: border-box;
+      display: none;
     }
 
 
@@ -254,27 +276,29 @@
 
       right: 0;
 
-      bottom: 10px;
+      bottom: 8px;
 
       text-align: center;
 
-      font-size: 1.3rem;
+      font-size: 1.2rem;
 
       color: white;
 
       text-shadow:
         0 2px 4px black,
         0 2px 8px black;
+
+      pointer-events: none;
     }
 
 
     .cameraStatus {
 
-      font-size: 1.6rem;
+      font-size: 1.4rem;
 
-      margin: 10px 0;
+      margin: 6px 0;
 
-      min-height: 2.5rem;
+      min-height: 2rem;
     }
 
 
@@ -302,40 +326,188 @@
     }
 
 
+    /* ======================================================
+       VERIFICATION MODAL
+       ====================================================== */
+
+    .verificationOverlay {
+
+      position: fixed;
+
+      top: 0;
+      left: 0;
+
+      width: 100vw;
+      height: 100vh;
+
+      background: rgba(0, 0, 0, 0.88);
+
+      display: none;
+
+      align-items: center;
+
+      justify-content: center;
+
+      z-index: 9999;
+
+      padding: 20px;
+
+      box-sizing: border-box;
+    }
+
+
+    .verificationOverlay.active {
+
+      display: flex;
+    }
+
+
+    .verificationBox {
+
+      width: 95%;
+
+      max-width: 700px;
+
+      background: #1e1e1e;
+
+      border: 4px solid #00e676;
+
+      border-radius: 25px;
+
+      padding: 30px 20px;
+
+      box-sizing: border-box;
+
+      text-align: center;
+
+      box-shadow:
+        0 0 30px rgba(0, 230, 118, 0.4);
+    }
+
+
+    .verificationTitle {
+
+      font-size: 2.8rem;
+
+      font-weight: bold;
+
+      color: #00e676;
+
+      margin-bottom: 20px;
+    }
+
+
+    .verificationLabel {
+
+      font-size: 1.5rem;
+
+      color: #bbb;
+
+      margin-bottom: 10px;
+    }
+
+
+    .verificationAWB {
+
+      font-size: 3.5rem;
+
+      font-weight: bold;
+
+      color: white;
+
+      background: #000;
+
+      border-radius: 15px;
+
+      padding: 20px 10px;
+
+      margin: 15px 0 25px;
+
+      letter-spacing: 3px;
+
+      word-break: break-all;
+    }
+
+
+    .verifyButton {
+
+      background-color: #00a152;
+
+      font-weight: bold;
+    }
+
+
+    .cancelVerifyButton {
+
+      background-color: #d32f2f;
+
+      font-weight: bold;
+    }
+
+
     @media (max-width: 600px) {
 
       h2 {
 
-        font-size: 2.7rem;
+        font-size: 2.5rem;
       }
 
 
       h3 {
 
-        font-size: 1.8rem;
+        font-size: 1.7rem;
       }
 
 
       input,
       button {
 
-        font-size: 1.5rem;
+        font-size: 1.35rem;
 
-        padding: 1.1rem;
+        padding: 0.9rem;
       }
 
 
       table {
 
-        font-size: 1rem;
+        font-size: 0.9rem;
       }
 
 
       th,
       td {
 
-        padding: 8px;
+        padding: 7px;
       }
+
+
+      .cameraContainer {
+
+        aspect-ratio: 4.98 / 1;
+
+        border-radius: 10px;
+      }
+
+
+      .cameraStatus {
+
+        font-size: 1.1rem;
+      }
+
+
+      .verificationTitle {
+
+        font-size: 2.2rem;
+      }
+
+
+      .verificationAWB {
+
+        font-size: 2.6rem;
+
+        padding: 18px 5px;
+      }
+
     }
 
   </style>
@@ -438,8 +610,6 @@
     </h3>
 
 
-    <!-- CAMERA OPEN BUTTON -->
-
     <button
       id="openAllocateCameraButton"
       class="cameraButton"
@@ -450,7 +620,7 @@
     </button>
 
 
-    <!-- CAMERA -->
+    <!-- ONLY GREEN BOX AREA IS DISPLAYED -->
 
     <div
       id="allocateCameraContainer"
@@ -464,14 +634,11 @@
       </video>
 
 
-      <div class="scanBox"></div>
-
-
       <div class="scanText">
 
         Place
         <b>518-YWG-13634095</b>
-        inside the green box
+        in this area
 
       </div>
 
@@ -487,8 +654,6 @@
     </div>
 
 
-    <!-- READ BUTTON -->
-
     <button
       id="readAllocateButton"
       class="readButton hidden"
@@ -498,8 +663,6 @@
 
     </button>
 
-
-    <!-- CLOSE CAMERA -->
 
     <button
       id="closeAllocateButton"
@@ -600,8 +763,6 @@
     </h3>
 
 
-    <!-- CAMERA OPEN BUTTON -->
-
     <button
       id="openOffloadCameraButton"
       class="cameraButton"
@@ -612,7 +773,7 @@
     </button>
 
 
-    <!-- CAMERA -->
+    <!-- ONLY GREEN BOX AREA IS DISPLAYED -->
 
     <div
       id="offloadCameraContainer"
@@ -626,14 +787,11 @@
       </video>
 
 
-      <div class="scanBox"></div>
-
-
       <div class="scanText">
 
         Place
         <b>518-YWG-13634095</b>
-        inside the green box
+        in this area
 
       </div>
 
@@ -649,8 +807,6 @@
     </div>
 
 
-    <!-- READ BUTTON -->
-
     <button
       id="readOffloadButton"
       class="readButton hidden"
@@ -660,8 +816,6 @@
 
     </button>
 
-
-    <!-- CLOSE CAMERA -->
 
     <button
       id="closeOffloadButton"
@@ -756,9 +910,57 @@
 </div>
 
 
-<!-- ========================================================
+<!-- ======================================================
+     VERIFICATION POPUP
+     ====================================================== -->
+
+<div
+  id="verificationOverlay"
+  class="verificationOverlay">
+
+  <div class="verificationBox">
+
+    <div class="verificationTitle">
+      ✓ VERIFY AWB
+    </div>
+
+
+    <div class="verificationLabel">
+      AWB detected:
+    </div>
+
+
+    <div
+      id="verificationAWB"
+      class="verificationAWB">
+    </div>
+
+
+    <button
+      class="verifyButton"
+      onclick="confirmVerification()">
+
+      ✓ VERIFY & SAVE
+
+    </button>
+
+
+    <button
+      class="cancelVerifyButton"
+      onclick="cancelVerification()">
+
+      ✖ CANCEL
+
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- ======================================================
      TESSERACT OCR
-     ======================================================== -->
+     ====================================================== -->
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
@@ -851,6 +1053,12 @@
 
   let ocrBusy = false;
 
+  /*
+     Holds the AWB waiting for verification.
+  */
+
+  let pendingAWB = null;
+
 
   // ============================================================
   // SCREEN CONTROL
@@ -921,6 +1129,8 @@
 
     currentCameraMode = null;
 
+    pendingAWB = null;
+
   };
 
 
@@ -946,6 +1156,7 @@
       );
 
       return;
+
     }
 
 
@@ -978,6 +1189,7 @@
       );
 
       return;
+
     }
 
 
@@ -989,7 +1201,7 @@
 
 
   // ============================================================
-  // EXTRACT 518 NUMBER
+  // EXTRACT FULL 518 AWB
   // ============================================================
 
   function extract518Number(
@@ -1084,6 +1296,49 @@
 
 
     return null;
+
+  }
+
+
+  // ============================================================
+  // CONVERT TO SAVED AWB
+  // ============================================================
+
+  /*
+     518-YWG-13634095
+
+     becomes
+
+     13634095
+  */
+
+  function getSavedAWB(
+    fullAWB
+  ) {
+
+    if (!fullAWB) {
+
+      return null;
+
+    }
+
+
+    const match =
+      String(fullAWB)
+        .toUpperCase()
+        .match(
+          /^518-[A-Z]{3}-(\d{8})$/
+        );
+
+
+    if (!match) {
+
+      return null;
+
+    }
+
+
+    return match[1];
 
   }
 
@@ -1361,7 +1616,7 @@
 
 
       setStatus(
-        "Camera ready. Place the 518 number inside the green box.",
+        "Camera ready. Place the AWB in the scanning area.",
         "scanning"
       );
 
@@ -1544,7 +1799,7 @@
 
 
   // ============================================================
-  // CAPTURE CAMERA IMAGE
+  // CAPTURE ONLY GREEN BOX AREA
   // ============================================================
 
   function captureFrame() {
@@ -1588,8 +1843,8 @@
 
 
     /*
-      Crop the center portion
-      where the green box is.
+       EXACTLY THE SAME AREA THAT
+       WAS INSIDE THE GREEN BOX.
     */
 
     const cropWidth =
@@ -1600,7 +1855,7 @@
 
     const cropHeight =
       Math.floor(
-        height * 0.40
+        height * 0.30
       );
 
 
@@ -1610,9 +1865,14 @@
       );
 
 
+    /*
+       Original green box starts
+       at 35% of camera height.
+    */
+
     const cropY =
       Math.floor(
-        (height - cropHeight) / 2
+        height * 0.35
       );
 
 
@@ -1659,12 +1919,223 @@
 
 
   // ============================================================
+  // PAUSE CAMERA FOR VERIFICATION
+  // ============================================================
+
+  function pauseCamera() {
+
+    if (cameraStream) {
+
+      cameraStream
+        .getTracks()
+        .forEach(
+          track => {
+
+            track.enabled =
+              false;
+
+          }
+        );
+
+    }
+
+  }
+
+
+  // ============================================================
+  // RESUME CAMERA
+  // ============================================================
+
+  function resumeCamera() {
+
+    if (cameraStream) {
+
+      cameraStream
+        .getTracks()
+        .forEach(
+          track => {
+
+            track.enabled =
+              true;
+
+          }
+        );
+
+    }
+
+  }
+
+
+  // ============================================================
+  // SHOW VERIFICATION
+  // ============================================================
+
+  function showVerification(
+    awb
+  ) {
+
+    pendingAWB =
+      awb;
+
+
+    pauseCamera();
+
+
+    document
+      .getElementById(
+        "verificationAWB"
+      )
+      .innerText =
+      awb;
+
+
+    document
+      .getElementById(
+        "verificationOverlay"
+      )
+      .classList.add(
+        "active"
+      );
+
+  }
+
+
+  // ============================================================
+  // CANCEL VERIFICATION
+  // ============================================================
+
+  window.cancelVerification =
+    () => {
+
+      pendingAWB =
+        null;
+
+
+      document
+        .getElementById(
+          "verificationOverlay"
+        )
+        .classList.remove(
+          "active"
+        );
+
+
+      resumeCamera();
+
+
+      setStatus(
+        "Scan cancelled. Ready for next AWB.",
+        "scanning"
+      );
+
+    };
+
+
+  // ============================================================
+  // CONFIRM VERIFICATION
+  // ============================================================
+
+  window.confirmVerification =
+    async () => {
+
+      if (!pendingAWB) {
+
+        return;
+
+      }
+
+
+      const awb =
+        pendingAWB;
+
+
+      /*
+         Close verification box first.
+      */
+
+      document
+        .getElementById(
+          "verificationOverlay"
+        )
+        .classList.remove(
+          "active"
+        );
+
+
+      try {
+
+        if (
+          currentCameraMode ===
+          "allocate"
+        ) {
+
+          await handleScan(
+            awb
+          );
+
+        }
+
+
+        if (
+          currentCameraMode ===
+          "offload"
+        ) {
+
+          await handleOffload(
+            awb
+          );
+
+        }
+
+
+      } catch (error) {
+
+        console.error(
+          error
+        );
+
+
+        setStatus(
+          "❌ Could not process AWB.",
+          "error"
+        );
+
+      }
+
+
+      pendingAWB =
+        null;
+
+
+      /*
+         Return to camera automatically.
+      */
+
+      resumeCamera();
+
+
+      setStatus(
+        "Camera ready. Scan the next AWB.",
+        "scanning"
+      );
+
+    };
+
+
+  // ============================================================
   // READ AWB
   // ============================================================
 
   async function readAWB() {
 
     if (ocrBusy) {
+
+      return;
+
+    }
+
+
+    if (pendingAWB) {
 
       return;
 
@@ -1727,13 +2198,13 @@
       );
 
 
-      const awb =
+      const fullAWB =
         extract518Number(
           rawText
         );
 
 
-      if (!awb) {
+      if (!fullAWB) {
 
         setStatus(
           "❌ No 518 AWB found. Move closer, focus, and try again.",
@@ -1749,34 +2220,42 @@
       }
 
 
-      setStatus(
-        "✅ Found: " + awb,
-        "success"
+      /*
+         Convert:
+
+         518-YWG-13634095
+
+         to:
+
+         13634095
+      */
+
+      const savedAWB =
+        getSavedAWB(
+          fullAWB
+        );
+
+
+      if (!savedAWB) {
+
+        setStatus(
+          "❌ Invalid AWB format.",
+          "error"
+        );
+
+
+        return;
+
+      }
+
+
+      /*
+         Show ONLY the number that will be saved.
+      */
+
+      showVerification(
+        savedAWB
       );
-
-
-      if (
-        currentCameraMode ===
-        "allocate"
-      ) {
-
-        await handleScan(
-          awb
-        );
-
-      }
-
-
-      if (
-        currentCameraMode ===
-        "offload"
-      ) {
-
-        await handleOffload(
-          awb
-        );
-
-      }
 
 
     } catch (error) {
@@ -2012,6 +2491,10 @@
     }
 
 
+    /*
+       CODE IS ALREADY ONLY THE 8 DIGITS.
+    */
+
     const q =
       query(
 
@@ -2095,20 +2578,22 @@
 
         {
 
-          code:
+          /*
+             SAVE ONLY:
 
+             13634095
+          */
+
+          code:
             code,
 
           positionId:
-
             positionId,
 
           scannedAt:
-
             serverTimestamp(),
 
           scannedBy:
-
             currentUser
 
         }
