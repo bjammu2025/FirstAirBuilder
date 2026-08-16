@@ -297,6 +297,7 @@ th{background:#222}
   font-size:1.4rem;
   line-height:1.5;
   margin-bottom:15px;
+  white-space:pre-line;
 }
 
 .confirmBox button{
@@ -352,7 +353,9 @@ th{background:#222}
   margin:15px 0;
 }
 
-.errorBox .verificationAWB{color:#ff5252}
+.errorBox .verificationAWB{
+  color:#ff5252;
+}
 
 .verificationMessage{
   font-size:1.4rem;
@@ -368,6 +371,16 @@ th{background:#222}
   height:1px;
   opacity:0;
   pointer-events:none;
+}
+
+.passwordBox{
+  border-color:#ff9800;
+}
+
+.passwordInput{
+  text-align:center;
+  letter-spacing:8px;
+  font-weight:bold;
 }
 
 @media(max-width:600px){
@@ -404,7 +417,7 @@ th{background:#222}
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.01
+    Version 12.5
   </div>
 
   <input
@@ -926,6 +939,50 @@ th{background:#222}
 </div>
 
 
+<!-- =========================================================
+     PASSWORD POPUP
+     ========================================================= -->
+
+<div
+  id="passwordOverlay"
+  class="confirmOverlay">
+
+  <div class="confirmBox passwordBox">
+
+    <div class="confirmTitle">
+      🔐 CLOSE FLIGHT
+    </div>
+
+    <div class="confirmText">
+      Enter the password to continue.
+    </div>
+
+    <input
+      id="closeFlightPassword"
+      class="passwordInput"
+      type="password"
+      inputmode="numeric"
+      maxlength="4"
+      placeholder="PASSWORD"
+      autocomplete="off">
+
+    <button
+      class="confirmButton"
+      onclick="verifyCloseFlightPassword()">
+      UNLOCK
+    </button>
+
+    <button
+      class="confirmCancel"
+      onclick="cancelCloseFlightPassword()">
+      CANCEL
+    </button>
+
+  </div>
+
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 
@@ -935,7 +992,14 @@ th{background:#222}
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.01";
+const CODE_VERSION = "12.5";
+
+
+/* =========================================================
+   CLOSE FLIGHT PASSWORD
+   ========================================================= */
+
+const CLOSE_FLIGHT_PASSWORD = "2021";
 
 
 /* =========================================================
@@ -1041,6 +1105,7 @@ function switchScreen(id){
   document
     .getElementById(id)
     .classList.add("visible");
+
 }
 
 
@@ -1136,6 +1201,11 @@ window.goToCloseULD = async () => {
 };
 
 
+/* =========================================================
+   GO TO CLOSE FLIGHT
+   PASSWORD IS REQUIRED HERE
+   ========================================================= */
+
 window.goToCloseFlight = async () => {
 
   if(!getCurrentUser()){
@@ -1145,11 +1215,157 @@ window.goToCloseFlight = async () => {
 
   }
 
+  const password =
+    await requestCloseFlightPassword();
+
+  if(!password){
+
+    return;
+
+  }
+
+  if(password !== CLOSE_FLIGHT_PASSWORD){
+
+    alert(
+      "Incorrect password.\n\n" +
+      "Close Flight was cancelled."
+    );
+
+    return;
+
+  }
+
   switchScreen("closeFlight");
 
   await loadCloseFlightData();
 
 };
+
+
+/* =========================================================
+   CLOSE FLIGHT PASSWORD
+   ========================================================= */
+
+function requestCloseFlightPassword(){
+
+  return new Promise(resolve => {
+
+    const overlay =
+      document.getElementById(
+        "passwordOverlay"
+      );
+
+    const input =
+      document.getElementById(
+        "closeFlightPassword"
+      );
+
+    input.value = "";
+
+    overlay.classList.add("active");
+
+    input.focus();
+
+    window._closeFlightPasswordResolve =
+      resolve;
+
+  });
+
+}
+
+
+window.verifyCloseFlightPassword = () => {
+
+  const input =
+    document.getElementById(
+      "closeFlightPassword"
+    );
+
+  const password =
+    input.value.trim();
+
+  const overlay =
+    document.getElementById(
+      "passwordOverlay"
+    );
+
+  overlay.classList.remove("active");
+
+  if(
+    typeof window._closeFlightPasswordResolve ===
+    "function"
+  ){
+
+    const resolve =
+      window._closeFlightPasswordResolve;
+
+    window._closeFlightPasswordResolve =
+      null;
+
+    resolve(password);
+
+  }
+
+};
+
+
+window.cancelCloseFlightPassword = () => {
+
+  const overlay =
+    document.getElementById(
+      "passwordOverlay"
+    );
+
+  overlay.classList.remove("active");
+
+  document
+    .getElementById(
+      "closeFlightPassword"
+    )
+    .value = "";
+
+  if(
+    typeof window._closeFlightPasswordResolve ===
+    "function"
+  ){
+
+    const resolve =
+      window._closeFlightPasswordResolve;
+
+    window._closeFlightPasswordResolve =
+      null;
+
+    resolve(null);
+
+  }
+
+};
+
+
+document
+  .getElementById("closeFlightPassword")
+  .addEventListener(
+    "keydown",
+    event => {
+
+      if(event.key === "Enter"){
+
+        event.preventDefault();
+
+        verifyCloseFlightPassword();
+
+      }
+
+      if(event.key === "Escape"){
+
+        event.preventDefault();
+
+        cancelCloseFlightPassword();
+
+      }
+
+    }
+  );
 
 
 /* =========================================================
@@ -1267,6 +1483,10 @@ window.createNewULD = async () => {
 
   try{
 
+    /*
+       CHECK FOR DUPLICATE ULD
+    */
+
     const q =
       query(
         collection(db,"ulds"),
@@ -1279,24 +1499,38 @@ window.createNewULD = async () => {
     if(!existing.empty){
 
       alert(
-        "This ULD already exists."
+        "This ULD already exists.\n\n" +
+        "Duplicate ULDs are not allowed."
       );
+
+      input.select();
 
       return;
 
     }
 
+    /*
+       CREATE NEW ULD
+    */
+
     await addDoc(
       collection(db,"ulds"),
       {
 
-        uldId: uldId,
+        uldId:uldId,
 
-        status: "OPEN",
+        /*
+           ULD ID and Position ID
+           are intentionally the same.
+        */
 
-        weightLbs: 0,
+        positionId:uldId,
 
-        weightKg: 0,
+        status:"OPEN",
+
+        weightLbs:0,
+
+        weightKg:0,
 
         createdAt:
           serverTimestamp(),
@@ -1304,9 +1538,9 @@ window.createNewULD = async () => {
         createdBy:
           currentUser,
 
-        closedAt: null,
+        closedAt:null,
 
-        closedBy: ""
+        closedBy:""
 
       }
     );
@@ -2361,11 +2595,6 @@ async function processOffloadAWB(code){
 
   }
 
-  /*
-     IMPORTANT:
-     ASK FOR CONFIRMATION BEFORE OFFLOADING.
-  */
-
   const confirmed =
     await showConfirmation(
       "CONFIRM OFFLOAD",
@@ -2581,7 +2810,6 @@ window.startCloseULD = () => {
 
 /* =========================================================
    KG CALCULATION
-   1 LB = 0.45359237 KG
    ========================================================= */
 
 window.calculateKG = () => {
@@ -2967,9 +3195,29 @@ window.goToLiveView = () => {
 
 
 /* =========================================================
-   EXPORT
-   ONLY CLOSED ULDs
-   DOES NOT DELETE ANYTHING
+   EXPORT CLOSED ULDs
+   =========================================================
+
+   CSV FORMAT:
+
+   Column 1 = AWB
+   Column 2 = Scanned At
+   Column 3 = Scanned By
+   Column 4 = ULD ID
+   Column 5 = Weight
+
+   Each ULD gets its own first row
+   containing ULD ID and weight.
+
+   Following rows contain AWB details.
+
+   Example:
+
+   AWB,Scanned At,Scanned By,ULD ID,Weight
+                           ,          ,       ,AKE123,1250.00 LBS
+   12345678,08/16/2026 10:20,John,, 
+   12345679,08/16/2026 10:22,John,,
+
    ========================================================= */
 
 window.exportToCSV = async () => {
@@ -3021,6 +3269,41 @@ window.exportToCSV = async () => {
       const uldId =
         uld.uldId || uld.id;
 
+      const weight =
+        Number(
+          uld.weightLbs || 0
+        ).toFixed(2) +
+        " LBS / " +
+        Number(
+          uld.weightKg || 0
+        ).toFixed(2) +
+        " KGS";
+
+      /*
+         First row for each ULD.
+         ULD ID is column 4.
+         Weight is column 5.
+      */
+
+      rows.push({
+
+        code:"",
+
+        scannedAt:"",
+
+        scannedBy:"",
+
+        uldId:uldId,
+
+        weight:weight
+
+      });
+
+
+      /*
+         Get AWBs for this ULD.
+      */
+
       const q =
         query(
           collection(db,"scans"),
@@ -3030,18 +3313,17 @@ window.exportToCSV = async () => {
       const snapshot =
         await getDocs(q);
 
+
+      const awbRows = [];
+
       snapshot.forEach(docSnap => {
 
         const d =
           docSnap.data();
 
         /*
-           Export AWBs belonging to
-           this CLOSED ULD.
-
-           Even if an AWB was offloaded,
-           it is not exported because it is
-           no longer active in the ULD.
+           Do not export AWBs that were
+           offloaded from the ULD.
         */
 
         if(
@@ -3052,101 +3334,64 @@ window.exportToCSV = async () => {
         if(!d.scannedAt)
           return;
 
-        rows.push({
-
-          uldId:uldId,
+        awbRows.push({
 
           code:
             awbNumberOnly(d.code),
 
-          positionId:
-            d.positionId || "",
-
           scannedAt:
             new Date(
-              d.scannedAt.seconds*1000
+              d.scannedAt.seconds * 1000
             ).toLocaleString(),
 
           scannedBy:
             d.scannedBy || "",
 
-          weightLbs:
-            Number(
-              uld.weightLbs || 0
-            ).toFixed(2),
+          uldId:"",
 
-          weightKg:
-            Number(
-              uld.weightKg || 0
-            ).toFixed(2)
+          weight:""
 
         });
 
       });
 
+
+      /*
+         Put AWB rows immediately
+         below the ULD row.
+      */
+
+      rows.push(
+        ...awbRows
+      );
+
     }
 
+
     /*
-       If a CLOSED ULD has no AWBs,
-       still export the ULD.
+       CSV HEADER
     */
-
-    closedULDs.forEach(uld => {
-
-      const uldId =
-        uld.uldId || uld.id;
-
-      const exists =
-        rows.some(
-          r => r.uldId === uldId
-        );
-
-      if(!exists){
-
-        rows.push({
-
-          uldId:uldId,
-
-          code:"",
-
-          positionId:"",
-
-          scannedAt:"",
-
-          scannedBy:"",
-
-          weightLbs:
-            Number(
-              uld.weightLbs || 0
-            ).toFixed(2),
-
-          weightKg:
-            Number(
-              uld.weightKg || 0
-            ).toFixed(2)
-
-        });
-
-      }
-
-    });
 
     let csv =
       "\uFEFF" +
-      "ULD ID,Airway Bill,Position ID,Scanned At,Scanned By,ULD Weight LBS,ULD Weight KGS\n";
+      "Airway Bill,Scanned At,Scanned By,ULD ID,Weight\n";
+
+
+    /*
+       CSV ROWS
+    */
 
     rows.forEach(row => {
 
       csv +=
-        `"${csvEscape(row.uldId)}",` +
         `"${csvEscape(row.code)}",` +
-        `"${csvEscape(row.positionId)}",` +
         `"${csvEscape(row.scannedAt)}",` +
         `"${csvEscape(row.scannedBy)}",` +
-        `"${csvEscape(row.weightLbs)}",` +
-        `"${csvEscape(row.weightKg)}"\n`;
+        `"${csvEscape(row.uldId)}",` +
+        `"${csvEscape(row.weight)}"\n`;
 
     });
+
 
     const blob =
       new Blob(
@@ -3157,8 +3402,10 @@ window.exportToCSV = async () => {
         }
       );
 
+
     const url =
       URL.createObjectURL(blob);
+
 
     const link =
       document.createElement("a");
@@ -3176,16 +3423,13 @@ window.exportToCSV = async () => {
 
     URL.revokeObjectURL(url);
 
-    /*
-       IMPORTANT:
-       NO DELETE HERE.
-    */
 
     alert(
       `Export complete.\n\n` +
       `${closedULDs.length} CLOSED ULD(s) exported.\n\n` +
       `No Live View data was deleted.`
     );
+
 
   }catch(error){
 
@@ -3267,6 +3511,7 @@ async function loadCloseFlightData(){
 
         <tbody>`;
 
+
     ulds.forEach(uld => {
 
       const lbs =
@@ -3279,10 +3524,6 @@ async function loadCloseFlightData(){
           uld.weightKg || 0
         );
 
-      /*
-         Only closed ULDs have official
-         weights.
-      */
 
       if(uld.status === "CLOSED"){
 
@@ -3290,6 +3531,7 @@ async function loadCloseFlightData(){
         totalKg += kg;
 
       }
+
 
       html +=
         `<tr>
@@ -3324,6 +3566,7 @@ async function loadCloseFlightData(){
 
     });
 
+
     html +=
       `</tbody>
       </table>
@@ -3344,10 +3587,12 @@ async function loadCloseFlightData(){
 
       </div>`;
 
+
     const openCount =
       ulds.filter(
         u => u.status === "OPEN"
       ).length;
+
 
     if(openCount > 0){
 
@@ -3359,7 +3604,9 @@ async function loadCloseFlightData(){
 
     }
 
+
     container.innerHTML = html;
+
 
   }catch(error){
 
@@ -3383,6 +3630,13 @@ window.confirmCloseFlight = async () => {
 
   try{
 
+    /*
+       Password has already been checked
+       when entering Close Flight.
+
+       Check the data again before deletion.
+    */
+
     const snapshot =
       await getDocs(
         collection(db,"ulds")
@@ -3398,10 +3652,12 @@ window.confirmCloseFlight = async () => {
 
     }
 
+
     let totalLbs = 0;
     let totalKg = 0;
 
     let openCount = 0;
+
 
     snapshot.forEach(docSnap => {
 
@@ -3410,6 +3666,7 @@ window.confirmCloseFlight = async () => {
 
       if(d.status === "OPEN")
         openCount++;
+
 
       if(d.status === "CLOSED"){
 
@@ -3423,6 +3680,7 @@ window.confirmCloseFlight = async () => {
 
     });
 
+
     if(openCount > 0){
 
       const continueAnyway =
@@ -3433,10 +3691,12 @@ window.confirmCloseFlight = async () => {
           `Do you still want to close the entire flight and DELETE ALL flight data?`
         );
 
+
       if(!continueAnyway)
         return;
 
     }
+
 
     const confirmed =
       await showConfirmation(
@@ -3448,10 +3708,13 @@ window.confirmCloseFlight = async () => {
         `ALL ULD AND AWB DATA will be permanently deleted from Live View and Firebase.`
       );
 
+
     if(!confirmed)
       return;
 
+
     await closeEntireFlight();
+
 
   }catch(error){
 
@@ -3488,6 +3751,7 @@ async function closeEntireFlight(){
 
     const deletePromises = [];
 
+
     /*
        Delete ALL scans.
     */
@@ -3505,6 +3769,7 @@ async function closeEntireFlight(){
       );
 
     });
+
 
     /*
        Delete ALL ULD records.
@@ -3524,14 +3789,17 @@ async function closeEntireFlight(){
 
     });
 
+
     await Promise.all(
       deletePromises
     );
+
 
     alert(
       "FLIGHT CLOSED.\n\n" +
       "All ULD and AWB data has been cleared."
     );
+
 
     if(
       typeof liveUnsubscribe ===
@@ -3543,12 +3811,15 @@ async function closeEntireFlight(){
 
     }
 
+
     document
       .getElementById("liveTables")
       .innerHTML =
       "<p>No ULDs.</p>";
 
+
     switchScreen("home");
+
 
   }catch(error){
 
@@ -3603,6 +3874,7 @@ function showConfirmation(
         "confirmNoButton"
       );
 
+
     titleEl.innerText =
       title;
 
@@ -3610,6 +3882,7 @@ function showConfirmation(
       message;
 
     overlay.classList.add("active");
+
 
     const cleanup = () => {
 
@@ -3622,12 +3895,14 @@ function showConfirmation(
 
     };
 
+
     yesButton.onclick = () => {
 
       cleanup();
       resolve(true);
 
     };
+
 
     noButton.onclick = () => {
 
@@ -3679,30 +3954,37 @@ function showVerification(
         "verificationMessage"
       );
 
+
     box.classList.toggle(
       "errorBox",
       !success
     );
+
 
     titleEl.innerText =
       success
         ? "✓ " + title
         : "✕ " + title;
 
+
     awbEl.innerText =
       awb;
 
+
     messageEl.innerText =
       message;
+
 
     overlay.classList.add(
       "active"
     );
 
+
     const displayTime =
       success
         ? 1200
         : 2500;
+
 
     setTimeout(() => {
 
@@ -3768,6 +4050,7 @@ barcodeInput.addEventListener(
     if(!barcodeMode)
       return;
 
+
     if(
       event.key === "Enter" ||
       event.key === "Tab"
@@ -3775,13 +4058,17 @@ barcodeInput.addEventListener(
 
       event.preventDefault();
 
+
       const value =
         barcodeInput.value.trim();
 
+
       barcodeInput.value = "";
+
 
       if(value)
         await processBarcode(value);
+
 
       setTimeout(() => {
 
@@ -3803,7 +4090,9 @@ barcodeInput.addEventListener(
     if(!barcodeMode)
       return;
 
+
     clearTimeout(barcodeTimer);
+
 
     barcodeTimer =
       setTimeout(
@@ -3812,11 +4101,14 @@ barcodeInput.addEventListener(
           const value =
             barcodeInput.value.trim();
 
+
           if(/^A\d{8}$/.test(value)){
 
             barcodeInput.value = "";
 
+
             await processBarcode(value);
+
 
             setTimeout(() => {
 
@@ -3844,6 +4136,7 @@ async function processBarcode(raw){
   const code =
     normalizeAWB(raw);
 
+
   if(!code){
 
     await showVerification(
@@ -3857,8 +4150,10 @@ async function processBarcode(raw){
 
   }
 
+
   if(barcodeMode === "allocate")
     await processAllocateAWB(code);
+
 
   if(barcodeMode === "offload")
     await processOffloadAWB(code);
@@ -3877,10 +4172,12 @@ function stopBarcodeScanner(){
 
   clearTimeout(barcodeTimer);
 
+
   const input =
     document.getElementById(
       "barcodeScannerInput"
     );
+
 
   input.value = "";
   input.blur();
