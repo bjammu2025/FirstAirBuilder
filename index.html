@@ -1,1150 +1,769 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
 
-<meta
-  name="viewport"
-  content="width=device-width,
-           initial-scale=1.0,
-           maximum-scale=1.0,
-           user-scalable=no">
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1.0,
+               maximum-scale=1.0,
+               user-scalable=no">
 
 <title>First Air Builder</title>
 
-  
-
 <style>
 
-/* =========================================================
-   GENERAL
-   ========================================================= */
-
-html,
-body {
-
-  margin: 0;
-  padding: 0;
-
-  background: #121212;
-  color: white;
-
-  font-family: Arial, sans-serif;
-
-  width: 100%;
-  min-height: 100%;
-
-  overflow-x: hidden;
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #121212;
+    color: white;
+    font-family: Arial, sans-serif;
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
 }
 
-
 body {
-
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
 }
-
 
 .container {
-
-  width: 100%;
-  min-height: 100vh;
-
-  padding: 12px;
-
-  box-sizing: border-box;
-
-  text-align: center;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
+    width: 100%;
+    min-height: 100vh;
+    padding: 12px;
+    box-sizing: border-box;
+    text-align: center;
 }
-
-
-/* =========================================================
-   SCREENS
-   ========================================================= */
-
-.screen {
-
-  display: none;
-
-  width: 100%;
-
-}
-
-
-.screen.visible {
-
-  display: block;
-
-}
-
-
-/* =========================================================
-   HEADINGS
-   ========================================================= */
-
-h2 {
-
-  margin: 15px 0 5px;
-
-  font-size: 3rem;
-
-}
-
-
-h3 {
-
-  margin: 12px 0;
-
-  font-size: 2rem;
-
-}
-
-
-/* =========================================================
-   VERSION
-   ========================================================= */
-
-.version {
-
-  font-size: 0.75rem;
-
-  color: #777;
-
-  margin-bottom: 12px;
-
-}
-
-
-/* =========================================================
-   INPUTS / BUTTONS
-   ========================================================= */
 
 input,
 button {
-
-  font-size: 1.7rem;
-
-  padding: 1rem;
-
-  margin: 0.6rem 0;
-
-  width: 95%;
-
-  max-width: 900px;
-
-  border: none;
-
-  border-radius: 14px;
-
-  box-sizing: border-box;
-
+    font-size: 1.7rem;
+    padding: 1rem;
+    margin: 0.6rem 0;
+    width: 95%;
+    max-width: 800px;
+    border: none;
+    border-radius: 14px;
+    box-sizing: border-box;
 }
-
 
 input {
-
-  background: white;
-
-  color: black;
-
+    background: white;
+    color: black;
 }
-
 
 button {
-
-  background: #1e88e5;
-
-  color: white;
-
-  cursor: pointer;
-
+    background: #1e88e5;
+    color: white;
+    cursor: pointer;
 }
-
 
 button:hover {
-
-  background: #1565c0;
-
+    background: #1565c0;
 }
-
 
 .cameraButton {
-
-  background: #00897b;
-
+    background: #00897b;
 }
-
 
 .readButton {
-
-  background: #43a047;
-
+    background: #43a047;
 }
-
 
 .stopButton {
-
-  background: #d32f2f;
-
+    background: #d32f2f;
 }
-
 
 .backButton {
-
-  background: #555;
-
+    background: #555;
 }
 
-
-.verifyButton {
-
-  background: #43a047;
-
+h2 {
+    margin: 12px 0;
+    font-size: 2.8rem;
 }
 
-
-.cancelButton {
-
-  background: #d32f2f;
-
+h3 {
+    margin: 10px 0;
+    font-size: 1.9rem;
 }
 
+.screen {
+    display: none;
+    width: 100%;
+}
+
+.visible {
+    display: block;
+}
+
+.hidden {
+    display: none !important;
+}
 
 /* =========================================================
-   POSITION / USER INFORMATION
+   CAMERA
    ========================================================= */
-
-.infoBox {
-
-  background: #1e1e1e;
-
-  border: 1px solid #444;
-
-  border-radius: 12px;
-
-  padding: 8px;
-
-  margin-bottom: 8px;
-
-  font-size: 1.15rem;
-
-}
-
-
-.infoBox span {
-
-  color: #00e676;
-
-  font-weight: bold;
-
-}
-
-
-/* =========================================================
-   CAMERA AREA
-   ========================================================= */
-
-/*
-   IMPORTANT:
-
-   The real video element is hidden.
-
-   We display only a canvas containing the section
-   that corresponds to the green scanning area.
-*/
 
 .cameraContainer {
+    display: none;
+    width: 100%;
+    max-width: 700px;
+    margin: 8px auto;
+    position: relative;
+    background: black;
+    border-radius: 12px;
+    overflow: hidden;
 
-  display: none;
-
-  width: 100%;
-
-  max-width: 700px;
-
-  margin: 8px auto;
-
-  position: relative;
-
-  background: black;
-
-  border-radius: 14px;
-
-  overflow: hidden;
-
+    /* ONLY SHOW THE GREEN BOX AREA */
+    height: 180px;
 }
-
 
 .cameraContainer.active {
-
-  display: block;
-
+    display: block;
 }
 
+video {
+    position: absolute;
 
-/*
-   Hidden real camera.
-*/
+    /* Camera image is intentionally enlarged/cropped */
+    width: 100%;
+    height: 100%;
 
-.realCamera {
+    object-fit: cover;
 
-  position: absolute;
-
-  width: 1px;
-
-  height: 1px;
-
-  opacity: 0;
-
-  pointer-events: none;
-
+    /* Center camera image */
+    object-position: center center;
 }
 
-
 /*
-   This is the visible camera image.
-
-   It contains ONLY the green scanning area.
-*/
-
-#allocatePreview,
-#offloadPreview {
-
-  width: 100%;
-
-  display: block;
-
-  background: black;
-
-}
-
-
-/*
-   Green box.
-
-   Since the displayed image IS the cropped box,
-   this border surrounds the entire visible image.
+   The green box IS the visible camera area.
+   No large camera image is shown outside it.
 */
 
 .scanBox {
+    position: absolute;
 
-  position: absolute;
+    left: 5%;
+    right: 5%;
 
-  inset: 4px;
+    top: 15%;
+    bottom: 15%;
 
-  border: 4px solid #00ff00;
+    border: 4px solid #00ff00;
 
-  border-radius: 10px;
+    border-radius: 10px;
 
-  pointer-events: none;
+    box-sizing: border-box;
 
-  box-sizing: border-box;
+    pointer-events: none;
 
+    z-index: 5;
+
+    box-shadow:
+        0 0 8px #00ff00,
+        inset 0 0 8px rgba(0,255,0,0.3);
 }
 
+.scanText {
+    position: absolute;
 
-/* =========================================================
-   CAMERA STATUS
-   ========================================================= */
+    left: 0;
+    right: 0;
+
+    bottom: 3px;
+
+    text-align: center;
+
+    font-size: 0.85rem;
+
+    color: white;
+
+    z-index: 10;
+
+    text-shadow:
+        0 2px 4px black;
+}
 
 .cameraStatus {
-
-  font-size: 1.2rem;
-
-  margin: 6px 0;
-
-  min-height: 2rem;
-
+    font-size: 1.15rem;
+    margin: 5px 0;
+    min-height: 1.8rem;
 }
-
 
 .success {
-
-  color: #00e676;
-
+    color: #00e676;
 }
-
 
 .error {
-
-  color: #ff5252;
-
+    color: #ff5252;
 }
-
 
 .scanning {
-
-  color: #ffeb3b;
-
+    color: #ffeb3b;
 }
 
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+table {
+    width: 100%;
+    margin-top: 8px;
+    border-collapse: collapse;
+    font-size: 1rem;
+}
+
+th,
+td {
+    border: 1px solid #777;
+    padding: 7px;
+    text-align: center;
+}
+
+th {
+    background: #222;
+}
+
+/* =========================================================
+   LIVE VIEW
+   ========================================================= */
+
+.livePositionTable {
+    margin-bottom: 20px;
+}
+
+.livePositionTitle {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    color: #00e676;
+}
 
 /* =========================================================
    VERIFICATION BOX
    ========================================================= */
 
 .verificationOverlay {
+    position: fixed;
 
-  display: none;
+    inset: 0;
 
-  position: fixed;
+    background: rgba(0,0,0,0.75);
 
-  inset: 0;
+    display: none;
 
-  background: rgba(0,0,0,0.82);
+    align-items: center;
+    justify-content: center;
 
-  z-index: 9999;
+    z-index: 9999;
 
-  align-items: center;
+    padding: 20px;
 
-  justify-content: center;
-
-  padding: 20px;
-
-  box-sizing: border-box;
-
+    box-sizing: border-box;
 }
-
 
 .verificationOverlay.active {
-
-  display: flex;
-
+    display: flex;
 }
-
 
 .verificationBox {
+    width: 100%;
+    max-width: 500px;
 
-  width: 95%;
+    background: #202020;
 
-  max-width: 650px;
+    border: 3px solid #00e676;
 
-  background: #222;
+    border-radius: 18px;
 
-  border: 4px solid #00e676;
+    padding: 25px;
 
-  border-radius: 20px;
+    box-sizing: border-box;
 
-  padding: 25px 15px;
-
-  box-sizing: border-box;
-
+    box-shadow:
+        0 0 30px rgba(0,0,0,0.8);
 }
 
-
-.verificationTitle {
-
-  font-size: 2rem;
-
-  color: #00e676;
-
-  margin-bottom: 15px;
-
+.verificationBox h2 {
+    margin-top: 0;
+    font-size: 2rem;
 }
-
-
-.verificationLabel {
-
-  font-size: 1.2rem;
-
-  color: #aaa;
-
-}
-
 
 .verificationAWB {
+    font-size: 3rem;
+    font-weight: bold;
 
-  font-size: 3rem;
+    margin: 20px 0;
 
-  font-weight: bold;
+    color: #00e676;
 
-  margin: 15px 0 25px;
-
-  word-break: break-all;
-
+    word-break: break-all;
 }
 
-
-.verificationButtons {
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
+.verifyButton {
+    background: #43a047;
 }
 
+.cancelVerifyButton {
+    background: #d32f2f;
+}
 
 /* =========================================================
-   TABLES
+   VERSION
    ========================================================= */
 
-.tableContainer {
+.version {
+    position: fixed;
+    bottom: 4px;
+    right: 6px;
 
-  width: 100%;
+    font-size: 0.55rem;
 
-  overflow-x: auto;
+    color: #666;
 
+    pointer-events: none;
 }
-
-
-table {
-
-  width: 100%;
-
-  margin-top: 10px;
-
-  border-collapse: collapse;
-
-  font-size: 1rem;
-
-}
-
-
-th,
-td {
-
-  border: 1px solid #777;
-
-  padding: 8px;
-
-  text-align: center;
-
-}
-
-
-th {
-
-  background: #252525;
-
-}
-
-
-tr:nth-child(even) {
-
-  background: #1b1b1b;
-
-}
-
-
-/* =========================================================
-   LIVE VIEW POSITION TABLE
-   ========================================================= */
-
-.livePositionSection {
-
-  width: 100%;
-
-  margin: 12px 0 25px;
-
-  border: 1px solid #444;
-
-  border-radius: 10px;
-
-  overflow: hidden;
-
-}
-
-
-.livePositionTitle {
-
-  background: #252525;
-
-  padding: 10px;
-
-  font-size: 1.5rem;
-
-  font-weight: bold;
-
-  color: #00e676;
-
-}
-
-
-/* =========================================================
-   HIDDEN
-   ========================================================= */
-
-.hidden {
-
-  display: none !important;
-
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
 
 @media (max-width: 600px) {
 
-  h2 {
+    h2 {
+        font-size: 2.3rem;
+    }
 
-    font-size: 2.3rem;
+    h3 {
+        font-size: 1.5rem;
+    }
 
-  }
+    input,
+    button {
+        font-size: 1.35rem;
+        padding: 0.9rem;
+    }
 
+    .cameraContainer {
+        height: 165px;
+    }
 
-  h3 {
+    .verificationAWB {
+        font-size: 2.5rem;
+    }
 
-    font-size: 1.5rem;
+    table {
+        font-size: 0.82rem;
+    }
 
-  }
-
-
-  input,
-  button {
-
-    font-size: 1.35rem;
-
-    padding: 0.9rem;
-
-  }
-
-
-  .verificationAWB {
-
-    font-size: 2.3rem;
-
-  }
-
-
-  table {
-
-    font-size: 0.85rem;
-
-  }
-
-
-  th,
-  td {
-
-    padding: 6px;
-
-  }
-
+    th,
+    td {
+        padding: 5px;
+    }
 }
 
 </style>
-
 </head>
-
 
 <body>
 
-
 <div class="container">
 
-
-<!-- ======================================================
+<!-- =========================================================
      HOME
-     ====================================================== -->
+     ========================================================= -->
 
 <div id="home" class="screen visible">
 
-  <h2>First Air Builder</h2>
+    <h2>First Air Builder</h2>
 
-  <div class="version">
-    Version 2.0
-  </div>
+    <input
+        type="text"
+        id="userName"
+        placeholder="Enter User Name"
+        autocomplete="off">
 
+    <button onclick="goToAllocate()">
+        ALLOCATE
+    </button>
 
-  <input
-    type="text"
-    id="userName"
-    placeholder="Enter User Name"
-    autocomplete="off"
-  >
+    <button onclick="goToOffload()">
+        OFFLOAD
+    </button>
 
+    <button onclick="goToLiveView()">
+        LIVE VIEW
+    </button>
 
-  <button onclick="goToAllocate()">
-    ALLOCATE
-  </button>
-
-
-  <button onclick="goToOffload()">
-    OFFLOAD
-  </button>
-
-
-  <button onclick="goToLiveView()">
-    LIVE VIEW
-  </button>
-
-
-  <button onclick="exportToCSV()">
-    EXPORT
-  </button>
+    <button onclick="exportToCSV()">
+        EXPORT
+    </button>
 
 </div>
 
 
-<!-- ======================================================
+<!-- =========================================================
      ALLOCATE START
-     ====================================================== -->
+     ========================================================= -->
 
 <div id="allocateStart" class="screen">
 
-  <h3>Allocate Airway Bills</h3>
+    <h3>Allocate Airway Bills</h3>
 
+    <input
+        type="text"
+        id="allocatePositionId"
+        placeholder="Enter Position ID"
+        autocomplete="off">
 
-  <input
-    type="text"
-    id="allocatePositionId"
-    placeholder="Enter Position ID"
-    autocomplete="off"
-  >
+    <button onclick="startAllocate()">
+        START
+    </button>
 
-
-  <button onclick="startAllocate()">
-    START
-  </button>
-
-
-  <button
-    class="backButton"
-    onclick="goHome()">
-
-    ⬅ BACK
-
-  </button>
+    <button class="backButton"
+            onclick="goHome()">
+        ⬅ BACK
+    </button>
 
 </div>
 
 
-<!-- ======================================================
+<!-- =========================================================
      ALLOCATE SCAN
-     ====================================================== -->
+     ========================================================= -->
 
 <div id="allocateScan" class="screen">
 
-  <h3>ALLOCATE</h3>
+    <h3>
+        Position:
+        <span id="allocPosition"></span>
+        <br>
+        User:
+        <span id="allocUser"></span>
+    </h3>
 
+    <button
+        id="openAllocateCameraButton"
+        class="cameraButton"
+        onclick="openAllocateCamera()">
 
-  <div class="infoBox">
+        📷 OPEN CAMERA
 
-    Position:
-    <span id="allocPosition"></span>
+    </button>
 
-    &nbsp;&nbsp;
+    <div
+        id="allocateCameraContainer"
+        class="cameraContainer">
 
-    User:
-    <span id="allocUser"></span>
+        <video
+            id="allocateVideo"
+            autoplay
+            playsinline
+            muted>
+        </video>
 
-  </div>
+        <div class="scanBox"></div>
 
+        <div class="scanText">
+            Place AWB inside green box
+        </div>
 
-  <button
-    id="openAllocateCameraButton"
-    class="cameraButton"
-    onclick="openAllocateCamera()">
+    </div>
 
-    📷 OPEN CAMERA
+    <div
+        id="allocateCameraStatus"
+        class="cameraStatus">
 
-  </button>
+        Camera is closed
 
+    </div>
 
-  <!-- CAMERA -->
+    <button
+        id="closeAllocateButton"
+        class="stopButton hidden"
+        onclick="closeCamera()">
 
-  <div
-    id="allocateCameraContainer"
-    class="cameraContainer">
+        ✖ CLOSE CAMERA
 
-    <video
-      id="allocateVideo"
-      class="realCamera"
-      autoplay
-      playsinline
-      muted>
-    </video>
-
-
-    <canvas
-      id="allocatePreview">
-    </canvas>
-
-
-    <div class="scanBox"></div>
-
-  </div>
-
-
-  <div
-    id="allocateCameraStatus"
-    class="cameraStatus">
-
-    Camera is closed
-
-  </div>
-
-
-  <button
-    id="closeAllocateButton"
-    class="stopButton hidden"
-    onclick="closeCamera()">
-
-    ✖ CLOSE CAMERA
-
-  </button>
-
-
-  <div class="tableContainer">
+    </button>
 
     <table>
 
-      <thead>
-
+        <thead>
         <tr>
-
-          <th>#</th>
-
-          <th>AWB</th>
-
-          <th>Scanned At</th>
-
-          <th>Scanned By</th>
-
+            <th>#</th>
+            <th>Airway Bill</th>
+            <th>Scanned At</th>
+            <th>Scanned By</th>
         </tr>
+        </thead>
 
-      </thead>
-
-
-      <tbody id="scanTable"></tbody>
+        <tbody id="scanTable"></tbody>
 
     </table>
 
-  </div>
+    <button
+        class="backButton"
+        onclick="goHome()">
 
+        ⬅ BACK
 
-  <button
-    class="backButton"
-    onclick="goHome()">
-
-    ⬅ BACK
-
-  </button>
+    </button>
 
 </div>
 
 
-<!-- ======================================================
+<!-- =========================================================
      OFFLOAD START
-     ====================================================== -->
+     ========================================================= -->
 
 <div id="offloadStart" class="screen">
 
-  <h3>Offload Airway Bills</h3>
+    <h3>Offload Airway Bills</h3>
 
+    <input
+        type="text"
+        id="offloadPositionId"
+        placeholder="Enter Position ID"
+        autocomplete="off">
 
-  <input
-    type="text"
-    id="offloadPositionId"
-    placeholder="Enter Position ID"
-    autocomplete="off"
-  >
+    <button onclick="startOffload()">
+        START
+    </button>
 
+    <button
+        class="backButton"
+        onclick="goHome()">
 
-  <button onclick="startOffload()">
+        ⬅ BACK
 
-    START
-
-  </button>
-
-
-  <button
-    class="backButton"
-    onclick="goHome()">
-
-    ⬅ BACK
-
-  </button>
+    </button>
 
 </div>
 
 
-<!-- ======================================================
+<!-- =========================================================
      OFFLOAD SCAN
-     ====================================================== -->
+     ========================================================= -->
 
 <div id="offloadScan" class="screen">
 
-  <h3>OFFLOAD</h3>
+    <h3>
+        Offloading:
+        <span id="offloadPosition"></span>
+        <br>
+        User:
+        <span id="offloadUser"></span>
+    </h3>
 
+    <button
+        id="openOffloadCameraButton"
+        class="cameraButton"
+        onclick="openOffloadCamera()">
 
-  <div class="infoBox">
+        📷 OPEN CAMERA
 
-    Position:
-    <span id="offloadPosition"></span>
+    </button>
 
-    &nbsp;&nbsp;
+    <div
+        id="offloadCameraContainer"
+        class="cameraContainer">
 
-    User:
-    <span id="offloadUser"></span>
+        <video
+            id="offloadVideo"
+            autoplay
+            playsinline
+            muted>
+        </video>
 
-  </div>
+        <div class="scanBox"></div>
 
+        <div class="scanText">
+            Place AWB inside green box
+        </div>
 
-  <button
-    id="openOffloadCameraButton"
-    class="cameraButton"
-    onclick="openOffloadCamera()">
+    </div>
 
-    📷 OPEN CAMERA
+    <div
+        id="offloadCameraStatus"
+        class="cameraStatus">
 
-  </button>
+        Camera is closed
 
+    </div>
 
-  <!-- CAMERA -->
+    <button
+        id="closeOffloadButton"
+        class="stopButton hidden"
+        onclick="closeCamera()">
 
-  <div
-    id="offloadCameraContainer"
-    class="cameraContainer">
+        ✖ CLOSE CAMERA
 
-    <video
-      id="offloadVideo"
-      class="realCamera"
-      autoplay
-      playsinline
-      muted>
-    </video>
-
-
-    <canvas
-      id="offloadPreview">
-    </canvas>
-
-
-    <div class="scanBox"></div>
-
-  </div>
-
-
-  <div
-    id="offloadCameraStatus"
-    class="cameraStatus">
-
-    Camera is closed
-
-  </div>
-
-
-  <button
-    id="closeOffloadButton"
-    class="stopButton hidden"
-    onclick="closeCamera()">
-
-    ✖ CLOSE CAMERA
-
-  </button>
-
-
-  <div class="tableContainer">
+    </button>
 
     <table>
 
-      <thead>
-
+        <thead>
         <tr>
-
-          <th>#</th>
-
-          <th>AWB</th>
-
-          <th>Scanned At</th>
-
-          <th>Scanned By</th>
-
+            <th>#</th>
+            <th>Airway Bill</th>
+            <th>Scanned At</th>
+            <th>Scanned By</th>
         </tr>
+        </thead>
 
-      </thead>
-
-
-      <tbody id="offloadTable"></tbody>
+        <tbody id="offloadTable"></tbody>
 
     </table>
 
-  </div>
+    <button
+        class="backButton"
+        onclick="goHome()">
 
+        ⬅ BACK
 
-  <button
-    class="backButton"
-    onclick="goHome()">
-
-    ⬅ BACK
-
-  </button>
+    </button>
 
 </div>
 
 
-<!-- ======================================================
+<!-- =========================================================
      LIVE VIEW
-     ====================================================== -->
+     ========================================================= -->
 
 <div id="liveView" class="screen">
 
-  <h3>Live Scans Overview</h3>
+    <h3>Live Scans Overview</h3>
 
+    <div id="liveTables"></div>
 
-  <div id="liveTables"></div>
+    <button
+        class="backButton"
+        onclick="goHome()">
 
+        ⬅ BACK
 
-  <button
-    class="backButton"
-    onclick="goHome()">
+    </button>
 
-    ⬅ BACK
-
-  </button>
+</div>
 
 </div>
 
 
-</div>
-
-
-<!-- ======================================================
-     VERIFICATION POPUP
-     ====================================================== -->
+<!-- =========================================================
+     VERIFICATION
+     ========================================================= -->
 
 <div
-  id="verificationOverlay"
-  class="verificationOverlay">
+    id="verificationOverlay"
+    class="verificationOverlay">
 
-  <div class="verificationBox">
+    <div class="verificationBox">
 
-    <div class="verificationTitle">
+        <h2>
+            VERIFY AWB
+        </h2>
 
-      ✓ AWB DETECTED
+        <div
+            id="verificationAWB"
+            class="verificationAWB">
+        </div>
 
-    </div>
+        <p>
+            Please verify this AWB before saving.
+        </p>
 
+        <button
+            class="verifyButton"
+            onclick="confirmVerification()">
 
-    <div class="verificationLabel">
+            ✓ VERIFY & SAVE
 
-      Please verify the AWB
+        </button>
 
-    </div>
+        <button
+            class="cancelVerifyButton"
+            onclick="cancelVerification()">
 
+            ✖ CANCEL
 
-    <div
-      id="verificationAWB"
-      class="verificationAWB">
-
-    </div>
-
-
-    <div class="verificationButtons">
-
-      <button
-        class="verifyButton"
-        onclick="verifyDetectedAWB()">
-
-        ✓ VERIFY / SAVE
-
-      </button>
-
-
-      <button
-        class="cancelButton"
-        onclick="cancelDetectedAWB()">
-
-        ✖ WRONG / RESCAN
-
-      </button>
+        </button>
 
     </div>
-
-  </div>
 
 </div>
 
 
-<!-- ======================================================
+<div class="version">
+    v2.6
+</div>
+
+
+<!-- =========================================================
      TESSERACT
-     ====================================================== -->
+     ========================================================= -->
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 
 <script type="module">
 
-
 /* =========================================================
    FIREBASE
    ========================================================= */
 
 import {
-  initializeApp
+    initializeApp
 } from
 "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
 
 import {
-
-  getFirestore,
-
-  collection,
-
-  addDoc,
-
-  onSnapshot,
-
-  doc,
-
-  updateDoc,
-
-  serverTimestamp,
-
-  query,
-
-  where,
-
-  getDocs,
-
-  deleteDoc
-
+    getFirestore,
+    collection,
+    addDoc,
+    onSnapshot,
+    doc,
+    updateDoc,
+    serverTimestamp,
+    query,
+    where,
+    getDocs,
+    deleteDoc,
+    runTransaction
 } from
 "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 
 const firebaseConfig = {
 
-  apiKey:
-    "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
+    apiKey:
+        "AIzaSyB3s2DD2auW9bppmAe2ReqZxiz-jCYvd7U",
 
-  authDomain:
-    "firstairbuilder.firebaseapp.com",
+    authDomain:
+        "firstairbuilder.firebaseapp.com",
 
-  projectId:
-    "firstairbuilder",
+    projectId:
+        "firstairbuilder",
 
-  storageBucket:
-    "firstairbuilder.appspot.com",
+    storageBucket:
+        "firstairbuilder.appspot.com",
 
-  messagingSenderId:
-    "879078166665",
+    messagingSenderId:
+        "879078166665",
 
-  appId:
-    "1:879078166665:web:40f63a1b2fdfb7833d3658"
-
+    appId:
+        "1:879078166665:web:40f63a1b2fdfb7833d3658"
 };
 
 
 const app =
-  initializeApp(firebaseConfig);
+    initializeApp(firebaseConfig);
 
 
 const db =
-  getFirestore(app);
+    getFirestore(app);
 
 
 /* =========================================================
@@ -1165,38 +784,19 @@ let ocrWorker = null;
 
 let ocrBusy = false;
 
-let scanningActive = false;
+let autoScanTimer = null;
 
-let scanTimer = null;
+let pendingVerificationAWB = null;
 
-let detectedAWB = null;
-
-let cameraAnimationFrame = null;
-
-let lastPreviewTime = 0;
+let cameraClosing = false;
 
 
 /*
-   IMPORTANT PERFORMANCE SETTINGS
-
-   OCR is expensive.
-
-   We wait at least 1.5 seconds between OCR scans.
-
-   This prevents multiple OCR jobs from stacking up.
+   Prevent the same AWB from being processed repeatedly
+   while the camera is still seeing it.
 */
 
-const OCR_INTERVAL = 1500;
-
-
-/*
-   Prevent same AWB from being detected repeatedly
-   immediately after a successful scan.
-*/
-
-let lastDetectedCode = "";
-
-let lastDetectedTime = 0;
+let recentlyDetected = new Map();
 
 
 /* =========================================================
@@ -1205,19 +805,15 @@ let lastDetectedTime = 0;
 
 function switchScreen(id) {
 
-  document
-    .querySelectorAll(".screen")
-    .forEach(el => {
+    document
+        .querySelectorAll(".screen")
+        .forEach(el =>
+            el.classList.remove("visible")
+        );
 
-      el.classList.remove("visible");
-
-    });
-
-
-  document
-    .getElementById(id)
-    .classList.add("visible");
-
+    document
+        .getElementById(id)
+        .classList.add("visible");
 }
 
 
@@ -1227,360 +823,234 @@ function switchScreen(id) {
 
 window.goHome = async () => {
 
-  await closeCamera();
+    await closeCamera();
 
+    switchScreen("home");
 
-  switchScreen("home");
+    document.getElementById(
+        "allocatePositionId"
+    ).value = "";
 
+    document.getElementById(
+        "offloadPositionId"
+    ).value = "";
 
-  document
-    .getElementById("allocatePositionId")
-    .value = "";
+    document.getElementById(
+        "scanTable"
+    ).innerHTML = "";
 
+    document.getElementById(
+        "offloadTable"
+    ).innerHTML = "";
 
-  document
-    .getElementById("offloadPositionId")
-    .value = "";
+    positionId = "";
 
+    currentUser = "";
 
-  document
-    .getElementById("scanTable")
-    .innerHTML = "";
+    currentCameraMode = null;
 
+    pendingVerificationAWB = null;
 
-  document
-    .getElementById("offloadTable")
-    .innerHTML = "";
-
-
-  positionId = "";
-
-  currentUser = "";
-
-  currentCameraMode = null;
-
+    hideVerification();
 };
 
 
 /* =========================================================
-   ALLOCATE
+   USER
    ========================================================= */
 
 window.goToAllocate = () => {
 
-  currentUser =
-    document
-      .getElementById("userName")
-      .value
-      .trim();
+    currentUser =
+        document
+            .getElementById("userName")
+            .value
+            .trim();
 
+    if (!currentUser) {
 
-  if (!currentUser) {
+        alert("Please enter user name");
 
-    alert("Please enter user name");
+        return;
+    }
 
-    return;
-
-  }
-
-
-  switchScreen("allocateStart");
-
+    switchScreen("allocateStart");
 };
 
-
-window.startAllocate = async () => {
-
-  positionId =
-    document
-      .getElementById("allocatePositionId")
-      .value
-      .trim();
-
-
-  if (!positionId) {
-
-    alert("Enter Position ID");
-
-    return;
-
-  }
-
-
-  document
-    .getElementById("allocPosition")
-    .innerText =
-    positionId;
-
-
-  document
-    .getElementById("allocUser")
-    .innerText =
-    currentUser;
-
-
-  switchScreen("allocateScan");
-
-
-  await loadAllocateAWBs(positionId);
-
-};
-
-
-/* =========================================================
-   OFFLOAD
-   ========================================================= */
 
 window.goToOffload = () => {
 
-  currentUser =
-    document
-      .getElementById("userName")
-      .value
-      .trim();
+    currentUser =
+        document
+            .getElementById("userName")
+            .value
+            .trim();
 
+    if (!currentUser) {
 
-  if (!currentUser) {
+        alert("Please enter user name");
 
-    alert("Please enter user name");
+        return;
+    }
 
-    return;
-
-  }
-
-
-  switchScreen("offloadStart");
-
-};
-
-
-window.startOffload = async () => {
-
-  positionId =
-    document
-      .getElementById("offloadPositionId")
-      .value
-      .trim();
-
-
-  if (!positionId) {
-
-    alert("Enter Position ID");
-
-    return;
-
-  }
-
-
-  document
-    .getElementById("offloadPosition")
-    .innerText =
-    positionId;
-
-
-  document
-    .getElementById("offloadUser")
-    .innerText =
-    currentUser;
-
-
-  switchScreen("offloadScan");
-
-
-  await loadOffloadAWBs(positionId);
-
+    switchScreen("offloadStart");
 };
 
 
 /* =========================================================
-   EXTRACT AWB
+   AWB NORMALIZATION
    ========================================================= */
 
 function extract518Number(rawText) {
 
-  if (!rawText) {
+    if (!rawText) {
+        return null;
+    }
 
-    return null;
-
-  }
-
-
-  let text =
-    String(rawText)
-      .toUpperCase();
-
-
-  text =
-    text
-      .replace(/\r/g, " ")
-      .replace(/\n/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+    let text =
+        String(rawText)
+            .toUpperCase()
+            .replace(/\r/g, " ")
+            .replace(/\n/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
 
 
-  /*
-     Normal format
-     518-YWG-13634095
-  */
+    /*
+       Remove common OCR mistakes.
+    */
 
-  let match =
-    text.match(
-      /\b518-[A-Z]{3}-\d{8}\b/
-    );
-
-
-  if (match) {
-
-    return match[0];
-
-  }
-
-
-  /*
-     OCR may remove spaces/hyphens
-  */
-
-  match =
-    text.match(
-      /518\s*[-]?\s*[A-Z]{3}\s*[-]?\s*[0-9A-Z]{8}/
-    );
-
-
-  if (match) {
-
-    let result =
-      match[0]
-        .replace(/\s+/g, "-")
-        .replace(/--+/g, "-");
-
-
-    result =
-      result
+    text = text
         .replace(/O/g, "0")
         .replace(/I/g, "1")
         .replace(/L/g, "1");
 
 
-    if (
-      /^518-[A-Z]{3}-\d{8}$/
-        .test(result)
-    ) {
+    /*
+       Standard format.
+    */
 
-      return result;
+    let match =
+        text.match(
+            /518\s*[-]?\s*YWG\s*[-]?\s*(\d{8})/
+        );
+
+
+    if (match) {
+
+        return "518-YWG-" + match[1];
 
     }
 
-  }
+
+    /*
+       More forgiving OCR format.
+    */
+
+    match =
+        text.match(
+            /518[^0-9A-Z]{0,3}YWG[^0-9A-Z]{0,3}(\d{8})/
+        );
 
 
-  return null;
+    if (match) {
 
+        return "518-YWG-" + match[1];
+
+    }
+
+
+    return null;
 }
 
 
 /* =========================================================
-   GET ONLY NUMBER AFTER 518-YWG-
+   DISPLAY ONLY NUMBER
    ========================================================= */
 
-function getAWBNumber(code) {
+function displayAWB(code) {
 
-  if (!code) {
+    if (!code) {
+        return "";
+    }
 
-    return "";
+    const match =
+        String(code)
+            .match(
+                /518-YWG-(\d{8})/i
+            );
 
-  }
+    if (match) {
+        return match[1];
+    }
 
-
-  const match =
-    String(code)
-      .toUpperCase()
-      .match(
-        /^518-YWG-(\d{8})$/
-      );
-
-
-  if (match) {
-
-    return match[1];
-
-  }
-
-
-  return code;
-
+    return code;
 }
 
 
 /* =========================================================
-   OCR INITIALIZATION
+   OCR
    ========================================================= */
 
 async function initializeOCR() {
 
-  if (ocrWorker) {
-
-    return true;
-
-  }
-
-
-  setStatus(
-    "Loading OCR engine...",
-    "scanning"
-  );
-
-
-  try {
-
-    ocrWorker =
-      await Tesseract.createWorker(
-        "eng",
-        1,
-        {
-
-          logger(info) {
-
-            console.log(
-              "OCR:",
-              info.status,
-              info.progress
-            );
-
-          }
-
-        }
-      );
-
-
-    await ocrWorker.setParameters({
-
-      tessedit_char_whitelist:
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ",
-
-      preserve_interword_spaces:
-        "1"
-
-    });
-
-
-    return true;
-
-
-  } catch (error) {
-
-    console.error(error);
-
+    if (ocrWorker) {
+        return true;
+    }
 
     setStatus(
-      "❌ Could not load OCR.",
-      "error"
+        "Loading scanner...",
+        "scanning"
     );
 
+    try {
 
-    return false;
+        ocrWorker =
+            await Tesseract.createWorker(
+                "eng",
+                1,
+                {
+                    logger: info => {
+                        console.log(
+                            "OCR:",
+                            info.status,
+                            info.progress
+                        );
+                    }
+                }
+            );
 
-  }
 
+        await ocrWorker.setParameters({
+
+            tessedit_char_whitelist:
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-",
+
+            /*
+              Page segmentation mode 7 =
+              single line of text.
+            */
+
+            tessedit_pageseg_mode: "7",
+
+            preserve_interword_spaces: "0"
+
+        });
+
+
+        return true;
+
+    } catch (error) {
+
+        console.error(error);
+
+        setStatus(
+            "❌ OCR could not load.",
+            "error"
+        );
+
+        return false;
+    }
 }
 
 
@@ -1590,830 +1060,34 @@ async function initializeOCR() {
 
 function setStatus(message, type = "") {
 
-  if (
-    currentCameraMode ===
-    "allocate"
-  ) {
+    let el = null;
 
-    const el =
-      document.getElementById(
-        "allocateCameraStatus"
-      );
+    if (currentCameraMode === "allocate") {
 
+        el =
+            document.getElementById(
+                "allocateCameraStatus"
+            );
 
-    el.innerText =
-      message;
+    }
 
+    if (currentCameraMode === "offload") {
 
-    el.className =
-      "cameraStatus " + type;
+        el =
+            document.getElementById(
+                "offloadCameraStatus"
+            );
 
-  }
+    }
 
+    if (el) {
 
-  if (
-    currentCameraMode ===
-    "offload"
-  ) {
+        el.innerText = message;
 
-    const el =
-      document.getElementById(
-        "offloadCameraStatus"
-      );
-
-
-    el.innerText =
-      message;
-
-
-    el.className =
-      "cameraStatus " + type;
-
-  }
-
+        el.className =
+            "cameraStatus " + type;
+    }
 }
-
-
-/* =========================================================
-   CAMERA PREVIEW
-   ========================================================= */
-
-/*
-   We crop the real camera.
-
-   The original camera resolution may be 1280x720.
-
-   We take the CENTER 84% width and CENTER 40% height.
-
-   That is the area that used to be inside the green box.
-
-   Only that crop gets displayed.
-*/
-
-function updatePreview() {
-
-  if (!cameraStream ||
-      !currentCameraMode) {
-
-    return;
-
-  }
-
-
-  const video =
-    currentCameraMode === "allocate"
-
-      ? document.getElementById(
-          "allocateVideo"
-        )
-
-      : document.getElementById(
-          "offloadVideo"
-        );
-
-
-  const canvas =
-    currentCameraMode === "allocate"
-
-      ? document.getElementById(
-          "allocatePreview"
-        )
-
-      : document.getElementById(
-          "offloadPreview"
-        );
-
-
-  if (
-    !video ||
-    video.readyState <
-      HTMLMediaElement.HAVE_CURRENT_DATA
-  ) {
-
-    cameraAnimationFrame =
-      requestAnimationFrame(
-        updatePreview
-      );
-
-    return;
-
-  }
-
-
-  /*
-     Only update preview about 15 FPS.
-
-     We don't need 30/60 FPS for OCR.
-     This saves CPU on the Zebra.
-  */
-
-  const now =
-    performance.now();
-
-
-  if (
-    now - lastPreviewTime <
-    66
-  ) {
-
-    cameraAnimationFrame =
-      requestAnimationFrame(
-        updatePreview
-      );
-
-    return;
-
-  }
-
-
-  lastPreviewTime =
-    now;
-
-
-  const width =
-    video.videoWidth;
-
-
-  const height =
-    video.videoHeight;
-
-
-  if (!width || !height) {
-
-    cameraAnimationFrame =
-      requestAnimationFrame(
-        updatePreview
-      );
-
-    return;
-
-  }
-
-
-  /*
-     SAME CROP AS OCR
-  */
-
-  const cropWidth =
-    Math.floor(width * 0.84);
-
-
-  const cropHeight =
-    Math.floor(height * 0.40);
-
-
-  const cropX =
-    Math.floor(
-      (width - cropWidth) / 2
-    );
-
-
-  const cropY =
-    Math.floor(
-      (height - cropHeight) / 2
-    );
-
-
-  /*
-     Keep the preview at a manageable resolution.
-
-     This greatly reduces memory/CPU use.
-  */
-
-  const outputWidth =
-    Math.min(
-      cropWidth,
-      900
-    );
-
-
-  const outputHeight =
-    Math.floor(
-      outputWidth *
-      cropHeight /
-      cropWidth
-    );
-
-
-  if (
-    canvas.width !== outputWidth ||
-    canvas.height !== outputHeight
-  ) {
-
-    canvas.width =
-      outputWidth;
-
-    canvas.height =
-      outputHeight;
-
-  }
-
-
-  const ctx =
-    canvas.getContext(
-      "2d",
-      {
-        alpha: false
-      }
-    );
-
-
-  ctx.drawImage(
-
-    video,
-
-    cropX,
-    cropY,
-    cropWidth,
-    cropHeight,
-
-    0,
-    0,
-    outputWidth,
-    outputHeight
-
-  );
-
-
-  cameraAnimationFrame =
-    requestAnimationFrame(
-      updatePreview
-    );
-
-}
-
-
-/* =========================================================
-   CAPTURE OCR FRAME
-   ========================================================= */
-
-function captureFrame() {
-
-  const video =
-    currentCameraMode === "allocate"
-
-      ? document.getElementById(
-          "allocateVideo"
-        )
-
-      : document.getElementById(
-          "offloadVideo"
-        );
-
-
-  if (
-    !video ||
-    video.readyState <
-      HTMLMediaElement.HAVE_CURRENT_DATA
-  ) {
-
-    return null;
-
-  }
-
-
-  const width =
-    video.videoWidth;
-
-
-  const height =
-    video.videoHeight;
-
-
-  if (!width || !height) {
-
-    return null;
-
-  }
-
-
-  /*
-     Same exact area as the visible green box.
-  */
-
-  const cropWidth =
-    Math.floor(width * 0.84);
-
-
-  const cropHeight =
-    Math.floor(height * 0.40);
-
-
-  const cropX =
-    Math.floor(
-      (width - cropWidth) / 2
-    );
-
-
-  const cropY =
-    Math.floor(
-      (height - cropHeight) / 2
-    );
-
-
-  /*
-     Don't give Tesseract a giant image.
-  */
-
-  const maxWidth = 900;
-
-
-  const outputWidth =
-    Math.min(
-      cropWidth,
-      maxWidth
-    );
-
-
-  const outputHeight =
-    Math.floor(
-      outputWidth *
-      cropHeight /
-      cropWidth
-    );
-
-
-  const canvas =
-    document.createElement(
-      "canvas"
-    );
-
-
-  canvas.width =
-    outputWidth;
-
-
-  canvas.height =
-    outputHeight;
-
-
-  const ctx =
-    canvas.getContext(
-      "2d",
-      {
-        willReadFrequently: true
-      }
-    );
-
-
-  /*
-     Moderate contrast.
-
-     Do NOT use aggressive filters because
-     they can actually make OCR worse.
-  */
-
-  ctx.filter =
-    "contrast(1.15)";
-
-
-  ctx.drawImage(
-
-    video,
-
-    cropX,
-    cropY,
-    cropWidth,
-    cropHeight,
-
-    0,
-    0,
-    outputWidth,
-    outputHeight
-
-  );
-
-
-  ctx.filter =
-    "none";
-
-
-  return canvas;
-
-}
-
-
-/* =========================================================
-   START CONTINUOUS SCANNING
-   ========================================================= */
-
-async function startContinuousScanning() {
-
-  if (scanningActive) {
-
-    return;
-
-  }
-
-
-  scanningActive =
-    true;
-
-
-  setStatus(
-    "🔍 Scanning automatically...",
-    "scanning"
-  );
-
-
-  /*
-     Don't start another loop if one already exists.
-  */
-
-  if (scanTimer) {
-
-    clearTimeout(scanTimer);
-
-    scanTimer =
-      null;
-
-  }
-
-
-  continuousScanLoop();
-
-}
-
-
-/* =========================================================
-   CONTINUOUS SCAN LOOP
-   ========================================================= */
-
-async function continuousScanLoop() {
-
-  if (!scanningActive ||
-      !cameraStream ||
-      !currentCameraMode) {
-
-    return;
-
-  }
-
-
-  /*
-     If OCR is busy, DON'T start another OCR operation.
-
-     This is one of the most important fixes for
-     the camera hanging.
-  */
-
-  if (!ocrBusy) {
-
-    await performOCRScan();
-
-  }
-
-
-  /*
-     Wait before the next scan.
-
-     setTimeout prevents OCR operations from stacking.
-  */
-
-  if (scanningActive) {
-
-    scanTimer =
-      setTimeout(
-
-        continuousScanLoop,
-
-        OCR_INTERVAL
-
-      );
-
-  }
-
-}
-
-
-/* =========================================================
-   OCR SCAN
-   ========================================================= */
-
-async function performOCRScan() {
-
-  if (
-    ocrBusy ||
-    !scanningActive ||
-    !cameraStream
-  ) {
-
-    return;
-
-  }
-
-
-  if (!ocrWorker) {
-
-    const loaded =
-      await initializeOCR();
-
-
-    if (!loaded) {
-
-      return;
-
-    }
-
-  }
-
-
-  ocrBusy =
-    true;
-
-
-  try {
-
-    const canvas =
-      captureFrame();
-
-
-    if (!canvas) {
-
-      return;
-
-    }
-
-
-    const result =
-      await ocrWorker.recognize(
-        canvas
-      );
-
-
-    /*
-       Explicitly release our reference.
-
-       Browser garbage collection will clean
-       the temporary canvas.
-    */
-
-    const rawText =
-      result.data.text;
-
-
-    console.log(
-      "OCR:",
-      rawText
-    );
-
-
-    const awb =
-      extract518Number(
-        rawText
-      );
-
-
-    if (!awb) {
-
-      return;
-
-    }
-
-
-    /*
-       Don't repeatedly show the same AWB
-       every 1.5 seconds.
-    */
-
-    const now =
-      Date.now();
-
-
-    if (
-      awb === lastDetectedCode &&
-      now - lastDetectedTime <
-        5000
-    ) {
-
-      return;
-
-    }
-
-
-    lastDetectedCode =
-      awb;
-
-
-    lastDetectedTime =
-      now;
-
-
-    /*
-       STOP scanning while user verifies.
-    */
-
-    scanningActive =
-      false;
-
-
-    if (scanTimer) {
-
-      clearTimeout(
-        scanTimer
-      );
-
-      scanTimer =
-        null;
-
-    }
-
-
-    detectedAWB =
-      awb;
-
-
-    showVerification(
-      awb
-    );
-
-
-    vibrate();
-
-  } catch (error) {
-
-    console.error(
-      "OCR error:",
-      error
-    );
-
-  } finally {
-
-    ocrBusy =
-      false;
-
-  }
-
-}
-
-
-/* =========================================================
-   VERIFICATION
-   ========================================================= */
-
-function showVerification(code) {
-
-  const overlay =
-    document.getElementById(
-      "verificationOverlay"
-    );
-
-
-  const awbElement =
-    document.getElementById(
-      "verificationAWB"
-    );
-
-
-  awbElement.innerText =
-    getAWBNumber(code);
-
-
-  overlay.classList.add(
-    "active"
-  );
-
-}
-
-
-window.verifyDetectedAWB =
-  async () => {
-
-    if (!detectedAWB) {
-
-      return;
-
-    }
-
-
-    const code =
-      detectedAWB;
-
-
-    /*
-       Hide verification first.
-    */
-
-    document
-      .getElementById(
-        "verificationOverlay"
-      )
-      .classList.remove(
-        "active"
-      );
-
-
-    detectedAWB =
-      null;
-
-
-    /*
-       Save depending on mode.
-    */
-
-    if (
-      currentCameraMode ===
-      "allocate"
-    ) {
-
-      await handleScan(
-        code
-      );
-
-    }
-
-
-    if (
-      currentCameraMode ===
-      "offload"
-    ) {
-
-      await handleOffload(
-        code
-      );
-
-    }
-
-
-    /*
-       Resume automatic scanning.
-    */
-
-    if (
-      cameraStream &&
-      currentCameraMode
-    ) {
-
-      scanningActive =
-        true;
-
-
-      setStatus(
-        "🔍 Scanning automatically...",
-        "scanning"
-      );
-
-
-      continuousScanLoop();
-
-    }
-
-  };
-
-
-window.cancelDetectedAWB =
-  () => {
-
-    detectedAWB =
-      null;
-
-
-    document
-      .getElementById(
-        "verificationOverlay"
-      )
-      .classList.remove(
-        "active"
-      );
-
-
-    /*
-       Reset duplicate protection so the
-       camera can detect the same label again.
-    */
-
-    lastDetectedCode =
-      "";
-
-
-    lastDetectedTime =
-      0;
-
-
-    /*
-       Resume scanning.
-    */
-
-    if (
-      cameraStream &&
-      currentCameraMode
-    ) {
-
-      scanningActive =
-        true;
-
-
-      setStatus(
-        "🔍 Scanning automatically...",
-        "scanning"
-      );
-
-
-      continuousScanLoop();
-
-    }
-
-  };
 
 
 /* =========================================================
@@ -2422,204 +1096,644 @@ window.cancelDetectedAWB =
 
 async function startCamera(mode) {
 
-  await closeCamera();
+    currentCameraMode = mode;
+
+    await closeCamera();
+
+    currentCameraMode = mode;
+
+    const video =
+        mode === "allocate"
+            ? document.getElementById("allocateVideo")
+            : document.getElementById("offloadVideo");
 
 
-  currentCameraMode =
-    mode;
+    const container =
+        mode === "allocate"
+            ? document.getElementById("allocateCameraContainer")
+            : document.getElementById("offloadCameraContainer");
 
 
-  const video =
-    mode === "allocate"
+    const openButton =
+        mode === "allocate"
+            ? document.getElementById(
+                "openAllocateCameraButton"
+              )
+            : document.getElementById(
+                "openOffloadCameraButton"
+              );
 
-      ? document.getElementById(
-          "allocateVideo"
-        )
 
-      : document.getElementById(
-          "offloadVideo"
+    const closeButton =
+        mode === "allocate"
+            ? document.getElementById(
+                "closeAllocateButton"
+              )
+            : document.getElementById(
+                "closeOffloadButton"
+              );
+
+
+    try {
+
+        setStatus(
+            "Starting camera...",
+            "scanning"
         );
 
 
-  const container =
-    mode === "allocate"
+        cameraStream =
+            await navigator.mediaDevices.getUserMedia({
 
-      ? document.getElementById(
-          "allocateCameraContainer"
-        )
+                video: {
 
-      : document.getElementById(
-          "offloadCameraContainer"
+                    facingMode: {
+                        ideal: "environment"
+                    },
+
+                    width: {
+                        ideal: 1280
+                    },
+
+                    height: {
+                        ideal: 720
+                    },
+
+                    frameRate: {
+                        ideal: 30,
+                        max: 30
+                    }
+
+                },
+
+                audio: false
+
+            });
+
+
+        video.srcObject =
+            cameraStream;
+
+
+        await video.play();
+
+
+        container.classList.add("active");
+
+        openButton.classList.add("hidden");
+
+        closeButton.classList.remove("hidden");
+
+
+        setStatus(
+            "🔎 Automatic scanning...",
+            "scanning"
         );
 
 
-  const openButton =
-    mode === "allocate"
+        await initializeOCR();
 
-      ? document.getElementById(
-          "openAllocateCameraButton"
-        )
 
-      : document.getElementById(
-          "openOffloadCameraButton"
+        /*
+           Start automatic scanning.
+        */
+
+        startAutoScanning();
+
+
+    } catch (error) {
+
+        console.error(
+            "Camera error:",
+            error
         );
 
-
-  const closeButton =
-    mode === "allocate"
-
-      ? document.getElementById(
-          "closeAllocateButton"
-        )
-
-      : document.getElementById(
-          "closeOffloadButton"
+        setStatus(
+            "❌ Camera error: " +
+            error.message,
+            "error"
         );
 
-
-  try {
-
-    setStatus(
-      "📷 Starting camera...",
-      "scanning"
-    );
-
-
-    cameraStream =
-      await navigator
-        .mediaDevices
-        .getUserMedia({
-
-          video: {
-
-            facingMode: {
-              ideal: "environment"
-            },
-
-            width: {
-              ideal: 1280
-            },
-
-            height: {
-              ideal: 720
-            },
-
-            frameRate: {
-              ideal: 15,
-              max: 24
-            }
-
-          },
-
-          audio: false
-
-        });
-
-
-    video.srcObject =
-      cameraStream;
-
-
-    await video.play();
-
-
-    container.classList.add(
-      "active"
-    );
-
-
-    openButton.classList.add(
-      "hidden"
-    );
-
-
-    closeButton.classList.remove(
-      "hidden"
-    );
-
-
-    /*
-       Start visible cropped preview.
-    */
-
-    lastPreviewTime =
-      0;
-
-
-    updatePreview();
-
-
-    /*
-       Load OCR.
-
-       Only after OCR is ready do we start scanning.
-    */
-
-    const loaded =
-      await initializeOCR();
-
-
-    if (!loaded) {
-
-      return;
-
+        alert(
+            "Camera could not be opened.\n\n" +
+            "Make sure Chrome has camera permission."
+        );
     }
-
-
-    startContinuousScanning();
-
-
-  } catch (error) {
-
-    console.error(
-      "Camera error:",
-      error
-    );
-
-
-    setStatus(
-      "❌ Camera error: " +
-      error.message,
-      "error"
-    );
-
-
-    alert(
-      "Camera could not be opened.\n\n" +
-      "Make sure Chrome has permission to use the camera."
-    );
-
-  }
-
 }
 
 
 /* =========================================================
-   OPEN ALLOCATE CAMERA
+   OPEN CAMERA
    ========================================================= */
 
 window.openAllocateCamera =
-  async () => {
+    async () => {
 
-    await startCamera(
-      "allocate"
-    );
+        await startCamera("allocate");
 
-  };
+    };
+
+
+window.openOffloadCamera =
+    async () => {
+
+        await startCamera("offload");
+
+    };
 
 
 /* =========================================================
-   OPEN OFFLOAD CAMERA
+   STOP AUTO SCANNING
    ========================================================= */
 
-window.openOffloadCamera =
-  async () => {
+function stopAutoScanning() {
 
-    await startCamera(
-      "offload"
+    if (autoScanTimer) {
+
+        clearTimeout(autoScanTimer);
+
+        autoScanTimer = null;
+    }
+}
+
+
+/* =========================================================
+   AUTOMATIC SCANNING
+   ========================================================= */
+
+function startAutoScanning() {
+
+    stopAutoScanning();
+
+    scheduleNextScan();
+}
+
+
+function scheduleNextScan() {
+
+    if (!cameraStream) {
+        return;
+    }
+
+    if (!currentCameraMode) {
+        return;
+    }
+
+    autoScanTimer =
+        setTimeout(
+            async () => {
+
+                await automaticScan();
+
+                scheduleNextScan();
+
+            },
+
+            /*
+              Don't scan continuously.
+              This prevents TC77 from hanging.
+            */
+
+            350
+        );
+}
+
+
+/* =========================================================
+   AUTOMATIC OCR
+   ========================================================= */
+
+async function automaticScan() {
+
+    if (ocrBusy) {
+        return;
+    }
+
+    if (!ocrWorker) {
+        return;
+    }
+
+    if (!cameraStream) {
+        return;
+    }
+
+    /*
+       Don't OCR while verification popup is open.
+    */
+
+    if (pendingVerificationAWB) {
+        return;
+    }
+
+    ocrBusy = true;
+
+    try {
+
+        const canvas =
+            captureFrame();
+
+        if (!canvas) {
+            return;
+        }
+
+
+        const result =
+            await ocrWorker.recognize(
+                canvas
+            );
+
+
+        const awb =
+            extract518Number(
+                result.data.text
+            );
+
+
+        if (!awb) {
+            return;
+        }
+
+
+        /*
+           Prevent the same AWB from
+           triggering repeatedly.
+        */
+
+        const now =
+            Date.now();
+
+        const previous =
+            recentlyDetected.get(awb) || 0;
+
+
+        if (
+            now - previous <
+            5000
+        ) {
+
+            return;
+        }
+
+
+        recentlyDetected.set(
+            awb,
+            now
+        );
+
+
+        console.log(
+            "AWB FOUND:",
+            awb
+        );
+
+
+        vibrate();
+
+
+        /*
+           Stop automatic OCR while
+           user verifies the AWB.
+        */
+
+        stopAutoScanning();
+
+
+        showVerification(
+            awb
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Automatic OCR error:",
+            error
+        );
+
+    } finally {
+
+        ocrBusy = false;
+    }
+}
+
+
+/* =========================================================
+   CAPTURE ONLY GREEN BOX
+   ========================================================= */
+
+function captureFrame() {
+
+    const video =
+        currentCameraMode === "allocate"
+            ? document.getElementById("allocateVideo")
+            : document.getElementById("offloadVideo");
+
+
+    if (
+        !video ||
+        video.readyState <
+        HTMLMediaElement.HAVE_CURRENT_DATA
+    ) {
+
+        return null;
+    }
+
+
+    const width =
+        video.videoWidth;
+
+    const height =
+        video.videoHeight;
+
+
+    if (!width || !height) {
+        return null;
+    }
+
+
+    /*
+       GREEN BOX:
+
+       left  = 5%
+       right = 5%
+       top   = 15%
+       bottom= 15%
+
+       Therefore crop exactly that area.
+    */
+
+    const cropX =
+        Math.floor(width * 0.05);
+
+    const cropY =
+        Math.floor(height * 0.15);
+
+    const cropWidth =
+        Math.floor(width * 0.90);
+
+    const cropHeight =
+        Math.floor(height * 0.70);
+
+
+    /*
+       Resize OCR image.
+
+       Smaller image = faster OCR.
+    */
+
+    const scale = 0.65;
+
+
+    const canvas =
+        document.createElement(
+            "canvas"
+        );
+
+
+    canvas.width =
+        Math.floor(
+            cropWidth * scale
+        );
+
+    canvas.height =
+        Math.floor(
+            cropHeight * scale
+        );
+
+
+    const ctx =
+        canvas.getContext(
+            "2d",
+            {
+                willReadFrequently: true
+            }
+        );
+
+
+    ctx.imageSmoothingEnabled = true;
+
+
+    /*
+       Draw only the green-box image.
+    */
+
+    ctx.drawImage(
+
+        video,
+
+        cropX,
+        cropY,
+
+        cropWidth,
+        cropHeight,
+
+        0,
+        0,
+
+        canvas.width,
+        canvas.height
+
     );
 
-  };
+
+    /*
+       Increase contrast for AWB text.
+    */
+
+    const imageData =
+        ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+    const data =
+        imageData.data;
+
+
+    for (
+        let i = 0;
+        i < data.length;
+        i += 4
+    ) {
+
+        let gray =
+            0.299 * data[i] +
+            0.587 * data[i + 1] +
+            0.114 * data[i + 2];
+
+
+        /*
+           Simple contrast enhancement.
+        */
+
+        gray =
+            (gray - 128) * 1.5 + 128;
+
+
+        gray =
+            Math.max(
+                0,
+                Math.min(
+                    255,
+                    gray
+                )
+            );
+
+
+        data[i] =
+            gray;
+
+        data[i + 1] =
+            gray;
+
+        data[i + 2] =
+            gray;
+    }
+
+
+    ctx.putImageData(
+        imageData,
+        0,
+        0
+    );
+
+
+    return canvas;
+}
+
+
+/* =========================================================
+   VERIFICATION
+   ========================================================= */
+
+function showVerification(awb) {
+
+    pendingVerificationAWB =
+        awb;
+
+
+    document.getElementById(
+        "verificationAWB"
+    ).innerText =
+        displayAWB(awb);
+
+
+    document
+        .getElementById(
+            "verificationOverlay"
+        )
+        .classList.add(
+            "active"
+        );
+}
+
+
+function hideVerification() {
+
+    document
+        .getElementById(
+            "verificationOverlay"
+        )
+        .classList.remove(
+            "active"
+        );
+}
+
+
+window.cancelVerification =
+    () => {
+
+        pendingVerificationAWB =
+            null;
+
+        hideVerification();
+
+        recentlyDetected.clear();
+
+        setStatus(
+            "🔎 Scanning again...",
+            "scanning"
+        );
+
+        startAutoScanning();
+    };
+
+
+window.confirmVerification =
+    async () => {
+
+        if (!pendingVerificationAWB) {
+            return;
+        }
+
+
+        const awb =
+            pendingVerificationAWB;
+
+
+        /*
+           Keep popup closed while saving.
+        */
+
+        hideVerification();
+
+
+        pendingVerificationAWB =
+            null;
+
+
+        setStatus(
+            "💾 Saving " +
+            displayAWB(awb) +
+            "...",
+            "scanning"
+        );
+
+
+        if (
+            currentCameraMode ===
+            "allocate"
+        ) {
+
+            await handleScan(
+                awb
+            );
+
+        }
+
+
+        if (
+            currentCameraMode ===
+            "offload"
+        ) {
+
+            await handleOffload(
+                awb
+            );
+
+        }
+
+
+        /*
+           Return to automatic scanning.
+        */
+
+        if (
+            cameraStream &&
+            currentCameraMode
+        ) {
+
+            setStatus(
+                "🔎 Scanning again...",
+                "scanning"
+            );
+
+            startAutoScanning();
+        }
+    };
 
 
 /* =========================================================
@@ -2627,251 +1741,344 @@ window.openOffloadCamera =
    ========================================================= */
 
 window.closeCamera =
-  async () => {
+    async () => {
 
-    /*
-       Stop scanning immediately.
-    */
-
-    scanningActive =
-      false;
+        stopAutoScanning();
 
 
-    if (scanTimer) {
+        if (cameraStream) {
 
-      clearTimeout(
-        scanTimer
-      );
+            cameraStream
+                .getTracks()
+                .forEach(
+                    track =>
+                        track.stop()
+                );
 
-      scanTimer =
-        null;
-
-    }
-
-
-    if (cameraAnimationFrame) {
-
-      cancelAnimationFrame(
-        cameraAnimationFrame
-      );
-
-      cameraAnimationFrame =
-        null;
-
-    }
+            cameraStream =
+                null;
+        }
 
 
-    if (cameraStream) {
+        const allocateVideo =
+            document.getElementById(
+                "allocateVideo"
+            );
 
-      cameraStream
-        .getTracks()
-        .forEach(
-          track =>
-            track.stop()
-        );
-
-
-      cameraStream =
-        null;
-
-    }
+        const offloadVideo =
+            document.getElementById(
+                "offloadVideo"
+            );
 
 
-    const allocateVideo =
-      document.getElementById(
-        "allocateVideo"
-      );
+        if (allocateVideo) {
+            allocateVideo.srcObject = null;
+        }
+
+        if (offloadVideo) {
+            offloadVideo.srcObject = null;
+        }
 
 
-    const offloadVideo =
-      document.getElementById(
-        "offloadVideo"
-      );
+        document
+            .getElementById(
+                "allocateCameraContainer"
+            )
+            .classList.remove("active");
 
 
-    allocateVideo.srcObject =
-      null;
+        document
+            .getElementById(
+                "offloadCameraContainer"
+            )
+            .classList.remove("active");
 
 
-    offloadVideo.srcObject =
-      null;
+        document
+            .getElementById(
+                "openAllocateCameraButton"
+            )
+            .classList.remove("hidden");
 
 
-    document
-      .getElementById(
-        "allocateCameraContainer"
-      )
-      .classList.remove(
-        "active"
-      );
+        document
+            .getElementById(
+                "openOffloadCameraButton"
+            )
+            .classList.remove("hidden");
 
 
-    document
-      .getElementById(
-        "offloadCameraContainer"
-      )
-      .classList.remove(
-        "active"
-      );
+        document
+            .getElementById(
+                "closeAllocateButton"
+            )
+            .classList.add("hidden");
 
 
-    document
-      .getElementById(
-        "openAllocateCameraButton"
-      )
-      .classList.remove(
-        "hidden"
-      );
+        document
+            .getElementById(
+                "closeOffloadButton"
+            )
+            .classList.add("hidden");
 
 
-    document
-      .getElementById(
-        "openOffloadCameraButton"
-      )
-      .classList.remove(
-        "hidden"
-      );
+        ocrBusy = false;
 
+        currentCameraMode = null;
 
-    document
-      .getElementById(
-        "closeAllocateButton"
-      )
-      .classList.add(
-        "hidden"
-      );
+        pendingVerificationAWB = null;
 
-
-    document
-      .getElementById(
-        "closeOffloadButton"
-      )
-      .classList.add(
-        "hidden"
-      );
-
-
-    document
-      .getElementById(
-        "verificationOverlay"
-      )
-      .classList.remove(
-        "active"
-      );
-
-
-    detectedAWB =
-      null;
-
-
-    currentCameraMode =
-      null;
-
-  };
+        hideVerification();
+    };
 
 
 /* =========================================================
-   LOAD ALLOCATE AWBs
+   START ALLOCATE
    ========================================================= */
 
-async function loadAllocateAWBs(posId) {
+window.startAllocate =
+    async () => {
 
-  const table =
-    document.getElementById(
-      "scanTable"
-    );
-
-
-  table.innerHTML =
-    "<tr><td colspan='4'>Loading...</td></tr>";
-
-
-  const q =
-    query(
-
-      collection(
-        db,
-        "scans"
-      ),
-
-      where(
-        "positionId",
-        "==",
-        posId
-      )
-
-    );
+        positionId =
+            document
+                .getElementById(
+                    "allocatePositionId"
+                )
+                .value
+                .trim();
 
 
-  const snapshot =
-    await getDocs(q);
+        if (!positionId) {
+
+            alert(
+                "Enter Position ID"
+            );
+
+            return;
+        }
 
 
-  if (
-    snapshot.empty
-  ) {
+        document
+            .getElementById(
+                "allocPosition"
+            )
+            .innerText =
+            positionId;
+
+
+        document
+            .getElementById(
+                "allocUser"
+            )
+            .innerText =
+            currentUser;
+
+
+        switchScreen(
+            "allocateScan"
+        );
+
+
+        await loadAllocateAWBs(
+            positionId
+        );
+    };
+
+
+/* =========================================================
+   LOAD ALLOCATE AWBS
+   ========================================================= */
+
+async function loadAllocateAWBs(
+    posId
+) {
+
+    const table =
+        document.getElementById(
+            "scanTable"
+        );
+
 
     table.innerHTML =
-      `<tr>
-        <td colspan="4">
-          No AWBs allocated
-        </td>
-      </tr>`;
-
-    return;
-
-  }
+        "<tr><td colspan='4'>Loading...</td></tr>";
 
 
-  let html = "";
-
-  let idx = 1;
-
-
-  snapshot.forEach(
-    docSnap => {
-
-      const d =
-        docSnap.data();
-
-
-      const scannedAt =
-        d.scannedAt
-
-          ? new Date(
-              d.scannedAt.seconds *
-              1000
-            ).toLocaleString()
-
-          : "N/A";
+    const q =
+        query(
+            collection(db, "scans"),
+            where(
+                "positionId",
+                "==",
+                posId
+            )
+        );
 
 
-      html +=
-        `<tr>
+    const snapshot =
+        await getDocs(q);
 
-          <td>${idx++}</td>
 
-          <td>
-            ${getAWBNumber(d.code)}
-          </td>
+    if (snapshot.empty) {
 
-          <td>
-            ${scannedAt}
-          </td>
+        table.innerHTML =
+            `<tr>
+                <td colspan="4">
+                    No AWBs allocated
+                </td>
+            </tr>`;
 
-          <td>
-            ${d.scannedBy || ""}
-          </td>
-
-        </tr>`;
-
+        return;
     }
-  );
 
 
-  table.innerHTML =
-    html;
+    let html = "";
 
+    let idx = 1;
+
+
+    snapshot.forEach(
+        docSnap => {
+
+            const d =
+                docSnap.data();
+
+
+            const scannedAt =
+                d.scannedAt
+                    ? new Date(
+                        d.scannedAt.seconds *
+                        1000
+                      ).toLocaleString()
+                    : "N/A";
+
+
+            html +=
+                `<tr>
+                    <td>${idx++}</td>
+                    <td>${displayAWB(d.code)}</td>
+                    <td>${scannedAt}</td>
+                    <td>${d.scannedBy}</td>
+                </tr>`;
+        }
+    );
+
+
+    table.innerHTML =
+        html;
+}
+
+
+/* =========================================================
+   DUPLICATE-SAFE ALLOCATION
+   ========================================================= */
+
+/*
+   THIS IS THE IMPORTANT FIX.
+
+   We create one Firestore lock document for each AWB.
+
+   Example:
+
+   awbLocks/
+       13634095
+
+   The transaction checks that lock.
+
+   If another user has already allocated it,
+   the transaction fails.
+
+   This prevents two users/devices from
+   allocating the same AWB at the same time.
+*/
+
+async function claimAWB(
+    code
+) {
+
+    const awbNumber =
+        displayAWB(code);
+
+
+    const lockRef =
+        doc(
+            db,
+            "awbLocks",
+            awbNumber
+        );
+
+
+    try {
+
+        await runTransaction(
+            db,
+            async transaction => {
+
+                const lockSnap =
+                    await transaction.get(
+                        lockRef
+                    );
+
+
+                if (lockSnap.exists()) {
+
+                    const lock =
+                        lockSnap.data();
+
+
+                    if (
+                        lock.positionId &&
+                        lock.positionId !==
+                        "[REMOVED]"
+                    ) {
+
+                        throw new Error(
+                            "DUPLICATE|" +
+                            lock.positionId +
+                            "|" +
+                            (lock.scannedBy || "")
+                        );
+                    }
+                }
+
+
+                /*
+                   Atomically claim AWB.
+                */
+
+                transaction.set(
+                    lockRef,
+                    {
+
+                        code:
+                            code,
+
+                        positionId:
+                            positionId,
+
+                        scannedBy:
+                            currentUser,
+
+                        claimedAt:
+                            serverTimestamp()
+
+                    }
+                );
+            }
+        );
+
+
+        return {
+            success: true
+        };
+
+
+    } catch (error) {
+
+        return {
+            success: false,
+            error: error
+        };
+    }
 }
 
 
@@ -2879,246 +2086,296 @@ async function loadAllocateAWBs(posId) {
    HANDLE ALLOCATE
    ========================================================= */
 
-async function handleScan(code) {
+async function handleScan(
+    code
+) {
 
-  if (!code) {
-
-    return;
-
-  }
-
-
-  const q =
-    query(
-
-      collection(
-        db,
-        "scans"
-      ),
-
-      where(
-        "code",
-        "==",
-        code
-      )
-
-    );
+    if (!code) {
+        return;
+    }
 
 
-  const snapshot =
-    await getDocs(q);
+    /*
+       First atomically claim the AWB.
+    */
+
+    const claim =
+        await claimAWB(code);
 
 
-  if (
-    !snapshot.empty
-  ) {
+    if (!claim.success) {
 
-    let duplicate =
-      null;
-
-
-    snapshot.forEach(
-      docSnap => {
-
-        const d =
-          docSnap.data();
+        const message =
+            claim.error?.message || "";
 
 
         if (
-          d.positionId !==
-          "[REMOVED]"
+            message.startsWith(
+                "DUPLICATE|"
+            )
         ) {
 
-          duplicate =
-            d;
+            const parts =
+                message.split("|");
 
+
+            const duplicatePosition =
+                parts[1] || "another position";
+
+
+            const duplicateUser =
+                parts[2] || "another user";
+
+
+            setStatus(
+                "❌ DUPLICATE AWB! " +
+                displayAWB(code) +
+                " already allocated to " +
+                duplicatePosition +
+                " by " +
+                duplicateUser,
+                "error"
+            );
+
+
+            vibrate();
+
+            return;
         }
 
-      }
-    );
+
+        console.error(
+            "Claim error:",
+            claim.error
+        );
 
 
-    if (duplicate) {
-
-      setStatus(
-
-        "❌ Duplicate AWB! Already allocated to Position ID: " +
-        duplicate.positionId,
-
-        "error"
-
-      );
+        setStatus(
+            "❌ Could not verify AWB. Try again.",
+            "error"
+        );
 
 
-      vibrate();
-
-
-      return;
-
+        return;
     }
 
-  }
+
+    try {
+
+        await addDoc(
+            collection(
+                db,
+                "scans"
+            ),
+            {
+
+                code:
+                    code,
+
+                positionId:
+                    positionId,
+
+                scannedAt:
+                    serverTimestamp(),
+
+                scannedBy:
+                    currentUser
+
+            }
+        );
 
 
-  try {
-
-    await addDoc(
-
-      collection(
-        db,
-        "scans"
-      ),
-
-      {
-
-        code:
-          code,
-
-        positionId:
-          positionId,
-
-        scannedAt:
-          serverTimestamp(),
-
-        scannedBy:
-          currentUser
-
-      }
-
-    );
+        await loadAllocateAWBs(
+            positionId
+        );
 
 
-    await loadAllocateAWBs(
-      positionId
-    );
+        setStatus(
+            "✅ Saved " +
+            displayAWB(code),
+            "success"
+        );
 
 
-    setStatus(
-      "✅ AWB saved. Scanning...",
-      "success"
-    );
+        vibrate();
 
 
-    vibrate();
+    } catch (error) {
+
+        console.error(
+            error
+        );
 
 
-  } catch (error) {
+        /*
+           If saving the scan failed,
+           release the AWB lock.
+        */
 
-    console.error(error);
+        try {
+
+            await deleteDoc(
+                doc(
+                    db,
+                    "awbLocks",
+                    displayAWB(code)
+                )
+            );
+
+        } catch (unlockError) {
+
+            console.error(
+                "Unlock error:",
+                unlockError
+            );
+        }
 
 
-    setStatus(
-      "❌ Failed to save AWB.",
-      "error"
-    );
-
-  }
-
+        setStatus(
+            "❌ Failed to save AWB.",
+            "error"
+        );
+    }
 }
 
 
 /* =========================================================
-   LOAD OFFLOAD AWBs
+   START OFFLOAD
    ========================================================= */
 
-async function loadOffloadAWBs(posId) {
+window.startOffload =
+    async () => {
 
-  const table =
-    document.getElementById(
-      "offloadTable"
-    );
-
-
-  table.innerHTML =
-    "<tr><td colspan='4'>Loading...</td></tr>";
-
-
-  const q =
-    query(
-
-      collection(
-        db,
-        "scans"
-      ),
-
-      where(
-        "positionId",
-        "==",
-        posId
-      )
-
-    );
+        const pos =
+            document
+                .getElementById(
+                    "offloadPositionId"
+                )
+                .value
+                .trim();
 
 
-  const snapshot =
-    await getDocs(q);
+        if (!pos) {
+
+            alert(
+                "Enter Position ID"
+            );
+
+            return;
+        }
 
 
-  if (
-    snapshot.empty
-  ) {
+        positionId =
+            pos;
+
+
+        document
+            .getElementById(
+                "offloadPosition"
+            )
+            .innerText =
+            positionId;
+
+
+        document
+            .getElementById(
+                "offloadUser"
+            )
+            .innerText =
+            currentUser;
+
+
+        switchScreen(
+            "offloadScan"
+        );
+
+
+        await loadOffloadAWBs(
+            positionId
+        );
+    };
+
+
+/* =========================================================
+   LOAD OFFLOAD
+   ========================================================= */
+
+async function loadOffloadAWBs(
+    posId
+) {
+
+    const table =
+        document.getElementById(
+            "offloadTable"
+        );
+
 
     table.innerHTML =
-      `<tr>
-        <td colspan="4">
-          No AWBs found
-        </td>
-      </tr>`;
-
-    return;
-
-  }
+        "<tr><td colspan='4'>Loading...</td></tr>";
 
 
-  let html = "";
-
-  let idx = 1;
-
-
-  snapshot.forEach(
-    docSnap => {
-
-      const d =
-        docSnap.data();
-
-
-      const scannedAt =
-        d.scannedAt
-
-          ? new Date(
-              d.scannedAt.seconds *
-              1000
-            ).toLocaleString()
-
-          : "N/A";
+    const q =
+        query(
+            collection(db, "scans"),
+            where(
+                "positionId",
+                "==",
+                posId
+            )
+        );
 
 
-      html +=
-        `<tr>
+    const snapshot =
+        await getDocs(q);
 
-          <td>${idx++}</td>
 
-          <td>
-            ${getAWBNumber(d.code)}
-          </td>
+    if (snapshot.empty) {
 
-          <td>
-            ${scannedAt}
-          </td>
+        table.innerHTML =
+            `<tr>
+                <td colspan="4">
+                    No AWBs found
+                </td>
+            </tr>`;
 
-          <td>
-            ${d.scannedBy || ""}
-          </td>
-
-        </tr>`;
-
+        return;
     }
-  );
 
 
-  table.innerHTML =
-    html;
+    let html = "";
 
+    let idx = 1;
+
+
+    snapshot.forEach(
+        docSnap => {
+
+            const d =
+                docSnap.data();
+
+
+            const scannedAt =
+                d.scannedAt
+                    ? new Date(
+                        d.scannedAt.seconds *
+                        1000
+                      ).toLocaleString()
+                    : "N/A";
+
+
+            html +=
+                `<tr>
+                    <td>${idx++}</td>
+                    <td>${displayAWB(d.code)}</td>
+                    <td>${scannedAt}</td>
+                    <td>${d.scannedBy}</td>
+                </tr>`;
+        }
+    );
+
+
+    table.innerHTML =
+        html;
 }
 
 
@@ -3126,364 +2383,128 @@ async function loadOffloadAWBs(posId) {
    HANDLE OFFLOAD
    ========================================================= */
 
-async function handleOffload(code) {
+async function handleOffload(
+    code
+) {
 
-  if (!code) {
-
-    return;
-
-  }
-
-
-  const q =
-    query(
-
-      collection(
-        db,
-        "scans"
-      ),
-
-      where(
-        "code",
-        "==",
-        code
-      )
-
-    );
-
-
-  const snapshot =
-    await getDocs(q);
-
-
-  if (
-    snapshot.empty
-  ) {
-
-    setStatus(
-      "❌ AWB not found.",
-      "error"
-    );
-
-    return;
-
-  }
-
-
-  let found =
-    false;
-
-
-  for (
-    const docSnap
-    of snapshot.docs
-  ) {
-
-    const d =
-      docSnap.data();
-
-
-    if (
-      d.positionId ===
-      positionId
-    ) {
-
-      await updateDoc(
-
-        doc(
-          db,
-          "scans",
-          docSnap.id
-        ),
-
-        {
-
-          positionId:
-            "[REMOVED]"
-
-        }
-
-      );
-
-
-      setStatus(
-        "✅ Removed: " +
-        getAWBNumber(code),
-
-        "success"
-      );
-
-
-      found =
-        true;
-
-
-      vibrate();
-
-
-      break;
-
+    if (!code) {
+        return;
     }
 
-  }
+
+    const q =
+        query(
+            collection(db, "scans"),
+            where(
+                "code",
+                "==",
+                code
+            )
+        );
 
 
-  if (!found) {
+    const snapshot =
+        await getDocs(q);
 
-    setStatus(
 
-      "❌ AWB is not allocated to Position ID: " +
-      positionId,
+    if (snapshot.empty) {
 
-      "error"
+        setStatus(
+            "❌ AWB " +
+            displayAWB(code) +
+            " not found.",
+            "error"
+        );
 
+        return;
+    }
+
+
+    let found = false;
+
+
+    for (
+        const docSnap
+        of snapshot.docs
+    ) {
+
+        const d =
+            docSnap.data();
+
+
+        if (
+            d.positionId ===
+            positionId
+        ) {
+
+            await updateDoc(
+                doc(
+                    db,
+                    "scans",
+                    docSnap.id
+                ),
+                {
+                    positionId:
+                        "[REMOVED]"
+                }
+            );
+
+
+            /*
+               Release the atomic AWB lock.
+            */
+
+            try {
+
+                await deleteDoc(
+                    doc(
+                        db,
+                        "awbLocks",
+                        displayAWB(code)
+                    )
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Lock release error:",
+                    error
+                );
+            }
+
+
+            setStatus(
+                "✅ Removed: " +
+                displayAWB(code),
+                "success"
+            );
+
+
+            found = true;
+
+            vibrate();
+
+            break;
+        }
+    }
+
+
+    if (!found) {
+
+        setStatus(
+            "❌ " +
+            displayAWB(code) +
+            " is not allocated to Position ID: " +
+            positionId,
+            "error"
+        );
+    }
+
+
+    await loadOffloadAWBs(
+        positionId
     );
-
-  }
-
-
-  await loadOffloadAWBs(
-    positionId
-  );
-
 }
-
-
-/* =========================================================
-   LIVE VIEW
-   ========================================================= */
-
-window.goToLiveView =
-  () => {
-
-    switchScreen(
-      "liveView"
-    );
-
-
-    const container =
-      document.getElementById(
-        "liveTables"
-      );
-
-
-    container.innerHTML =
-      "<div>Loading...</div>";
-
-
-    if (
-      typeof liveUnsubscribe ===
-      "function"
-    ) {
-
-      liveUnsubscribe();
-
-    }
-
-
-    liveUnsubscribe =
-      onSnapshot(
-
-        collection(
-          db,
-          "scans"
-        ),
-
-        snapshot => {
-
-          const groups =
-            {};
-
-
-          snapshot.forEach(
-            docSnap => {
-
-              const data =
-                docSnap.data();
-
-
-              if (
-
-                data.positionId ===
-                "[REMOVED]"
-
-              ) {
-
-                return;
-
-              }
-
-
-              if (
-                !data.positionId
-              ) {
-
-                return;
-
-              }
-
-
-              if (
-                !data.scannedAt
-              ) {
-
-                return;
-
-              }
-
-
-              if (
-                !groups[
-                  data.positionId
-                ]
-              ) {
-
-                groups[
-                  data.positionId
-                ] = [];
-
-              }
-
-
-              groups[
-                data.positionId
-              ].push({
-
-                ...data,
-
-                scannedDate:
-                  new Date(
-                    data.scannedAt.seconds *
-                    1000
-                  )
-
-              });
-
-            }
-
-          );
-
-
-          const positions =
-            Object.keys(groups)
-              .sort();
-
-
-          if (
-            positions.length === 0
-          ) {
-
-            container.innerHTML =
-              "<div>No active AWBs.</div>";
-
-            return;
-
-          }
-
-
-          let html = "";
-
-
-          positions.forEach(
-            pos => {
-
-              const rows =
-                groups[pos];
-
-
-              rows.sort(
-                (a, b) =>
-                  b.scannedDate -
-                  a.scannedDate
-              );
-
-
-              html +=
-
-                `<div class="livePositionSection">
-
-                  <div class="livePositionTitle">
-
-                    Position ID:
-                    ${pos}
-
-                  </div>
-
-
-                  <div class="tableContainer">
-
-                    <table>
-
-                      <thead>
-
-                        <tr>
-
-                          <th>#</th>
-
-                          <th>AWB</th>
-
-                          <th>Scanned At</th>
-
-                          <th>Scanned By</th>
-
-                        </tr>
-
-                      </thead>
-
-
-                      <tbody>
-
-                        ${
-                          rows.map(
-                            (entry, idx) =>
-
-                              `<tr>
-
-                                <td>
-                                  ${idx + 1}
-                                </td>
-
-                                <td>
-                                  ${getAWBNumber(
-                                    entry.code
-                                  )}
-                                </td>
-
-                                <td>
-                                  ${entry.scannedDate
-                                    .toLocaleString()}
-                                </td>
-
-                                <td>
-                                  ${entry.scannedBy || ""}
-                                </td>
-
-                              </tr>`
-
-                          ).join("")
-                        }
-
-                      </tbody>
-
-                    </table>
-
-                  </div>
-
-                </div>`;
-
-            }
-
-          );
-
-
-          container.innerHTML =
-            html;
-
-        }
-
-      );
-
-  };
 
 
 /* =========================================================
@@ -3493,263 +2514,417 @@ window.goToLiveView =
 /*
    IMPORTANT:
 
-   This version performs ONE getDocs().
+   The old export used onSnapshot().
+   That could cause repeated execution.
 
-   It creates ONE CSV string.
+   This version uses getDocs() ONCE.
 
-   It creates ONE download link.
-
-   It then deletes the exported records.
-
-   There is NO onSnapshot() here.
-
-   Therefore clicking EXPORT creates ONE file only.
+   One click = ONE CSV FILE.
 */
 
 window.exportToCSV =
-  async () => {
+    async () => {
 
-    try {
+        try {
 
-      const snapshot =
-        await getDocs(
-          collection(
-            db,
-            "scans"
-          )
-        );
-
-
-      let csv =
-        "\uFEFF" +
-        "Airway Bill,Position ID,Scanned At,Scanned By\n";
+            const snapshot =
+                await getDocs(
+                    collection(
+                        db,
+                        "scans"
+                    )
+                );
 
 
-      const recordsToDelete =
-        [];
+            let rows = [];
 
 
-      let count =
-        0;
+            snapshot.forEach(
+                docSnap => {
+
+                    const d =
+                        docSnap.data();
 
 
-      snapshot.forEach(
-        docSnap => {
+                    if (
+                        d.positionId !==
+                        "[REMOVED]" &&
+                        d.scannedAt
+                    ) {
 
-          const d =
-            docSnap.data();
+                        rows.push({
 
+                            code:
+                                displayAWB(
+                                    d.code
+                                ),
 
-          /*
-             Don't export removed AWBs.
-          */
+                            positionId:
+                                d.positionId,
 
-          if (
-            d.positionId ===
-            "[REMOVED]"
-          ) {
+                            scannedAt:
+                                new Date(
+                                    d.scannedAt.seconds *
+                                    1000
+                                ).toLocaleString(),
 
-            return;
+                            scannedBy:
+                                d.scannedBy
 
-          }
-
-
-          if (
-            !d.scannedAt
-          ) {
-
-            return;
-
-          }
-
-
-          const awb =
-            getAWBNumber(
-              d.code
+                        });
+                    }
+                }
             );
 
 
-          const scannedAt =
-            new Date(
-              d.scannedAt.seconds *
-              1000
-            ).toLocaleString();
+            if (rows.length === 0) {
+
+                alert(
+                    "There is no data to export."
+                );
+
+                return;
+            }
 
 
-          /*
-             Escape CSV values.
-          */
-
-          const safeAWB =
-            String(awb)
-              .replace(/"/g, '""');
+            let csv =
+                "\uFEFF" +
+                "Airway Bill,Position ID,Scanned At,Scanned By\n";
 
 
-          const safePosition =
-            String(
-              d.positionId || ""
-            )
-              .replace(/"/g, '""');
+            rows.forEach(
+                row => {
+
+                    csv +=
+                        `"${row.code}",` +
+                        `"${row.positionId}",` +
+                        `"${row.scannedAt}",` +
+                        `"${row.scannedBy}"\n`;
+                }
+            );
 
 
-          const safeDate =
-            String(scannedAt)
-              .replace(/"/g, '""');
+            /*
+               ONE file.
+            */
+
+            const blob =
+                new Blob(
+                    [csv],
+                    {
+                        type:
+                            "text/csv;charset=utf-8;"
+                    }
+                );
 
 
-          const safeUser =
-            String(
-              d.scannedBy || ""
-            )
-              .replace(/"/g, '""');
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
 
 
-          csv +=
-            `"${safeAWB}",` +
-            `"${safePosition}",` +
-            `"${safeDate}",` +
-            `"${safeUser}"\n`;
+            const link =
+                document.createElement(
+                    "a"
+                );
 
 
-          recordsToDelete.push(
-            docSnap.id
-          );
+            link.href =
+                url;
 
 
-          count++;
+            link.download =
+                "FirstAirBuilder_Export.csv";
 
+
+            document.body.appendChild(
+                link
+            );
+
+
+            link.click();
+
+
+            document.body.removeChild(
+                link
+            );
+
+
+            URL.revokeObjectURL(
+                url
+            );
+
+
+            /*
+               Clear exported records.
+            */
+
+            const deletePromises =
+                [];
+
+
+            snapshot.forEach(
+                docSnap => {
+
+                    const d =
+                        docSnap.data();
+
+
+                    if (
+                        d.positionId !==
+                        "[REMOVED]" &&
+                        d.scannedAt
+                    ) {
+
+                        deletePromises.push(
+                            deleteDoc(
+                                doc(
+                                    db,
+                                    "scans",
+                                    docSnap.id
+                                )
+                            )
+                        );
+                    }
+                }
+            );
+
+
+            await Promise.all(
+                deletePromises
+            );
+
+
+            /*
+               Also clear AWB locks.
+            */
+
+            const lockSnapshot =
+                await getDocs(
+                    collection(
+                        db,
+                        "awbLocks"
+                    )
+                );
+
+
+            const lockDeletes =
+                [];
+
+
+            lockSnapshot.forEach(
+                lockDoc => {
+
+                    lockDeletes.push(
+                        deleteDoc(
+                            lockDoc.ref
+                        )
+                    );
+                }
+            );
+
+
+            await Promise.all(
+                lockDeletes
+            );
+
+
+            alert(
+                "Export complete.\n\n" +
+                rows.length +
+                " AWB(s) exported into ONE file."
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Export error:",
+                error
+            );
+
+
+            alert(
+                "Export failed.\n\n" +
+                error.message
+            );
+        }
+    };
+
+
+/* =========================================================
+   LIVE VIEW
+   ========================================================= */
+
+window.goToLiveView =
+    () => {
+
+        switchScreen(
+            "liveView"
+        );
+
+
+        const container =
+            document.getElementById(
+                "liveTables"
+            );
+
+
+        if (
+            typeof liveUnsubscribe ===
+            "function"
+        ) {
+
+            liveUnsubscribe();
         }
 
-      );
+
+        liveUnsubscribe =
+            onSnapshot(
+
+                collection(
+                    db,
+                    "scans"
+                ),
+
+                snapshot => {
+
+                    const groups =
+                        {};
 
 
-      if (
-        count === 0
-      ) {
+                    snapshot.forEach(
+                        docSnap => {
 
-        alert(
-          "There is no data to export."
-        );
-
-        return;
-
-      }
+                            const data =
+                                docSnap.data();
 
 
-      /*
-         ONE FILE ONLY.
-      */
+                            if (
+                                data.positionId !==
+                                "[REMOVED]" &&
+                                data.scannedAt
+                            ) {
 
-      const blob =
-        new Blob(
-          [csv],
-          {
-            type:
-              "text/csv;charset=utf-8;"
-          }
-        );
+                                const pos =
+                                    data.positionId;
 
 
-      const url =
-        URL.createObjectURL(
-          blob
-        );
+                                if (
+                                    !groups[pos]
+                                ) {
+
+                                    groups[pos] =
+                                        [];
+                                }
 
 
-      const link =
-        document.createElement(
-          "a"
-        );
+                                groups[pos].push({
+
+                                    code:
+                                        displayAWB(
+                                            data.code
+                                        ),
+
+                                    scannedAt:
+                                        new Date(
+                                            data.scannedAt.seconds *
+                                            1000
+                                        ).toLocaleString(),
+
+                                    scannedBy:
+                                        data.scannedBy
+
+                                });
+                            }
+                        }
+                    );
 
 
-      link.href =
-        url;
+                    /*
+                       Sort positions.
+                    */
+
+                    const positions =
+                        Object.keys(
+                            groups
+                        ).sort();
 
 
-      link.download =
-        "FirstAirBuilder_Export.csv";
+                    let html = "";
 
 
-      link.style.display =
-        "none";
+                    positions.forEach(
+                        position => {
+
+                            groups[position].sort(
+                                (a, b) =>
+                                    new Date(
+                                        b.scannedAt
+                                    ) -
+                                    new Date(
+                                        a.scannedAt
+                                    )
+                            );
 
 
-      document.body.appendChild(
-        link
-      );
+                            html +=
+                                `<div class="livePositionTable">
+
+                                    <div class="livePositionTitle">
+                                        Position ID: ${position}
+                                    </div>
+
+                                    <table>
+
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Airway Bill</th>
+                                                <th>Scanned At</th>
+                                                <th>Scanned By</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>`;
 
 
-      link.click();
+                            groups[position].forEach(
+                                (entry, index) => {
+
+                                    html +=
+                                        `<tr>
+                                            <td>${index + 1}</td>
+                                            <td>${entry.code}</td>
+                                            <td>${entry.scannedAt}</td>
+                                            <td>${entry.scannedBy}</td>
+                                        </tr>`;
+                                }
+                            );
 
 
-      document.body.removeChild(
-        link
-      );
+                            html +=
+                                `</tbody>
+                                </table>
+                                </div>`;
+                        }
+                    );
 
 
-      /*
-         Release memory.
-      */
+                    if (!html) {
 
-      setTimeout(
-        () => {
-
-          URL.revokeObjectURL(
-            url
-          );
-
-        },
-        1000
-      );
+                        html =
+                            "<p>No active AWBs.</p>";
+                    }
 
 
-      /*
-         Delete exported records.
+                    container.innerHTML =
+                        html;
 
-         Do it AFTER creating the file.
-      */
-
-      const deletePromises =
-        recordsToDelete.map(
-          id =>
-            deleteDoc(
-              doc(
-                db,
-                "scans",
-                id
-              )
-            )
-        );
-
-
-      await Promise.all(
-        deletePromises
-      );
-
-
-      alert(
-        count +
-        " AWB(s) exported successfully in ONE file.\n\n" +
-        "Exported data has been cleared."
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        "Export error:",
-        error
-      );
-
-
-      alert(
-        "Export failed.\n\n" +
-        error.message
-      );
-
-    }
-
-  };
+                }
+            );
+    };
 
 
 /* =========================================================
@@ -3758,16 +2933,12 @@ window.exportToCSV =
 
 function vibrate() {
 
-  if (
-    navigator.vibrate
-  ) {
+    if (navigator.vibrate) {
 
-    navigator.vibrate(
-      [100, 50, 100]
-    );
-
-  }
-
+        navigator.vibrate(
+            100
+        );
+    }
 }
 
 
@@ -3776,14 +2947,13 @@ function vibrate() {
    ========================================================= */
 
 window.addEventListener(
-  "pagehide",
-  () => {
+    "pagehide",
+    () => {
 
-    closeCamera();
+        closeCamera();
 
-  }
+    }
 );
-
 
 </script>
 
