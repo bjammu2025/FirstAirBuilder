@@ -2,211 +2,359 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <meta
+    name="viewport"
+    content="width=device-width,
+             initial-scale=1.0,
+             maximum-scale=1.0,
+             user-scalable=no">
 
   <title>First Air Builder</title>
 
   <style>
+
     html, body {
+
       margin: 0;
       padding: 0;
+
       background-color: #121212;
       color: white;
+
       font-family: Arial, sans-serif;
+
       width: 100%;
       min-height: 100%;
+
       overflow-x: hidden;
     }
 
+
     body {
+
       display: flex;
       justify-content: center;
       align-items: flex-start;
     }
 
+
     .container {
+
       width: 100%;
       min-height: 100vh;
+
       padding: 20px;
+
       box-sizing: border-box;
+
       text-align: center;
+
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
-    input, button {
+
+    input,
+    button {
+
       font-size: 2rem;
+
       padding: 1.3rem;
+
       margin: 1rem 0;
+
       width: 95%;
       max-width: 1000px;
+
       border: none;
+
       border-radius: 18px;
+
       box-sizing: border-box;
     }
 
+
     input {
+
       background: white;
       color: black;
     }
 
+
     button {
+
       background-color: #1e88e5;
+
       color: white;
+
       cursor: pointer;
     }
 
+
     button:hover {
+
       background-color: #1565c0;
     }
 
-    button:disabled {
-      background-color: #555;
-      color: #aaa;
+
+    .cameraButton {
+
+      background-color: #00897b;
     }
 
-    .backButton {
-      background-color: #555;
+
+    .cameraButton:hover {
+
+      background-color: #00695c;
     }
+
+
+    .readButton {
+
+      background-color: #43a047;
+    }
+
 
     .stopButton {
+
       background-color: #d32f2f;
     }
 
+
+    .backButton {
+
+      background-color: #555;
+    }
+
+
     h2 {
+
       margin: 20px 0;
+
       font-size: 3.5rem;
     }
 
+
     h3 {
+
       margin: 15px 0;
+
       font-size: 2.5rem;
     }
 
+
     table {
+
       width: 100%;
+
       margin-top: 20px;
+
       border-collapse: collapse;
+
       font-size: 1.6rem;
     }
 
-    th, td {
+
+    th,
+    td {
+
       border: 2px solid #999;
+
       padding: 15px;
+
       text-align: center;
     }
 
+
     .screen {
+
       display: none;
+
       width: 100%;
     }
 
+
     .visible {
+
       display: block;
     }
 
-    /* ============================
+
+    /* ======================================================
        CAMERA
-       ============================ */
+       ====================================================== */
 
     .cameraContainer {
+
+      display: none;
+
       width: 100%;
+
       max-width: 900px;
-      margin: 10px auto;
+
+      margin: 15px auto;
+
       position: relative;
-      background: #000;
+
+      background: black;
+
       border-radius: 20px;
+
       overflow: hidden;
     }
 
-    #cameraPreview {
-      width: 100%;
+
+    .cameraContainer.active {
+
       display: block;
+    }
+
+
+    video {
+
+      width: 100%;
+
+      display: block;
+
       background: black;
+
       object-fit: cover;
     }
 
+
     .scanBox {
+
       position: absolute;
-      left: 10%;
-      right: 10%;
+
+      left: 8%;
+
+      right: 8%;
+
       top: 35%;
+
       height: 30%;
+
       border: 4px solid #00ff00;
+
       border-radius: 15px;
-      box-sizing: border-box;
+
       pointer-events: none;
+
+      box-sizing: border-box;
     }
 
+
+    .scanText {
+
+      position: absolute;
+
+      left: 0;
+
+      right: 0;
+
+      bottom: 10px;
+
+      text-align: center;
+
+      font-size: 1.3rem;
+
+      color: white;
+
+      text-shadow:
+        0 2px 4px black,
+        0 2px 8px black;
+    }
+
+
     .cameraStatus {
-      font-size: 1.7rem;
-      margin: 15px 0;
+
+      font-size: 1.6rem;
+
+      margin: 10px 0;
+
       min-height: 2.5rem;
     }
 
+
     .success {
+
       color: #00e676;
     }
 
+
     .error {
+
       color: #ff5252;
     }
 
+
     .scanning {
+
       color: #ffeb3b;
     }
 
-    .cameraControls {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+
+    .hidden {
+
+      display: none !important;
     }
 
-    .smallText {
-      font-size: 1.2rem;
-      color: #bbb;
-      margin: 10px;
-    }
 
     @media (max-width: 600px) {
 
       h2 {
+
         font-size: 2.7rem;
       }
 
+
       h3 {
+
         font-size: 1.8rem;
       }
 
-      input, button {
+
+      input,
+      button {
+
         font-size: 1.5rem;
+
         padding: 1.1rem;
       }
 
+
       table {
+
         font-size: 1rem;
       }
 
-      th, td {
+
+      th,
+      td {
+
         padding: 8px;
       }
     }
+
   </style>
 </head>
+
 
 <body>
 
 <div class="container">
 
-  <!-- ============================
+
+  <!-- ======================================================
        HOME
-       ============================ -->
+       ====================================================== -->
 
   <div id="home" class="screen visible">
 
     <h2>First Air Builder</h2>
+
 
     <input
       type="text"
@@ -215,17 +363,21 @@
       autocomplete="off"
     >
 
+
     <button onclick="goToAllocate()">
       ALLOCATE
     </button>
+
 
     <button onclick="goToOffload()">
       OFFLOAD
     </button>
 
+
     <button onclick="goToLiveView()">
       LIVE VIEW
     </button>
+
 
     <button onclick="exportToCSV()">
       EXPORT
@@ -234,13 +386,14 @@
   </div>
 
 
-  <!-- ============================
+  <!-- ======================================================
        ALLOCATE START
-       ============================ -->
+       ====================================================== -->
 
   <div id="allocateStart" class="screen">
 
     <h3>Allocate Airway Bills</h3>
+
 
     <input
       type="text"
@@ -249,100 +402,158 @@
       autocomplete="off"
     >
 
+
     <button onclick="startAllocate()">
-      START CAMERA SCANNING
+      START
     </button>
+
 
     <button
       class="backButton"
       onclick="goHome()">
+
       ⬅ BACK
+
     </button>
 
   </div>
 
 
-  <!-- ============================
+  <!-- ======================================================
        ALLOCATE CAMERA
-       ============================ -->
+       ====================================================== -->
 
   <div id="allocateScan" class="screen">
 
     <h3>
+
       Position:
       <span id="allocPosition"></span>
+
       <br>
+
       User:
       <span id="allocUser"></span>
+
     </h3>
 
-    <div class="cameraContainer">
+
+    <!-- CAMERA OPEN BUTTON -->
+
+    <button
+      id="openAllocateCameraButton"
+      class="cameraButton"
+      onclick="openAllocateCamera()">
+
+      📷 OPEN CAMERA
+
+    </button>
+
+
+    <!-- CAMERA -->
+
+    <div
+      id="allocateCameraContainer"
+      class="cameraContainer">
 
       <video
-        id="cameraPreview"
+        id="allocateVideo"
         autoplay
         playsinline
         muted>
       </video>
 
+
       <div class="scanBox"></div>
 
+
+      <div class="scanText">
+
+        Place
+        <b>518-YWG-13634095</b>
+        inside the green box
+
+      </div>
+
     </div>
+
 
     <div
-      id="cameraStatus"
-      class="cameraStatus scanning">
-      Starting camera...
-    </div>
+      id="allocateCameraStatus"
+      class="cameraStatus">
 
-    <div class="cameraControls">
-
-      <button
-        id="scanNowButton"
-        onclick="scanNow()">
-        📷 SCAN AWB
-      </button>
-
-      <button
-        class="stopButton"
-        onclick="stopCamera()">
-        STOP CAMERA
-      </button>
+      Camera is closed
 
     </div>
+
+
+    <!-- READ BUTTON -->
+
+    <button
+      id="readAllocateButton"
+      class="readButton hidden"
+      onclick="readAllocateAWB()">
+
+      📸 READ AWB
+
+    </button>
+
+
+    <!-- CLOSE CAMERA -->
+
+    <button
+      id="closeAllocateButton"
+      class="stopButton hidden"
+      onclick="closeCamera()">
+
+      ✖ CLOSE CAMERA
+
+    </button>
 
 
     <table>
 
       <thead>
+
         <tr>
+
           <th>#</th>
+
           <th>Airway Bill</th>
+
           <th>Scanned At</th>
+
           <th>Scanned By</th>
+
         </tr>
+
       </thead>
+
 
       <tbody id="scanTable"></tbody>
 
     </table>
 
+
     <button
       class="backButton"
       onclick="goHome()">
+
       ⬅ BACK
+
     </button>
 
   </div>
 
 
-  <!-- ============================
+  <!-- ======================================================
        OFFLOAD START
-       ============================ -->
+       ====================================================== -->
 
   <div id="offloadStart" class="screen">
 
     <h3>Offload Airway Bills</h3>
+
 
     <input
       type="text"
@@ -351,121 +562,193 @@
       autocomplete="off"
     >
 
+
     <button onclick="startOffload()">
-      START CAMERA SCANNING
+
+      START
+
     </button>
+
 
     <button
       class="backButton"
       onclick="goHome()">
+
       ⬅ BACK
+
     </button>
 
   </div>
 
 
-  <!-- ============================
+  <!-- ======================================================
        OFFLOAD CAMERA
-       ============================ -->
+       ====================================================== -->
 
   <div id="offloadScan" class="screen">
 
     <h3>
+
       Offloading:
       <span id="offloadPosition"></span>
+
       <br>
+
       User:
       <span id="offloadUser"></span>
+
     </h3>
 
-    <div class="cameraContainer">
+
+    <!-- CAMERA OPEN BUTTON -->
+
+    <button
+      id="openOffloadCameraButton"
+      class="cameraButton"
+      onclick="openOffloadCamera()">
+
+      📷 OPEN CAMERA
+
+    </button>
+
+
+    <!-- CAMERA -->
+
+    <div
+      id="offloadCameraContainer"
+      class="cameraContainer">
 
       <video
-        id="offloadCameraPreview"
+        id="offloadVideo"
         autoplay
         playsinline
         muted>
       </video>
 
+
       <div class="scanBox"></div>
 
+
+      <div class="scanText">
+
+        Place
+        <b>518-YWG-13634095</b>
+        inside the green box
+
+      </div>
+
     </div>
+
 
     <div
-      id="offloadMessage"
-      class="cameraStatus scanning">
-      Starting camera...
-    </div>
+      id="offloadCameraStatus"
+      class="cameraStatus">
 
-    <div class="cameraControls">
-
-      <button
-        id="offloadScanButton"
-        onclick="scanOffloadNow()">
-        📷 SCAN AWB
-      </button>
-
-      <button
-        class="stopButton"
-        onclick="stopCamera()">
-        STOP CAMERA
-      </button>
+      Camera is closed
 
     </div>
+
+
+    <!-- READ BUTTON -->
+
+    <button
+      id="readOffloadButton"
+      class="readButton hidden"
+      onclick="readOffloadAWB()">
+
+      📸 READ AWB
+
+    </button>
+
+
+    <!-- CLOSE CAMERA -->
+
+    <button
+      id="closeOffloadButton"
+      class="stopButton hidden"
+      onclick="closeCamera()">
+
+      ✖ CLOSE CAMERA
+
+    </button>
 
 
     <table>
 
       <thead>
+
         <tr>
+
           <th>#</th>
+
           <th>Airway Bill</th>
+
           <th>Scanned At</th>
+
           <th>Scanned By</th>
+
         </tr>
+
       </thead>
+
 
       <tbody id="offloadTable"></tbody>
 
     </table>
 
+
     <button
       class="backButton"
       onclick="goHome()">
+
       ⬅ BACK
+
     </button>
 
   </div>
 
 
-  <!-- ============================
+  <!-- ======================================================
        LIVE VIEW
-       ============================ -->
+       ====================================================== -->
 
   <div id="liveView" class="screen">
 
     <h3>Live Scans Overview</h3>
 
+
     <table>
 
       <thead>
+
         <tr>
+
           <th>#</th>
+
           <th>Airway Bill</th>
+
           <th>Position ID</th>
+
           <th>Scanned At</th>
+
           <th>Scanned By</th>
+
         </tr>
+
       </thead>
+
 
       <tbody id="liveTable"></tbody>
 
     </table>
 
+
     <button
       class="backButton"
       onclick="goHome()">
+
       ⬅ BACK
+
     </button>
 
   </div>
@@ -473,39 +756,51 @@
 </div>
 
 
-<!--
-============================================================
-TESSERACT OCR
-============================================================
--->
+<!-- ========================================================
+     TESSERACT OCR
+     ======================================================== -->
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 
 <script type="module">
 
-  import { initializeApp } from
-    "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-
-  import {
-    getFirestore,
-    collection,
-    addDoc,
-    onSnapshot,
-    doc,
-    updateDoc,
-    serverTimestamp,
-    query,
-    where,
-    getDocs,
-    deleteDoc
-  } from
-    "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
 
   // ============================================================
   // FIREBASE
   // ============================================================
+
+  import { initializeApp } from
+    "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+
+  import {
+
+    getFirestore,
+
+    collection,
+
+    addDoc,
+
+    onSnapshot,
+
+    doc,
+
+    updateDoc,
+
+    serverTimestamp,
+
+    query,
+
+    where,
+
+    getDocs,
+
+    deleteDoc
+
+  } from
+    "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 
   const firebaseConfig = {
 
@@ -526,11 +821,13 @@ TESSERACT OCR
 
     appId:
       "1:879078166665:web:40f63a1b2fdfb7833d3658"
+
   };
 
 
   const app =
     initializeApp(firebaseConfig);
+
 
   const db =
     getFirestore(app);
@@ -556,17 +853,6 @@ TESSERACT OCR
 
 
   // ============================================================
-  // CAMERA ELEMENTS
-  // ============================================================
-
-  const allocateVideo =
-    document.getElementById("cameraPreview");
-
-  const offloadVideo =
-    document.getElementById("offloadCameraPreview");
-
-
-  // ============================================================
   // SCREEN CONTROL
   // ============================================================
 
@@ -574,13 +860,18 @@ TESSERACT OCR
 
     document
       .querySelectorAll(".screen")
-      .forEach(el =>
-        el.classList.remove("visible")
+      .forEach(
+        el =>
+          el.classList.remove(
+            "visible"
+          )
       );
+
 
     document
       .getElementById(id)
       .classList.add("visible");
+
   }
 
 
@@ -590,81 +881,110 @@ TESSERACT OCR
 
   window.goHome = async () => {
 
-    await stopCamera();
+    await closeCamera();
+
 
     switchScreen("home");
 
+
     document
-      .getElementById("allocatePositionId")
+      .getElementById(
+        "allocatePositionId"
+      )
       .value = "";
 
+
     document
-      .getElementById("offloadPositionId")
+      .getElementById(
+        "offloadPositionId"
+      )
       .value = "";
 
-    document
-      .getElementById("offloadMessage")
-      .innerText = "";
 
     document
-      .getElementById("scanTable")
+      .getElementById(
+        "scanTable"
+      )
       .innerHTML = "";
 
+
     document
-      .getElementById("offloadTable")
+      .getElementById(
+        "offloadTable"
+      )
       .innerHTML = "";
+
 
     positionId = "";
 
     currentUser = "";
 
     currentCameraMode = null;
+
   };
 
 
   // ============================================================
-  // ALLOCATE
+  // GO TO ALLOCATE
   // ============================================================
 
   window.goToAllocate = () => {
 
     currentUser =
       document
-        .getElementById("userName")
+        .getElementById(
+          "userName"
+        )
         .value
         .trim();
 
+
     if (!currentUser) {
 
-      alert("Please enter user name");
+      alert(
+        "Please enter user name"
+      );
 
       return;
     }
 
-    switchScreen("allocateStart");
+
+    switchScreen(
+      "allocateStart"
+    );
+
   };
 
 
   // ============================================================
-  // OFFLOAD
+  // GO TO OFFLOAD
   // ============================================================
 
   window.goToOffload = () => {
 
     currentUser =
       document
-        .getElementById("userName")
+        .getElementById(
+          "userName"
+        )
         .value
         .trim();
 
+
     if (!currentUser) {
 
-      alert("Please enter user name");
+      alert(
+        "Please enter user name"
+      );
 
       return;
     }
 
-    switchScreen("offloadStart");
+
+    switchScreen(
+      "offloadStart"
+    );
+
   };
 
 
@@ -672,9 +992,15 @@ TESSERACT OCR
   // EXTRACT 518 NUMBER
   // ============================================================
 
-  function extract518Number(rawText) {
+  function extract518Number(
+    rawText
+  ) {
 
-    if (!rawText) return null;
+    if (!rawText) {
+
+      return null;
+
+    }
 
 
     let text =
@@ -690,18 +1016,7 @@ TESSERACT OCR
         .trim();
 
 
-    /*
-      Expected:
-
-      518-YWG-13634095
-
-      OCR may produce:
-
-      518 YWG 13634095
-      518-YWG 13634095
-      518 - YWG - 13634095
-    */
-
+    // Exact format
 
     let match =
       text.match(
@@ -712,8 +1027,11 @@ TESSERACT OCR
     if (match) {
 
       return match[0];
+
     }
 
+
+    // Spaces instead of hyphens
 
     match =
       text.match(
@@ -726,88 +1044,64 @@ TESSERACT OCR
       return match[0]
         .replace(/\s+/g, "-")
         .replace(/--+/g, "-");
+
     }
 
+
+    // OCR may use incorrect characters
 
     match =
-      text.match(
-        /\b518\s*-\s*[A-Z]{3}\s*-\s*\d{8}\b/
-      );
-
-
-    if (match) {
-
-      return match[0]
-        .replace(/\s+/g, "");
-    }
-
-
-    /*
-      OCR sometimes reads:
-
-      518-YWG-13634095
-
-      as:
-
-      518-YWG-1363409S
-
-      Try correcting common OCR mistakes
-      in the final 8-character number.
-    */
-
-
-    const looseMatch =
       text.match(
         /\b518\s*[- ]\s*[A-Z]{3}\s*[- ]\s*[0-9A-Z]{8}\b/
       );
 
 
-    if (looseMatch) {
+    if (match) {
 
       let result =
-        looseMatch[0]
+        match[0]
           .replace(/\s+/g, "-")
           .replace(/--+/g, "-");
 
-
-      /*
-        Common OCR substitutions.
-      */
 
       result =
         result
           .replace(/O/g, "0")
           .replace(/I/g, "1")
-          .replace(/L/g, "1")
-          .replace(/S(?=\d)/g, "5");
+          .replace(/L/g, "1");
 
 
       if (
-        /^518-[A-Z]{3}-\d{8}$/.test(result)
+        /^518-[A-Z]{3}-\d{8}$/
+          .test(result)
       ) {
 
         return result;
+
       }
+
     }
 
 
     return null;
+
   }
 
 
   // ============================================================
-  // INITIALIZE OCR
+  // OCR INITIALIZATION
   // ============================================================
 
   async function initializeOCR() {
 
     if (ocrWorker) {
 
-      return;
+      return true;
+
     }
 
 
-    setCameraStatus(
+    setStatus(
       "Loading OCR engine...",
       "scanning"
     );
@@ -820,28 +1114,21 @@ TESSERACT OCR
           "eng",
           1,
           {
-            logger: function(info) {
 
-              if (info.status) {
+            logger:
+              function(info) {
 
                 console.log(
                   "OCR:",
                   info.status,
                   info.progress
                 );
+
               }
-            }
+
           }
         );
 
-
-      /*
-        OCR settings.
-
-        We are mainly interested in:
-
-        518-YWG-13634095
-      */
 
       await ocrWorker.setParameters({
 
@@ -854,91 +1141,196 @@ TESSERACT OCR
       });
 
 
-      setCameraStatus(
-        "Camera ready. Position the 518 number inside the green box.",
-        "scanning"
-      );
+      return true;
 
 
     } catch (error) {
 
       console.error(
-        "OCR initialization failed:",
+        "OCR error:",
         error
       );
 
 
-      setCameraStatus(
-        "OCR failed to load.",
+      setStatus(
+        "❌ Could not load OCR.",
         "error"
       );
+
+
+      return false;
+
     }
+
   }
 
 
   // ============================================================
-  // CAMERA START
+  // STATUS
   // ============================================================
 
-  async function startCamera(mode) {
+  function setStatus(
+    message,
+    type = ""
+  ) {
 
-    currentCameraMode = mode;
+    if (
+      currentCameraMode ===
+      "allocate"
+    ) {
+
+      const el =
+        document.getElementById(
+          "allocateCameraStatus"
+        );
 
 
-    await stopCamera();
+      el.innerText =
+        message;
+
+
+      el.className =
+        "cameraStatus " +
+        type;
+
+    }
+
+
+    if (
+      currentCameraMode ===
+      "offload"
+    ) {
+
+      const el =
+        document.getElementById(
+          "offloadCameraStatus"
+        );
+
+
+      el.innerText =
+        message;
+
+
+      el.className =
+        "cameraStatus " +
+        type;
+
+    }
+
+  }
+
+
+  // ============================================================
+  // START CAMERA
+  // ============================================================
+
+  async function startCamera(
+    mode
+  ) {
+
+    currentCameraMode =
+      mode;
+
+
+    await closeCamera();
+
+
+    currentCameraMode =
+      mode;
 
 
     const video =
       mode === "allocate"
-        ? allocateVideo
-        : offloadVideo;
+
+        ? document.getElementById(
+            "allocateVideo"
+          )
+
+        : document.getElementById(
+            "offloadVideo"
+          );
+
+
+    const container =
+      mode === "allocate"
+
+        ? document.getElementById(
+            "allocateCameraContainer"
+          )
+
+        : document.getElementById(
+            "offloadCameraContainer"
+          );
+
+
+    const openButton =
+      mode === "allocate"
+
+        ? document.getElementById(
+            "openAllocateCameraButton"
+          )
+
+        : document.getElementById(
+            "openOffloadCameraButton"
+          );
+
+
+    const readButton =
+      mode === "allocate"
+
+        ? document.getElementById(
+            "readAllocateButton"
+          )
+
+        : document.getElementById(
+            "readOffloadButton"
+          );
+
+
+    const closeButton =
+      mode === "allocate"
+
+        ? document.getElementById(
+            "closeAllocateButton"
+          )
+
+        : document.getElementById(
+            "closeOffloadButton"
+          );
 
 
     try {
 
-      if (
-        !navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia
-      ) {
-
-        throw new Error(
-          "Camera API is not available."
-        );
-      }
-
-
-      setCameraStatus(
-        "Requesting camera permission...",
+      setStatus(
+        "Requesting camera...",
         "scanning"
       );
 
 
       cameraStream =
-        await navigator.mediaDevices.getUserMedia({
+        await navigator
+          .mediaDevices
+          .getUserMedia({
 
-          video: {
+            video: {
 
-            facingMode: {
-              ideal: "environment"
+              facingMode: {
+                ideal: "environment"
+              },
+
+              width: {
+                ideal: 1280
+              },
+
+              height: {
+                ideal: 720
+              }
+
             },
 
-            width: {
-              ideal: 1280
-            },
+            audio: false
 
-            height: {
-              ideal: 720
-            },
-
-            frameRate: {
-              ideal: 30
-            }
-
-          },
-
-          audio: false
-
-        });
+          });
 
 
       video.srcObject =
@@ -948,13 +1340,33 @@ TESSERACT OCR
       await video.play();
 
 
-      setCameraStatus(
-        "Camera ready. Put 518-YWG-13634095 inside the green box.",
+      container.classList.add(
+        "active"
+      );
+
+
+      openButton.classList.add(
+        "hidden"
+      );
+
+
+      readButton.classList.remove(
+        "hidden"
+      );
+
+
+      closeButton.classList.remove(
+        "hidden"
+      );
+
+
+      setStatus(
+        "Camera ready. Place the 518 number inside the green box.",
         "scanning"
       );
 
 
-      initializeOCR();
+      await initializeOCR();
 
 
     } catch (error) {
@@ -965,229 +1377,337 @@ TESSERACT OCR
       );
 
 
-      setCameraStatus(
-        "❌ Camera could not start: " +
+      setStatus(
+        "❌ Camera error: " +
         error.message,
         "error"
       );
 
 
       alert(
-        "Camera could not start.\n\n" +
-        "Please make sure Chrome has camera permission " +
-        "for this website."
+        "Camera could not be opened.\n\n" +
+        "Make sure Chrome has permission to use the camera."
       );
+
     }
+
   }
 
 
   // ============================================================
-  // STOP CAMERA
+  // OPEN ALLOCATE CAMERA
   // ============================================================
 
-  window.stopCamera = async () => {
+  window.openAllocateCamera =
+    async () => {
 
-    if (cameraStream) {
-
-      cameraStream
-        .getTracks()
-        .forEach(track => {
-          track.stop();
-        });
-
-      cameraStream = null;
-    }
-
-
-    allocateVideo.srcObject = null;
-
-    offloadVideo.srcObject = null;
-
-    currentCameraMode = null;
-
-    ocrBusy = false;
-  };
-
-
-  // ============================================================
-  // CAMERA STATUS
-  // ============================================================
-
-  function setCameraStatus(
-    message,
-    type = "scanning"
-  ) {
-
-    const allocateStatus =
-      document.getElementById(
-        "cameraStatus"
+      await startCamera(
+        "allocate"
       );
 
-    const offloadStatus =
-      document.getElementById(
-        "offloadMessage"
+    };
+
+
+  // ============================================================
+  // OPEN OFFLOAD CAMERA
+  // ============================================================
+
+  window.openOffloadCamera =
+    async () => {
+
+      await startCamera(
+        "offload"
       );
 
-
-    if (
-      currentCameraMode === "allocate"
-    ) {
-
-      allocateStatus.innerText =
-        message;
-
-      allocateStatus.className =
-        "cameraStatus " + type;
-
-    } else if (
-      currentCameraMode === "offload"
-    ) {
-
-      offloadStatus.innerText =
-        message;
-
-      offloadStatus.className =
-        "cameraStatus " + type;
-    }
-  }
+    };
 
 
   // ============================================================
-  // TAKE CAMERA PHOTO
+  // CLOSE CAMERA
   // ============================================================
 
-  async function captureCameraFrame() {
+  window.closeCamera =
+    async () => {
+
+      if (cameraStream) {
+
+        cameraStream
+          .getTracks()
+          .forEach(
+            track =>
+              track.stop()
+          );
+
+
+        cameraStream =
+          null;
+
+      }
+
+
+      const allocateVideo =
+        document.getElementById(
+          "allocateVideo"
+        );
+
+
+      const offloadVideo =
+        document.getElementById(
+          "offloadVideo"
+        );
+
+
+      allocateVideo.srcObject =
+        null;
+
+
+      offloadVideo.srcObject =
+        null;
+
+
+      document
+        .getElementById(
+          "allocateCameraContainer"
+        )
+        .classList.remove(
+          "active"
+        );
+
+
+      document
+        .getElementById(
+          "offloadCameraContainer"
+        )
+        .classList.remove(
+          "active"
+        );
+
+
+      document
+        .getElementById(
+          "openAllocateCameraButton"
+        )
+        .classList.remove(
+          "hidden"
+        );
+
+
+      document
+        .getElementById(
+          "openOffloadCameraButton"
+        )
+        .classList.remove(
+          "hidden"
+        );
+
+
+      document
+        .getElementById(
+          "readAllocateButton"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+
+      document
+        .getElementById(
+          "readOffloadButton"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+
+      document
+        .getElementById(
+          "closeAllocateButton"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+
+      document
+        .getElementById(
+          "closeOffloadButton"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+
+      currentCameraMode =
+        null;
+
+    };
+
+
+  // ============================================================
+  // CAPTURE CAMERA IMAGE
+  // ============================================================
+
+  function captureFrame() {
 
     const video =
-      currentCameraMode === "allocate"
-        ? allocateVideo
-        : offloadVideo;
+      currentCameraMode ===
+      "allocate"
+
+        ? document.getElementById(
+            "allocateVideo"
+          )
+
+        : document.getElementById(
+            "offloadVideo"
+          );
 
 
     if (
       !video ||
       video.readyState <
-      HTMLMediaElement.HAVE_CURRENT_DATA
+        HTMLMediaElement.HAVE_CURRENT_DATA
     ) {
 
       return null;
+
     }
 
 
     const canvas =
-      document.createElement("canvas");
+      document.createElement(
+        "canvas"
+      );
 
 
-    /*
-      Use the center portion of the camera.
-
-      This corresponds approximately to
-      the green scanning box.
-    */
-
-
-    const videoWidth =
+    const width =
       video.videoWidth;
 
-    const videoHeight =
+
+    const height =
       video.videoHeight;
 
 
+    /*
+      Crop the center portion
+      where the green box is.
+    */
+
     const cropWidth =
-      Math.floor(videoWidth * 0.80);
+      Math.floor(
+        width * 0.84
+      );
+
 
     const cropHeight =
-      Math.floor(videoHeight * 0.40);
+      Math.floor(
+        height * 0.40
+      );
 
 
     const cropX =
       Math.floor(
-        (videoWidth - cropWidth) / 2
+        (width - cropWidth) / 2
       );
+
 
     const cropY =
       Math.floor(
-        (videoHeight - cropHeight) / 2
+        (height - cropHeight) / 2
       );
 
 
     canvas.width =
       cropWidth;
 
+
     canvas.height =
       cropHeight;
 
 
     const ctx =
-      canvas.getContext("2d");
+      canvas.getContext(
+        "2d"
+      );
 
-
-    /*
-      Increase contrast slightly.
-    */
 
     ctx.filter =
-      "contrast(1.25)";
+      "contrast(1.3)";
 
 
     ctx.drawImage(
+
       video,
+
       cropX,
       cropY,
+
       cropWidth,
       cropHeight,
+
       0,
       0,
+
       cropWidth,
       cropHeight
+
     );
 
 
     return canvas;
+
   }
 
 
   // ============================================================
-  // OCR SCAN
+  // READ AWB
   // ============================================================
 
-  async function performOCR() {
+  async function readAWB() {
 
     if (ocrBusy) {
 
       return;
+
     }
 
 
     if (!ocrWorker) {
 
-      await initializeOCR();
+      const loaded =
+        await initializeOCR();
 
-      if (!ocrWorker) {
+
+      if (!loaded) {
 
         return;
+
       }
+
     }
 
 
-    ocrBusy = true;
+    ocrBusy =
+      true;
 
 
     try {
 
-      setCameraStatus(
+      setStatus(
         "🔍 Reading AWB...",
         "scanning"
       );
 
 
       const canvas =
-        await captureCameraFrame();
+        captureFrame();
 
 
       if (!canvas) {
 
-        return;
+        throw new Error(
+          "Camera image is not ready."
+        );
+
       }
 
 
@@ -1202,62 +1722,60 @@ TESSERACT OCR
 
 
       console.log(
-        "OCR TEXT:",
+        "OCR RESULT:",
         rawText
       );
 
 
       const awb =
-        extract518Number(rawText);
-
-
-      if (awb) {
-
-        setCameraStatus(
-          "✅ Found: " + awb,
-          "success"
+        extract518Number(
+          rawText
         );
 
 
-        if (
-          currentCameraMode ===
-          "allocate"
-        ) {
+      if (!awb) {
 
-          await handleScan(awb);
-
-        } else if (
-          currentCameraMode ===
-          "offload"
-        ) {
-
-          await handleOffload(awb);
-        }
-
-
-        /*
-          Give the user time to see
-          the successful scan.
-        */
-
-        await new Promise(
-          resolve =>
-            setTimeout(resolve, 1000)
-        );
-
-
-        setCameraStatus(
-          "Ready for next AWB.",
-          "scanning"
-        );
-
-
-      } else {
-
-        setCameraStatus(
-          "No 518 AWB found. Adjust the camera and try again.",
+        setStatus(
+          "❌ No 518 AWB found. Move closer, focus, and try again.",
           "error"
         );
+
+
+        vibrate();
+
+
+        return;
+
+      }
+
+
+      setStatus(
+        "✅ Found: " + awb,
+        "success"
+      );
+
+
+      if (
+        currentCameraMode ===
+        "allocate"
+      ) {
+
+        await handleScan(
+          awb
+        );
+
+      }
+
+
+      if (
+        currentCameraMode ===
+        "offload"
+      ) {
+
+        await handleOffload(
+          awb
+        );
+
       }
 
 
@@ -1269,108 +1787,118 @@ TESSERACT OCR
       );
 
 
-      setCameraStatus(
-        "OCR error. Try again.",
+      setStatus(
+        "❌ Could not read the AWB. Try again.",
         "error"
       );
 
-
     } finally {
 
-      ocrBusy = false;
+      ocrBusy =
+        false;
+
     }
+
   }
 
 
   // ============================================================
-  // SCAN BUTTON
+  // ALLOCATE READ BUTTON
   // ============================================================
 
-  window.scanNow = async () => {
+  window.readAllocateAWB =
+    async () => {
 
-    if (
-      currentCameraMode !==
-      "allocate"
-    ) {
+      if (
+        currentCameraMode !==
+        "allocate"
+      ) {
 
-      return;
-    }
+        return;
 
-
-    await performOCR();
-  };
+      }
 
 
-  window.scanOffloadNow = async () => {
+      await readAWB();
 
-    if (
-      currentCameraMode !==
-      "offload"
-    ) {
-
-      return;
-    }
+    };
 
 
-    await performOCR();
-  };
+  // ============================================================
+  // OFFLOAD READ BUTTON
+  // ============================================================
+
+  window.readOffloadAWB =
+    async () => {
+
+      if (
+        currentCameraMode !==
+        "offload"
+      ) {
+
+        return;
+
+      }
+
+
+      await readAWB();
+
+    };
 
 
   // ============================================================
   // START ALLOCATE
   // ============================================================
 
-  window.startAllocate = async () => {
+  window.startAllocate =
+    async () => {
 
-    positionId =
+      positionId =
+        document
+          .getElementById(
+            "allocatePositionId"
+          )
+          .value
+          .trim();
+
+
+      if (!positionId) {
+
+        alert(
+          "Enter Position ID"
+        );
+
+        return;
+
+      }
+
+
       document
         .getElementById(
-          "allocatePositionId"
+          "allocPosition"
         )
-        .value
-        .trim();
+        .innerText =
+        positionId;
 
 
-    if (!positionId) {
+      document
+        .getElementById(
+          "allocUser"
+        )
+        .innerText =
+        currentUser;
 
-      alert(
-        "Enter Position ID"
+
+      switchScreen(
+        "allocateScan"
       );
 
-      return;
-    }
 
+      await loadAllocateAWBs(
+        positionId
+      );
 
-    document
-      .getElementById(
-        "allocPosition"
-      )
-      .innerText =
-      positionId;
-
-
-    document
-      .getElementById(
-        "allocUser"
-      )
-      .innerText =
-      currentUser;
-
-
-    switchScreen(
-      "allocateScan"
-    );
-
-
-    await loadAllocateAWBs(
-      positionId
-    );
-
-
-    await startCamera(
-      "allocate"
-    );
-  };
+    };
 
 
   // ============================================================
@@ -1391,21 +1919,20 @@ TESSERACT OCR
       "<tr><td colspan='4'>Loading...</td></tr>";
 
 
-    const scansCol =
-      collection(
-        db,
-        "scans"
-      );
-
-
     const q =
       query(
-        scansCol,
+
+        collection(
+          db,
+          "scans"
+        ),
+
         where(
           "positionId",
           "==",
           posId
         )
+
       );
 
 
@@ -1413,7 +1940,9 @@ TESSERACT OCR
       await getDocs(q);
 
 
-    if (snapshot.empty) {
+    if (
+      snapshot.empty
+    ) {
 
       table.innerHTML =
         `<tr>
@@ -1423,10 +1952,11 @@ TESSERACT OCR
         </tr>`;
 
       return;
+
     }
 
 
-    let rowsHTML = "";
+    let html = "";
 
     let idx = 1;
 
@@ -1438,28 +1968,32 @@ TESSERACT OCR
           docSnap.data();
 
 
-        const scannedAtStr =
+        const scannedAt =
           d.scannedAt
+
             ? new Date(
                 d.scannedAt.seconds *
                 1000
               ).toLocaleString()
+
             : "N/A";
 
 
-        rowsHTML +=
+        html +=
           `<tr>
             <td>${idx++}</td>
             <td>${d.code}</td>
-            <td>${scannedAtStr}</td>
+            <td>${scannedAt}</td>
             <td>${d.scannedBy}</td>
           </tr>`;
+
       }
     );
 
 
     table.innerHTML =
-      rowsHTML;
+      html;
+
   }
 
 
@@ -1467,32 +2001,31 @@ TESSERACT OCR
   // HANDLE ALLOCATE
   // ============================================================
 
-  async function handleScan(code) {
+  async function handleScan(
+    code
+  ) {
 
-    if (!code) return;
+    if (!code) {
 
+      return;
 
-    console.log(
-      "Processing AWB:",
-      code
-    );
-
-
-    const scansCol =
-      collection(
-        db,
-        "scans"
-      );
+    }
 
 
     const q =
       query(
-        scansCol,
+
+        collection(
+          db,
+          "scans"
+        ),
+
         where(
           "code",
           "==",
           code
         )
+
       );
 
 
@@ -1500,9 +2033,11 @@ TESSERACT OCR
       await getDocs(q);
 
 
-    if (!snapshot.empty) {
+    if (
+      !snapshot.empty
+    ) {
 
-      let duplicateDoc =
+      let duplicate =
         null;
 
 
@@ -1518,18 +2053,24 @@ TESSERACT OCR
             "[REMOVED]"
           ) {
 
-            duplicateDoc = d;
+            duplicate =
+              d;
+
           }
+
         }
       );
 
 
-      if (duplicateDoc) {
+      if (duplicate) {
 
-        setCameraStatus(
-          `❌ Duplicate AWB: ${code}\n` +
-          `Already allocated to Position ID: ${duplicateDoc.positionId}`,
+        setStatus(
+
+          `❌ Duplicate AWB!\n` +
+          `Already allocated to Position ID: ${duplicate.positionId}`,
+
           "error"
+
         );
 
 
@@ -1537,17 +2078,21 @@ TESSERACT OCR
 
 
         return;
+
       }
+
     }
 
 
     try {
 
       await addDoc(
+
         collection(
           db,
           "scans"
         ),
+
         {
 
           code:
@@ -1567,6 +2112,7 @@ TESSERACT OCR
             currentUser
 
         }
+
       );
 
 
@@ -1585,11 +2131,13 @@ TESSERACT OCR
       );
 
 
-      setCameraStatus(
-        "❌ Failed to save scan.",
+      setStatus(
+        "❌ Failed to save AWB.",
         "error"
       );
+
     }
+
   }
 
 
@@ -1616,6 +2164,7 @@ TESSERACT OCR
         );
 
         return;
+
       }
 
 
@@ -1639,14 +2188,6 @@ TESSERACT OCR
         currentUser;
 
 
-      document
-        .getElementById(
-          "offloadMessage"
-        )
-        .innerText =
-        "Starting camera...";
-
-
       switchScreen(
         "offloadScan"
       );
@@ -1656,10 +2197,6 @@ TESSERACT OCR
         positionId
       );
 
-
-      await startCamera(
-        "offload"
-      );
     };
 
 
@@ -1681,21 +2218,20 @@ TESSERACT OCR
       "<tr><td colspan='4'>Loading...</td></tr>";
 
 
-    const scansCol =
-      collection(
-        db,
-        "scans"
-      );
-
-
     const q =
       query(
-        scansCol,
+
+        collection(
+          db,
+          "scans"
+        ),
+
         where(
           "positionId",
           "==",
           posId
         )
+
       );
 
 
@@ -1703,7 +2239,9 @@ TESSERACT OCR
       await getDocs(q);
 
 
-    if (snapshot.empty) {
+    if (
+      snapshot.empty
+    ) {
 
       table.innerHTML =
         `<tr>
@@ -1713,10 +2251,11 @@ TESSERACT OCR
         </tr>`;
 
       return;
+
     }
 
 
-    let rowsHTML = "";
+    let html = "";
 
     let idx = 1;
 
@@ -1728,28 +2267,32 @@ TESSERACT OCR
           docSnap.data();
 
 
-        const scannedAtStr =
+        const scannedAt =
           d.scannedAt
+
             ? new Date(
                 d.scannedAt.seconds *
                 1000
               ).toLocaleString()
+
             : "N/A";
 
 
-        rowsHTML +=
+        html +=
           `<tr>
             <td>${idx++}</td>
             <td>${d.code}</td>
-            <td>${scannedAtStr}</td>
+            <td>${scannedAt}</td>
             <td>${d.scannedBy}</td>
           </tr>`;
+
       }
     );
 
 
     table.innerHTML =
-      rowsHTML;
+      html;
+
   }
 
 
@@ -1761,30 +2304,27 @@ TESSERACT OCR
     code
   ) {
 
-    if (!code) return;
+    if (!code) {
 
+      return;
 
-    console.log(
-      "Offloading:",
-      code
-    );
-
-
-    const scansCol =
-      collection(
-        db,
-        "scans"
-      );
+    }
 
 
     const q =
       query(
-        scansCol,
+
+        collection(
+          db,
+          "scans"
+        ),
+
         where(
           "code",
           "==",
           code
         )
+
       );
 
 
@@ -1792,18 +2332,22 @@ TESSERACT OCR
       await getDocs(q);
 
 
-    if (snapshot.empty) {
+    if (
+      snapshot.empty
+    ) {
 
-      setCameraStatus(
+      setStatus(
         `❌ AWB ${code} not found.`,
         "error"
       );
 
+
       return;
+
     }
 
 
-    let foundForPosition =
+    let found =
       false;
 
 
@@ -1822,25 +2366,30 @@ TESSERACT OCR
       ) {
 
         await updateDoc(
+
           doc(
             db,
             "scans",
             docSnap.id
           ),
+
           {
+
             positionId:
               "[REMOVED]"
+
           }
+
         );
 
 
-        setCameraStatus(
+        setStatus(
           `✅ Removed: ${code}`,
           "success"
         );
 
 
-        foundForPosition =
+        found =
           true;
 
 
@@ -1848,127 +2397,152 @@ TESSERACT OCR
 
 
         break;
+
       }
+
     }
 
 
-    if (!foundForPosition) {
+    if (!found) {
 
-      setCameraStatus(
-        `❌ AWB ${code} is not allocated to Position ID: ${positionId}`,
+      setStatus(
+
+        `❌ ${code} is not allocated to Position ID: ${positionId}`,
+
         "error"
+
       );
+
     }
 
 
     await loadOffloadAWBs(
       positionId
     );
+
   }
 
 
   // ============================================================
-  // EXPORT CSV
+  // EXPORT
   // ============================================================
 
-  window.exportToCSV = () => {
+  window.exportToCSV =
+    () => {
 
-    onSnapshot(
-      collection(
-        db,
-        "scans"
-      ),
+      onSnapshot(
 
-      async snapshot => {
+        collection(
+          db,
+          "scans"
+        ),
 
-        let csv =
-          "data:text/csv;charset=utf-8,\uFEFF" +
-          "Airway Bill,Position ID,Scanned At,Scanned By\n";
+        async snapshot => {
 
-
-        const deletePromises =
-          [];
+          let csv =
+            "data:text/csv;charset=utf-8,\uFEFF" +
+            "Airway Bill,Position ID,Scanned At,Scanned By\n";
 
 
-        snapshot.forEach(
-          docSnap => {
-
-            const d =
-              docSnap.data();
+          const deletePromises =
+            [];
 
 
-            if (
-              d.positionId !==
-                "[REMOVED]" &&
-              d.scannedAt
-            ) {
+          snapshot.forEach(
+            docSnap => {
 
-              csv +=
-                `"${d.code}",` +
-                `"${d.positionId}",` +
-                `"${new Date(
-                  d.scannedAt.seconds *
-                  1000
-                ).toLocaleString()}",` +
-                `"${d.scannedBy}"\n`;
+              const d =
+                docSnap.data();
 
 
-              deletePromises.push(
-                deleteDoc(
-                  doc(
-                    db,
-                    "scans",
-                    docSnap.id
+              if (
+
+                d.positionId !==
+                  "[REMOVED]" &&
+
+                d.scannedAt
+
+              ) {
+
+                csv +=
+
+                  `"${d.code}",` +
+
+                  `"${d.positionId}",` +
+
+                  `"${new Date(
+                    d.scannedAt.seconds *
+                    1000
+                  ).toLocaleString()}",` +
+
+                  `"${d.scannedBy}"\n`;
+
+
+                deletePromises.push(
+
+                  deleteDoc(
+
+                    doc(
+                      db,
+                      "scans",
+                      docSnap.id
+                    )
+
                   )
-                )
-              );
+
+                );
+
+              }
+
             }
-          }
-        );
-
-
-        const link =
-          document.createElement(
-            "a"
           );
 
 
-        link.href =
-          encodeURI(csv);
+          const link =
+            document.createElement(
+              "a"
+            );
 
 
-        link.download =
-          "FirstAirBuilder_Export.csv";
+          link.href =
+            encodeURI(csv);
 
 
-        document.body.appendChild(
-          link
-        );
+          link.download =
+            "FirstAirBuilder_Export.csv";
 
 
-        link.click();
+          document.body.appendChild(
+            link
+          );
 
 
-        document.body.removeChild(
-          link
-        );
+          link.click();
 
 
-        await Promise.all(
-          deletePromises
-        );
+          document.body.removeChild(
+            link
+          );
 
 
-        alert(
-          "Export complete and all exported data cleared."
-        );
-      },
+          await Promise.all(
+            deletePromises
+          );
 
-      {
-        once: true
-      }
-    );
-  };
+
+          alert(
+            "Export complete and all exported data cleared."
+          );
+
+        },
+
+        {
+          once: true
+        }
+
+      );
+
+    };
 
 
   // ============================================================
@@ -1995,11 +2569,13 @@ TESSERACT OCR
       ) {
 
         liveUnsubscribe();
+
       }
 
 
       liveUnsubscribe =
         onSnapshot(
+
           collection(
             db,
             "scans"
@@ -2019,9 +2595,12 @@ TESSERACT OCR
 
 
                 if (
+
                   data.positionId !==
                     "[REMOVED]" &&
+
                   data.scannedAt
+
                 ) {
 
                   rows.push({
@@ -2035,37 +2614,65 @@ TESSERACT OCR
                       ).toLocaleString()
 
                   });
+
                 }
+
               }
             );
 
 
             rows.sort(
+
               (a, b) =>
+
                 new Date(
                   b.scannedAt
                 ) -
+
                 new Date(
                   a.scannedAt
                 )
+
             );
 
 
             table.innerHTML =
               rows
                 .map(
+
                   (entry, idx) =>
+
                     `<tr>
-                      <td>${idx + 1}</td>
-                      <td>${entry.code}</td>
-                      <td>${entry.positionId}</td>
-                      <td>${entry.scannedAt}</td>
-                      <td>${entry.scannedBy}</td>
+
+                      <td>
+                        ${idx + 1}
+                      </td>
+
+                      <td>
+                        ${entry.code}
+                      </td>
+
+                      <td>
+                        ${entry.positionId}
+                      </td>
+
+                      <td>
+                        ${entry.scannedAt}
+                      </td>
+
+                      <td>
+                        ${entry.scannedBy}
+                      </td>
+
                     </tr>`
+
                 )
                 .join("");
+
           }
+
         );
+
     };
 
 
@@ -2082,22 +2689,25 @@ TESSERACT OCR
       navigator.vibrate(
         100
       );
+
     }
+
   }
 
 
   // ============================================================
-  // PAGE CLEANUP
+  // CLEANUP
   // ============================================================
 
   window.addEventListener(
     "pagehide",
     () => {
 
-      stopCamera();
+      closeCamera();
 
     }
   );
+
 
 </script>
 
