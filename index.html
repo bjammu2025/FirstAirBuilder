@@ -6,7 +6,7 @@
 
 <!-- ============================================================
      FIRST AIR BUILDER
-     CODE VERSION: 11.00
+     CODE VERSION: 10.01
      ============================================================ -->
 
 <meta
@@ -21,485 +21,543 @@
 <style>
 
 html, body {
+
   margin: 0;
   padding: 0;
+
   background: #121212;
   color: white;
+
   font-family: Arial, sans-serif;
+
   width: 100%;
   min-height: 100%;
+
   overflow-x: hidden;
 }
 
+
 body {
+
   display: flex;
   justify-content: center;
   align-items: flex-start;
 }
 
+
 .container {
+
   width: 100%;
   min-height: 100vh;
+
   padding: 10px;
+
   box-sizing: border-box;
+
   text-align: center;
+
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
+
 input,
-button,
-select {
+button {
+
   font-size: 1.8rem;
+
   padding: 1rem;
+
   margin: .6rem 0;
+
   width: 95%;
   max-width: 900px;
+
   border: none;
+
   border-radius: 15px;
+
   box-sizing: border-box;
 }
 
-input,
-select {
+
+input {
+
   background: white;
   color: black;
 }
 
+
 button {
+
   background: #1e88e5;
+
   color: white;
+
   cursor: pointer;
 }
 
+
 button:hover {
+
   background: #1565c0;
 }
 
+
 .cameraButton {
+
   background: #00897b;
 }
 
+
 .readButton {
+
   background: #43a047;
 }
 
+
 .stopButton {
+
   background: #d32f2f;
 }
 
+
 .backButton {
+
   background: #555;
 }
 
+
 .barcodeButton {
+
   background: #8e24aa;
 }
 
-.closeULDButton {
-  background: #fb8c00;
-}
-
-.closeFlightButton {
-  background: #c62828;
-}
-
-.newULDButton {
-  background: #00897b;
-}
-
-.confirmButton {
-  background: #2e7d32;
-}
-
-.cancelButton {
-  background: #c62828;
-}
 
 h2 {
+
   margin: 10px 0;
+
   font-size: 2.7rem;
 }
 
+
 h3 {
+
   margin: 10px 0;
+
   font-size: 1.8rem;
 }
 
+
 .version {
+
   font-size: .8rem;
+
   color: #777;
+
   margin-top: 2px;
+
   margin-bottom: 10px;
 }
 
+
 .screen {
+
   display: none;
+
   width: 100%;
 }
 
+
 .visible {
+
   display: block;
 }
 
-.infoBox {
-  width: 95%;
-  max-width: 900px;
-  margin: 10px auto;
-  padding: 15px;
-  box-sizing: border-box;
-  background: #1e1e1e;
-  border: 1px solid #555;
-  border-radius: 15px;
-  font-size: 1.25rem;
-}
-
-.infoBox strong {
-  color: #00e676;
-}
-
-.weightBox {
-  width: 95%;
-  max-width: 900px;
-  margin: 10px auto;
-}
-
-.weightLabel {
-  font-size: 1.25rem;
-  text-align: left;
-  margin-top: 10px;
-  color: #ccc;
-}
-
-.weightKG {
-  background: #292929;
-  color: #00e676;
-  font-size: 2rem;
-  padding: 1rem;
-  border-radius: 15px;
-  margin: .6rem 0;
-  box-sizing: border-box;
-  width: 95%;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.summaryBox {
-  width: 95%;
-  max-width: 900px;
-  margin: 15px auto;
-  padding: 15px;
-  background: #1e1e1e;
-  border: 1px solid #555;
-  border-radius: 15px;
-  box-sizing: border-box;
-}
-
-.summaryTitle {
-  font-size: 1.6rem;
-  font-weight: bold;
-  color: #00e676;
-  margin-bottom: 10px;
-}
-
-.totalWeight {
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin-top: 15px;
-  color: #ffeb3b;
-}
 
 /* ============================================================
-   CAMERA
+   CAMERA VIEW
+   ONLY THE GREEN BOX AREA IS SHOWN
    ============================================================ */
 
 .cameraOuter {
+
   width: 100%;
+
   max-width: 900px;
+
   margin: 8px auto;
+
   display: none;
+
   position: relative;
+
   background: black;
+
   overflow: hidden;
+
   border-radius: 16px;
+
+  /*
+     This is the visible scanning area.
+     The full camera is NOT displayed.
+  */
+
   aspect-ratio: 16 / 5;
 }
 
+
 .cameraOuter.active {
+
   display: block;
 }
 
+
 .cameraOuter video {
+
   position: absolute;
+
+  /*
+     Enlarge the camera image so only
+     the center scanning region is visible.
+  */
+
   width: 100%;
+
   height: auto;
+
   min-height: 100%;
+
   object-fit: cover;
+
   left: 0;
+
   top: 50%;
+
   transform: translateY(-50%);
+
   background: black;
 }
 
+
+/*
+   GREEN SCANNING BOX
+
+   The entire visible camera area is effectively
+   the scanning box.
+*/
+
 .scanBox {
+
   position: absolute;
+
   left: 2%;
   right: 2%;
+
   top: 5%;
   bottom: 5%;
+
   border: 4px solid #00ff00;
+
   border-radius: 12px;
+
   pointer-events: none;
+
   box-sizing: border-box;
+
   z-index: 5;
+
   box-shadow:
     0 0 8px #00ff00,
     inset 0 0 8px #00ff00;
 }
 
+
 .scanText {
+
   position: absolute;
+
   left: 0;
   right: 0;
+
   bottom: 8px;
+
   text-align: center;
+
   font-size: 1rem;
+
   color: white;
+
   text-shadow:
     0 2px 4px black,
     0 2px 8px black;
+
   z-index: 6;
 }
 
+
 .cameraStatus {
+
   min-height: 2rem;
+
   font-size: 1.25rem;
+
   margin: 5px;
+
 }
 
+
 .success {
+
   color: #00e676;
 }
 
+
 .error {
+
   color: #ff5252;
 }
 
+
 .scanning {
+
   color: #ffeb3b;
 }
 
+
 .hidden {
+
   display: none !important;
 }
 
+
 /* ============================================================
-   TABLE
+   SCAN TABLE
    ============================================================ */
 
 table {
+
   width: 100%;
+
   margin-top: 10px;
+
   border-collapse: collapse;
+
   font-size: 1.15rem;
 }
 
+
 th,
 td {
+
   border: 1px solid #777;
+
   padding: 8px;
+
   text-align: center;
 }
 
+
 th {
+
   background: #222;
 }
 
+
 /* ============================================================
-   VERIFICATION / CONFIRMATION POPUP
+   VERIFICATION POPUP
    ============================================================ */
 
 #verificationOverlay {
+
   position: fixed;
+
   inset: 0;
+
   background: rgba(0,0,0,.82);
+
   display: none;
+
   align-items: center;
+
   justify-content: center;
+
   z-index: 9999;
+
   padding: 20px;
+
   box-sizing: border-box;
 }
 
+
 #verificationOverlay.active {
+
   display: flex;
 }
 
+
 .verificationBox {
+
   width: 95%;
+
   max-width: 650px;
+
   background: #202020;
+
   border-radius: 22px;
+
   padding: 25px;
+
   box-sizing: border-box;
+
   border: 3px solid #00e676;
+
   box-shadow: 0 0 30px rgba(0,255,100,.3);
 }
 
+
 .verificationBox.errorBox {
+
   border-color: #ff1744;
+
   box-shadow:
     0 0 30px rgba(255,0,50,.3);
 }
 
-.verificationBox.confirmBox {
-  border-color: #ffeb3b;
-}
 
 .verificationTitle {
+
   font-size: 2rem;
+
   font-weight: bold;
+
   margin-bottom: 15px;
 }
 
+
 .verificationAWB {
+
   font-size: 3rem;
+
   font-weight: bold;
+
   color: #00e676;
+
   word-break: break-all;
+
   margin: 15px 0;
 }
 
+
 .errorBox .verificationAWB {
+
   color: #ff5252;
 }
 
+
 .verificationMessage {
+
   font-size: 1.4rem;
+
   line-height: 1.5;
+
   margin-bottom: 10px;
 }
 
-.confirmButtons {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.confirmButtons button {
-  width: 45%;
-  min-width: 180px;
-}
 
 /* ============================================================
-   BARCODE
+   BARCODE SCANNER INPUT
    ============================================================ */
 
 .barcodeInput {
+
   position: fixed;
+
   left: -10000px;
+
   top: -10000px;
+
   width: 1px;
+
   height: 1px;
+
   opacity: 0;
+
   pointer-events: none;
 }
+
 
 /* ============================================================
    LIVE VIEW
    ============================================================ */
 
 .livePosition {
+
   margin: 15px 0 25px;
+
   padding: 10px;
+
   background: #1e1e1e;
+
   border-radius: 12px;
+
   border: 1px solid #555;
 }
 
+
 .livePositionTitle {
+
   font-size: 1.6rem;
+
   font-weight: bold;
+
   margin-bottom: 8px;
+
   color: #00e676;
 }
 
-.liveULD {
-  margin: 15px 0;
-  padding: 15px;
-  background: #181818;
-  border-radius: 12px;
-  border: 2px solid #555;
-}
-
-.liveULD.closed {
-  border-color: #00e676;
-}
-
-.uldHeader {
-  font-size: 1.7rem;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-
-.uldStatus {
-  font-size: 1.25rem;
-  font-weight: bold;
-}
-
-.uldOpen {
-  color: #ffeb3b;
-}
-
-.uldClosed {
-  color: #00e676;
-}
-
-.uldWeights {
-  margin-top: 8px;
-  font-size: 1.25rem;
-  color: #fff;
-}
-
-/* ============================================================
-   MOBILE
-   ============================================================ */
 
 @media (max-width:600px) {
 
   input,
-  button,
-  select {
+  button {
+
     font-size: 1.4rem;
+
     padding: .9rem;
   }
 
+
   h2 {
+
     font-size: 2.2rem;
   }
 
+
   h3 {
+
     font-size: 1.5rem;
   }
 
+
   table {
+
     font-size: .9rem;
   }
 
+
   th,
   td {
+
     padding: 6px;
   }
 
-  .verificationAWB {
-    font-size: 2.3rem;
-  }
 
-  .confirmButtons button {
-    width: 95%;
+  .verificationAWB {
+
+    font-size: 2.3rem;
   }
 
 }
@@ -508,9 +566,12 @@ th {
 
 </head>
 
+
 <body>
 
+
 <div class="container">
+
 
 <!-- ============================================================
      HOME
@@ -521,8 +582,9 @@ th {
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 11.00
+    Version 10.01
   </div>
+
 
   <input
     type="text"
@@ -530,29 +592,21 @@ th {
     placeholder="Enter User Name"
     autocomplete="off">
 
+
   <button onclick="goToAllocate()">
     ALLOCATE
   </button>
+
 
   <button onclick="goToOffload()">
     OFFLOAD
   </button>
 
-  <button
-    class="closeULDButton"
-    onclick="goToCloseULD()">
-    CLOSE ULD
-  </button>
-
-  <button
-    class="closeFlightButton"
-    onclick="goToCloseFlight()">
-    CLOSE FLIGHT
-  </button>
 
   <button onclick="goToLiveView()">
     LIVE VIEW
   </button>
+
 
   <button onclick="exportToCSV()">
     EXPORT
@@ -562,79 +616,12 @@ th {
 
 
 <!-- ============================================================
-     ALLOCATE ULD SELECTION
-     ============================================================ -->
-
-<div id="allocateULD" class="screen">
-
-  <h3>Select ULD</h3>
-
-  <select id="allocateULDSelect">
-    <option value="">
-      Loading available ULDs...
-    </option>
-  </select>
-
-  <button
-    class="newULDButton"
-    onclick="goToNewULD()">
-    + MAKE NEW ULD
-  </button>
-
-  <button onclick="continueAllocateWithULD()">
-    NEXT
-  </button>
-
-  <button
-    class="backButton"
-    onclick="goHome()">
-    ⬅ BACK
-  </button>
-
-</div>
-
-
-<!-- ============================================================
-     NEW ULD
-     ============================================================ -->
-
-<div id="newULD" class="screen">
-
-  <h3>Make New ULD</h3>
-
-  <input
-    type="text"
-    id="newULDId"
-    placeholder="Enter New ULD ID"
-    autocomplete="off">
-
-  <button
-    class="newULDButton"
-    onclick="createNewULD()">
-    CREATE ULD
-  </button>
-
-  <button
-    class="backButton"
-    onclick="goToAllocate()">
-    ⬅ BACK
-  </button>
-
-</div>
-
-
-<!-- ============================================================
-     ALLOCATE POSITION
+     ALLOCATE START
      ============================================================ -->
 
 <div id="allocateStart" class="screen">
 
   <h3>Allocate Airway Bills</h3>
-
-  <div class="infoBox">
-    ULD:
-    <strong id="allocateSelectedULD"></strong>
-  </div>
 
   <input
     type="text"
@@ -642,14 +629,18 @@ th {
     placeholder="Enter Position ID"
     autocomplete="off">
 
+
   <button onclick="startAllocate()">
     START
   </button>
 
+
   <button
     class="backButton"
-    onclick="goToAllocate()">
+    onclick="goHome()">
+
     ⬅ BACK
+
   </button>
 
 </div>
@@ -663,11 +654,6 @@ th {
 
   <h3>
 
-    ULD:
-    <span id="allocULD"></span>
-
-    <br>
-
     Position:
     <span id="allocPosition"></span>
 
@@ -678,19 +664,26 @@ th {
 
   </h3>
 
+
   <button
     id="openAllocateCameraButton"
     class="cameraButton"
     onclick="openAllocateCamera()">
+
     📷 OPEN CAMERA
+
   </button>
+
 
   <button
     id="openAllocateBarcodeButton"
     class="barcodeButton"
     onclick="openBarcodeScanner('allocate')">
+
     ▣ BARCODE SCANNER
+
   </button>
+
 
   <div
     id="allocateCameraOuter"
@@ -711,18 +704,25 @@ th {
 
   </div>
 
+
   <div
     id="allocateCameraStatus"
     class="cameraStatus">
+
     Camera is closed
+
   </div>
+
 
   <button
     id="closeAllocateButton"
     class="stopButton hidden"
     onclick="closeCamera()">
+
     ✖ CLOSE CAMERA
+
   </button>
+
 
   <table>
 
@@ -741,10 +741,13 @@ th {
 
   </table>
 
+
   <button
     class="backButton"
     onclick="goHome()">
+
     ⬅ BACK
+
   </button>
 
 </div>
@@ -758,20 +761,25 @@ th {
 
   <h3>Offload Airway Bills</h3>
 
+
   <input
     type="text"
     id="offloadPositionId"
     placeholder="Enter Position ID"
     autocomplete="off">
 
+
   <button onclick="startOffload()">
     START
   </button>
 
+
   <button
     class="backButton"
     onclick="goHome()">
+
     ⬅ BACK
+
   </button>
 
 </div>
@@ -795,19 +803,26 @@ th {
 
   </h3>
 
+
   <button
     id="openOffloadCameraButton"
     class="cameraButton"
     onclick="openOffloadCamera()">
+
     📷 OPEN CAMERA
+
   </button>
+
 
   <button
     id="openOffloadBarcodeButton"
     class="barcodeButton"
     onclick="openBarcodeScanner('offload')">
+
     ▣ BARCODE SCANNER
+
   </button>
+
 
   <div
     id="offloadCameraOuter"
@@ -828,18 +843,25 @@ th {
 
   </div>
 
+
   <div
     id="offloadCameraStatus"
     class="cameraStatus">
+
     Camera is closed
+
   </div>
+
 
   <button
     id="closeOffloadButton"
     class="stopButton hidden"
     onclick="closeCamera()">
+
     ✖ CLOSE CAMERA
+
   </button>
+
 
   <table>
 
@@ -858,121 +880,13 @@ th {
 
   </table>
 
-  <button
-    class="backButton"
-    onclick="goHome()">
-    ⬅ BACK
-  </button>
-
-</div>
-
-
-<!-- ============================================================
-     CLOSE ULD START
-     ============================================================ -->
-
-<div id="closeULDStart" class="screen">
-
-  <h3>Close ULD</h3>
-
-  <select id="closeULDSelect">
-    <option value="">
-      Loading open ULDs...
-    </option>
-  </select>
-
-  <button onclick="continueCloseULD()">
-    NEXT
-  </button>
 
   <button
     class="backButton"
     onclick="goHome()">
+
     ⬅ BACK
-  </button>
 
-</div>
-
-
-<!-- ============================================================
-     CLOSE ULD WEIGHT
-     ============================================================ -->
-
-<div id="closeULDWeight" class="screen">
-
-  <h3>ULD Weight</h3>
-
-  <div class="infoBox">
-    ULD:
-    <strong id="closeULDIdDisplay"></strong>
-  </div>
-
-  <div class="weightBox">
-
-    <div class="weightLabel">
-      Enter Weight in LBS
-    </div>
-
-    <input
-      type="number"
-      id="weightLBS"
-      placeholder="Weight in LBS"
-      min="0"
-      step="0.01"
-      inputmode="decimal"
-      oninput="calculateKG()">
-
-    <div class="weightLabel">
-      Weight in KGS
-    </div>
-
-    <div
-      id="weightKG"
-      class="weightKG">
-      0.00 KG
-    </div>
-
-  </div>
-
-  <button
-    class="confirmButton"
-    onclick="confirmCloseULD()">
-    CLOSE ULD
-  </button>
-
-  <button
-    class="backButton"
-    onclick="goToCloseULD()">
-    ⬅ BACK
-  </button>
-
-</div>
-
-
-<!-- ============================================================
-     CLOSE FLIGHT
-     ============================================================ -->
-
-<div id="closeFlightScreen" class="screen">
-
-  <h3>Close Flight</h3>
-
-  <div
-    id="flightSummary"
-    class="summaryBox">
-    Loading...
-  </div>
-
-  <button
-    class="closeFlightButton"
-    onclick="confirmCloseFlight()">
-    CLOSE FLIGHT
-  </button>
-
-  <button
-    class="backButton"
-    onclick="goHome()">
-    ⬅ BACK
   </button>
 
 </div>
@@ -988,19 +902,23 @@ th {
 
   <div id="liveTables"></div>
 
+
   <button
     class="backButton"
     onclick="goHome()">
+
     ⬅ BACK
+
   </button>
 
 </div>
+
 
 </div>
 
 
 <!-- ============================================================
-     HIDDEN ZEBRA INPUT
+     HIDDEN ZEBRA BARCODE INPUT
      ============================================================ -->
 
 <input
@@ -1024,34 +942,22 @@ th {
     <div
       id="verificationTitle"
       class="verificationTitle">
+
       Verification
+
     </div>
+
 
     <div
       id="verificationAWB"
       class="verificationAWB">
+
     </div>
+
 
     <div
       id="verificationMessage"
       class="verificationMessage">
-    </div>
-
-    <div
-      id="confirmationButtons"
-      class="confirmButtons hidden">
-
-      <button
-        class="confirmButton"
-        id="confirmYesButton">
-        YES
-      </button>
-
-      <button
-        class="cancelButton"
-        id="confirmNoButton">
-        NO
-      </button>
 
     </div>
 
@@ -1060,39 +966,55 @@ th {
 </div>
 
 
+<!-- ============================================================
+     TESSERACT
+     ============================================================ -->
+
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 
 <script type="module">
 
-/* ============================================================
-   VERSION
-   ============================================================ */
 
-const CODE_VERSION = "11.00";
+/* ==============================================================
+   CODE VERSION
+   ============================================================== */
+
+const CODE_VERSION = "10.01";
 
 
-/* ============================================================
+/* ==============================================================
    FIREBASE
-   ============================================================ */
+   ============================================================== */
 
 import {
   initializeApp
 } from
 "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
+
 import {
 
   getFirestore,
+
   collection,
+
   addDoc,
+
   onSnapshot,
+
   doc,
+
   updateDoc,
+
   serverTimestamp,
+
   query,
+
   where,
+
   getDocs,
+
   deleteDoc
 
 }
@@ -1126,47 +1048,70 @@ const firebaseConfig = {
 const app =
   initializeApp(firebaseConfig);
 
+
 const db =
   getFirestore(app);
 
 
-/* ============================================================
-   GLOBALS
-   ============================================================ */
+/* ==============================================================
+   GLOBAL VARIABLES
+   ============================================================== */
 
 let positionId = "";
+
 let currentUser = "";
 
-let currentULDId = "";
-
 let currentCameraMode = null;
+
 let cameraStream = null;
 
 let ocrWorker = null;
+
 let ocrBusy = false;
 
+let liveUnsubscribe = null;
+
+
+/*
+   Prevent the same AWB from being processed
+   repeatedly while OCR is running.
+*/
+
 let lastDetectedAWB = "";
+
 let lastDetectedTime = 0;
 
+
+/*
+   OCR interval.
+
+   Do NOT make this extremely short.
+   Running Tesseract continuously is what causes
+   the Android device to hang.
+
+   1500 ms = one OCR attempt approximately every
+   1.5 seconds.
+*/
+
 let OCR_INTERVAL = 1500;
+
 let ocrTimer = null;
 
+
+/*
+   Barcode scanner mode.
+*/
+
 let barcodeMode = null;
+
 let barcodeBuffer = "";
+
 let barcodeTimer = null;
 
-let liveUnsubscribe = null;
-let liveULDUnsubscribe = null;
 
-let pendingOffloadDocId = null;
-let pendingOffloadCode = null;
-
-let pendingConfirmationResolve = null;
-
-
-/* ============================================================
+/* ==============================================================
    SCREEN CONTROL
-   ============================================================ */
+   ============================================================== */
 
 function switchScreen(id) {
 
@@ -1177,15 +1122,17 @@ function switchScreen(id) {
         el.classList.remove("visible")
     );
 
+
   document
     .getElementById(id)
     .classList.add("visible");
+
 }
 
 
-/* ============================================================
+/* ==============================================================
    HOME
-   ============================================================ */
+   ============================================================== */
 
 window.goHome = async () => {
 
@@ -1193,68 +1140,54 @@ window.goHome = async () => {
 
   stopBarcodeScanner();
 
+
   if (
     typeof liveUnsubscribe ===
     "function"
   ) {
 
     liveUnsubscribe();
+
     liveUnsubscribe = null;
 
   }
 
-  if (
-    typeof liveULDUnsubscribe ===
-    "function"
-  ) {
-
-    liveULDUnsubscribe();
-    liveULDUnsubscribe = null;
-
-  }
 
   switchScreen("home");
+
 
   document.getElementById(
     "allocatePositionId"
   ).value = "";
 
+
   document.getElementById(
     "offloadPositionId"
   ).value = "";
+
 
   document.getElementById(
     "scanTable"
   ).innerHTML = "";
 
+
   document.getElementById(
     "offloadTable"
   ).innerHTML = "";
 
-  document.getElementById(
-    "newULDId"
-  ).value = "";
-
-  document.getElementById(
-    "weightLBS"
-  ).value = "";
-
-  document.getElementById(
-    "weightKG"
-  ).innerText = "0.00 KG";
 
   positionId = "";
-  currentULDId = "";
+
   currentCameraMode = null;
 
 };
 
 
-/* ============================================================
+/* ==============================================================
    USER
-   ============================================================ */
+   ============================================================== */
 
-window.goToAllocate = async () => {
+window.goToAllocate = () => {
 
   currentUser =
     document
@@ -1262,18 +1195,17 @@ window.goToAllocate = async () => {
       .value
       .trim();
 
+
   if (!currentUser) {
 
     alert("Please enter user name");
+
     return;
 
   }
 
-  switchScreen("allocateULD");
 
-  await loadAvailableULDs(
-    "allocateULDSelect"
-  );
+  switchScreen("allocateStart");
 
 };
 
@@ -1286,242 +1218,29 @@ window.goToOffload = () => {
       .value
       .trim();
 
+
   if (!currentUser) {
 
     alert("Please enter user name");
+
     return;
 
   }
+
 
   switchScreen("offloadStart");
 
 };
 
 
-/* ============================================================
-   ALLOCATE ULD
-   ============================================================ */
-
-async function loadAvailableULDs(
-  selectId
-) {
-
-  const select =
-    document.getElementById(
-      selectId
-    );
-
-  select.innerHTML =
-    `<option value="">
-      Select an available ULD
-    </option>`;
-
-  try {
-
-    const q =
-      query(
-        collection(db, "ulds"),
-        where("status", "==", "OPEN")
-      );
-
-    const snapshot =
-      await getDocs(q);
-
-    if (snapshot.empty) {
-
-      select.innerHTML =
-        `<option value="">
-          No open ULDs available
-        </option>`;
-
-      return;
-
-    }
-
-    snapshot.forEach(
-      docSnap => {
-
-        const d =
-          docSnap.data();
-
-        if (!d.uldId) return;
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-        option.value =
-          d.uldId;
-
-        option.textContent =
-          d.uldId;
-
-        select.appendChild(
-          option
-        );
-
-      }
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-    select.innerHTML =
-      `<option value="">
-        Error loading ULDs
-      </option>`;
-
-  }
-
-}
-
-
-window.goToNewULD = () => {
-
-  document.getElementById(
-    "newULDId"
-  ).value = "";
-
-  switchScreen("newULD");
-
-};
-
-
-window.createNewULD = async () => {
-
-  const input =
-    document.getElementById(
-      "newULDId"
-    );
-
-  const uldId =
-    input.value
-      .trim()
-      .toUpperCase();
-
-  if (!uldId) {
-
-    alert("Enter ULD ID");
-    return;
-
-  }
-
-  try {
-
-    const q =
-      query(
-        collection(db, "ulds"),
-        where("uldId", "==", uldId)
-      );
-
-    const snapshot =
-      await getDocs(q);
-
-    if (!snapshot.empty) {
-
-      alert(
-        "This ULD already exists."
-      );
-
-      return;
-
-    }
-
-    await addDoc(
-
-      collection(db, "ulds"),
-
-      {
-
-        uldId: uldId,
-
-        status: "OPEN",
-
-        weightLbs: null,
-
-        weightKgs: null,
-
-        createdAt:
-          serverTimestamp(),
-
-        createdBy:
-          currentUser
-
-      }
-
-    );
-
-    currentULDId =
-      uldId;
-
-    document.getElementById(
-      "allocateSelectedULD"
-    ).innerText =
-      currentULDId;
-
-    switchScreen(
-      "allocateStart"
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "Could not create ULD.\n\n" +
-      error.message
-    );
-
-  }
-
-};
-
-
-window.continueAllocateWithULD =
-async () => {
-
-  const select =
-    document.getElementById(
-      "allocateULDSelect"
-    );
-
-  const selected =
-    select.value;
-
-  if (!selected) {
-
-    alert(
-      "Please select a ULD or create a new ULD."
-    );
-
-    return;
-
-  }
-
-  currentULDId =
-    selected;
-
-  document.getElementById(
-    "allocateSelectedULD"
-  ).innerText =
-    currentULDId;
-
-  switchScreen(
-    "allocateStart"
-  );
-
-};
-
-
-/* ============================================================
+/* ==============================================================
    AWB EXTRACTION
-   ============================================================ */
+   ============================================================== */
 
 function extract518Number(rawText) {
 
   if (!rawText) return null;
+
 
   let text =
     String(rawText)
@@ -1531,10 +1250,17 @@ function extract518Number(rawText) {
       .replace(/\s+/g, " ")
       .trim();
 
+
+  /*
+     Normal format
+     518-YWG-12345678
+  */
+
   let match =
     text.match(
       /\b518-[A-Z]{3}-\d{8}\b/
     );
+
 
   if (match) {
 
@@ -1542,10 +1268,16 @@ function extract518Number(rawText) {
 
   }
 
+
+  /*
+     Spaces
+  */
+
   match =
     text.match(
       /\b518\s*[-]?\s*[A-Z]{3}\s*[-]?\s*\d{8}\b/
     );
+
 
   if (match) {
 
@@ -1555,10 +1287,16 @@ function extract518Number(rawText) {
 
   }
 
+
+  /*
+     OCR errors
+  */
+
   match =
     text.match(
       /\b518\s*[- ]\s*[A-Z]{3}\s*[- ]\s*[0-9A-Z]{8}\b/
     );
+
 
   if (match) {
 
@@ -1569,6 +1307,7 @@ function extract518Number(rawText) {
         .replace(/O/g, "0")
         .replace(/I/g, "1")
         .replace(/L/g, "1");
+
 
     if (
       /^518-[A-Z]{3}-\d{8}$/
@@ -1581,18 +1320,21 @@ function extract518Number(rawText) {
 
   }
 
+
   return null;
 
 }
 
 
-/* ============================================================
-   AWB NUMBER ONLY
-   ============================================================ */
+/* ==============================================================
+   STORE FORMAT
+   ONLY STORE THE NUMBER AFTER 518-YWG-
+   ============================================================== */
 
 function awbNumberOnly(code) {
 
   if (!code) return null;
+
 
   const match =
     String(code)
@@ -1601,30 +1343,42 @@ function awbNumberOnly(code) {
         /^518-YWG-(\d{8})$/
       );
 
+
   if (match) {
 
     return match[1];
 
   }
 
+
   return code;
 
 }
 
 
-/* ============================================================
+/* ==============================================================
    NORMALIZE AWB
-   ============================================================ */
+   ============================================================== */
 
 function normalizeAWB(raw) {
 
   if (!raw) return null;
+
 
   let text =
     String(raw)
       .trim()
       .toUpperCase();
 
+
+  /*
+     Barcode:
+
+     A12345678
+
+     Remove A.
+  */
+
   if (
     /^A\d{8}$/.test(text)
   ) {
@@ -1632,12 +1386,19 @@ function normalizeAWB(raw) {
     return text.substring(1);
 
   }
+
+
+  /*
+     Sometimes scanner may append
+     Enter / CR / LF.
+  */
 
   text =
     text
       .replace(/[\r\n]/g, "")
       .trim();
 
+
   if (
     /^A\d{8}$/.test(text)
   ) {
@@ -1646,8 +1407,14 @@ function normalizeAWB(raw) {
 
   }
 
+
+  /*
+     Camera AWB.
+  */
+
   const extracted =
     extract518Number(text);
+
 
   if (extracted) {
 
@@ -1657,6 +1424,11 @@ function normalizeAWB(raw) {
 
   }
 
+
+  /*
+     Direct 8 digit barcode.
+  */
+
   if (
     /^\d{8}$/.test(text)
   ) {
@@ -1665,25 +1437,30 @@ function normalizeAWB(raw) {
 
   }
 
+
   return null;
 
 }
 
 
-/* ============================================================
-   OCR
-   ============================================================ */
+/* ==============================================================
+   OCR INITIALIZATION
+   ============================================================== */
 
 async function initializeOCR() {
 
   if (ocrWorker) {
+
     return true;
+
   }
+
 
   setStatus(
     "Loading scanner...",
     "scanning"
   );
+
 
   try {
 
@@ -1706,6 +1483,7 @@ async function initializeOCR() {
         }
       );
 
+
     await ocrWorker.setParameters({
 
       tessedit_char_whitelist:
@@ -1716,7 +1494,9 @@ async function initializeOCR() {
 
     });
 
+
     return true;
+
 
   } catch (error) {
 
@@ -1734,9 +1514,9 @@ async function initializeOCR() {
 }
 
 
-/* ============================================================
+/* ==============================================================
    STATUS
-   ============================================================ */
+   ============================================================== */
 
 function setStatus(
   message,
@@ -1753,13 +1533,16 @@ function setStatus(
         "allocateCameraStatus"
       );
 
+
     el.innerText =
       message;
+
 
     el.className =
       "cameraStatus " + type;
 
   }
+
 
   if (
     currentCameraMode ===
@@ -1771,8 +1554,10 @@ function setStatus(
         "offloadCameraStatus"
       );
 
+
     el.innerText =
       message;
+
 
     el.className =
       "cameraStatus " + type;
@@ -1782,16 +1567,18 @@ function setStatus(
 }
 
 
-/* ============================================================
-   CAMERA
-   ============================================================ */
+/* ==============================================================
+   OPEN CAMERA
+   ============================================================== */
 
 async function startCamera(mode) {
 
   await closeCamera();
 
+
   currentCameraMode =
     mode;
+
 
   const video =
     mode === "allocate"
@@ -1804,6 +1591,7 @@ async function startCamera(mode) {
           "offloadVideo"
         );
 
+
   const container =
     mode === "allocate"
 
@@ -1814,6 +1602,7 @@ async function startCamera(mode) {
       : document.getElementById(
           "offloadCameraOuter"
         );
+
 
   const openButton =
     mode === "allocate"
@@ -1826,6 +1615,7 @@ async function startCamera(mode) {
           "openOffloadCameraButton"
         );
 
+
   const barcodeButton =
     mode === "allocate"
 
@@ -1836,6 +1626,7 @@ async function startCamera(mode) {
       : document.getElementById(
           "openOffloadBarcodeButton"
         );
+
 
   const closeButton =
     mode === "allocate"
@@ -1848,12 +1639,14 @@ async function startCamera(mode) {
           "closeOffloadButton"
         );
 
+
   try {
 
     setStatus(
       "Opening camera...",
       "scanning"
     );
+
 
     cameraStream =
       await navigator
@@ -1885,36 +1678,53 @@ async function startCamera(mode) {
 
         });
 
+
     video.srcObject =
       cameraStream;
 
+
     await video.play();
+
 
     container.classList.add(
       "active"
     );
 
+
     openButton.classList.add(
       "hidden"
     );
+
 
     barcodeButton.classList.add(
       "hidden"
     );
 
+
     closeButton.classList.remove(
       "hidden"
     );
+
 
     setStatus(
       "🔎 Automatically scanning...",
       "scanning"
     );
 
+
+    /*
+       Load OCR once.
+
+       After that the camera itself remains
+       responsive because OCR is throttled.
+    */
+
     const loaded =
       await initializeOCR();
 
+
     if (!loaded) return;
+
 
     startContinuousOCR();
 
@@ -1925,11 +1735,13 @@ async function startCamera(mode) {
       error
     );
 
+
     setStatus(
       "❌ Camera error: " +
       error.message,
       "error"
     );
+
 
     alert(
       "Camera could not be opened.\n\n" +
@@ -1942,29 +1754,34 @@ async function startCamera(mode) {
 
 
 window.openAllocateCamera =
-async () => {
+  async () => {
 
-  await startCamera(
-    "allocate"
-  );
+    await startCamera(
+      "allocate"
+    );
 
-};
+  };
 
 
 window.openOffloadCamera =
-async () => {
+  async () => {
 
-  await startCamera(
-    "offload"
-  );
+    await startCamera(
+      "offload"
+    );
 
-};
+  };
 
+
+/* ==============================================================
+   CLOSE CAMERA
+   ============================================================== */
 
 window.closeCamera =
 async () => {
 
   stopContinuousOCR();
+
 
   if (cameraStream) {
 
@@ -1975,9 +1792,11 @@ async () => {
           track.stop()
       );
 
+
     cameraStream = null;
 
   }
+
 
   const videos = [
 
@@ -1991,6 +1810,7 @@ async () => {
 
   ];
 
+
   videos.forEach(video => {
 
     if (video) {
@@ -2002,11 +1822,13 @@ async () => {
 
   });
 
+
   document
     .getElementById(
       "allocateCameraOuter"
     )
     .classList.remove("active");
+
 
   document
     .getElementById(
@@ -2014,11 +1836,13 @@ async () => {
     )
     .classList.remove("active");
 
+
   document
     .getElementById(
       "openAllocateCameraButton"
     )
     .classList.remove("hidden");
+
 
   document
     .getElementById(
@@ -2026,11 +1850,13 @@ async () => {
     )
     .classList.remove("hidden");
 
+
   document
     .getElementById(
       "openAllocateBarcodeButton"
     )
     .classList.remove("hidden");
+
 
   document
     .getElementById(
@@ -2038,11 +1864,13 @@ async () => {
     )
     .classList.remove("hidden");
 
+
   document
     .getElementById(
       "closeAllocateButton"
     )
     .classList.add("hidden");
+
 
   document
     .getElementById(
@@ -2050,15 +1878,16 @@ async () => {
     )
     .classList.add("hidden");
 
+
   currentCameraMode =
     null;
 
 };
 
 
-/* ============================================================
-   CAMERA CAPTURE
-   ============================================================ */
+/* ==============================================================
+   CAPTURE ONLY GREEN BOX
+   ============================================================== */
 
 function captureFrame() {
 
@@ -2073,6 +1902,7 @@ function captureFrame() {
           "offloadVideo"
         );
 
+
   if (
     !video ||
     video.readyState <
@@ -2083,46 +1913,70 @@ function captureFrame() {
 
   }
 
+
   const width =
     video.videoWidth;
+
 
   const height =
     video.videoHeight;
 
+
   if (!width || !height) {
+
     return null;
+
   }
+
+
+  /*
+     GREEN BOX POSITION:
+
+     left/right = 2%
+     top = approximately 35%
+     height = 30%
+
+     This is deliberately calculated
+     from the actual video frame.
+  */
 
   const cropWidth =
     Math.floor(
       width * 0.96
     );
 
+
   const cropHeight =
     Math.floor(
       height * 0.30
     );
+
 
   const cropX =
     Math.floor(
       (width - cropWidth) / 2
     );
 
+
   const cropY =
     Math.floor(
       (height - cropHeight) / 2
     );
+
 
   const canvas =
     document.createElement(
       "canvas"
     );
 
+
   canvas.width =
     cropWidth;
 
+
   canvas.height =
     cropHeight;
+
 
   const ctx =
     canvas.getContext(
@@ -2132,8 +1986,15 @@ function captureFrame() {
       }
     );
 
+
+  /*
+     Moderate contrast only.
+     Excessive filtering slows OCR.
+  */
+
   ctx.filter =
     "contrast(1.15)";
+
 
   ctx.drawImage(
 
@@ -2153,23 +2014,31 @@ function captureFrame() {
 
   );
 
+
   return canvas;
 
 }
 
 
-/* ============================================================
-   OCR LOOP
-   ============================================================ */
+/* ==============================================================
+   CONTINUOUS OCR
+   ============================================================== */
 
 function startContinuousOCR() {
 
   stopContinuousOCR();
 
+
+  /*
+     Small initial delay allows camera
+     to focus before OCR starts.
+  */
+
   setTimeout(
     performOCR,
     700
   );
+
 
   ocrTimer =
     setInterval(
@@ -2195,52 +2064,89 @@ function stopContinuousOCR() {
 }
 
 
+/* ==============================================================
+   OCR
+   ============================================================== */
+
 async function performOCR() {
 
+  /*
+     NEVER start another OCR while one
+     is already running.
+
+     This is important for Android 10.
+  */
+
   if (ocrBusy) {
+
     return;
+
   }
+
 
   if (!ocrWorker) {
+
     return;
+
   }
+
 
   if (!currentCameraMode) {
+
     return;
+
   }
 
+
   ocrBusy = true;
+
 
   try {
 
     const canvas =
       captureFrame();
 
+
     if (!canvas) {
+
       return;
+
     }
+
 
     const result =
       await ocrWorker.recognize(
         canvas
       );
 
+
     const awb =
       extract518Number(
         result.data.text
       );
 
+
     if (!awb) {
+
       return;
+
     }
+
 
     const number =
       awbNumberOnly(
         awb
       );
 
+
+    /*
+       Prevent same OCR result from
+       being processed repeatedly.
+    */
+
     const now =
       Date.now();
+
 
     if (
       number === lastDetectedAWB &&
@@ -2251,13 +2157,21 @@ async function performOCR() {
 
     }
 
+
     lastDetectedAWB =
       number;
 
     lastDetectedTime =
       now;
 
+
+    /*
+       Pause OCR while verification/
+       database checking occurs.
+    */
+
     stopContinuousOCR();
+
 
     if (
       currentCameraMode ===
@@ -2270,6 +2184,7 @@ async function performOCR() {
 
     }
 
+
     if (
       currentCameraMode ===
       "offload"
@@ -2280,6 +2195,7 @@ async function performOCR() {
       );
 
     }
+
 
   } catch (error) {
 
@@ -2297,9 +2213,9 @@ async function performOCR() {
 }
 
 
-/* ============================================================
+/* ==============================================================
    ALLOCATE START
-   ============================================================ */
+   ============================================================== */
 
 window.startAllocate =
 async () => {
@@ -2312,15 +2228,6 @@ async () => {
       .value
       .trim();
 
-  if (!currentULDId) {
-
-    alert(
-      "Please select a ULD."
-    );
-
-    return;
-
-  }
 
   if (!positionId) {
 
@@ -2332,12 +2239,6 @@ async () => {
 
   }
 
-  document
-    .getElementById(
-      "allocULD"
-    )
-    .innerText =
-    currentULDId;
 
   document
     .getElementById(
@@ -2346,6 +2247,7 @@ async () => {
     .innerText =
     positionId;
 
+
   document
     .getElementById(
       "allocUser"
@@ -2353,25 +2255,25 @@ async () => {
     .innerText =
     currentUser;
 
+
   switchScreen(
     "allocateScan"
   );
 
+
   await loadAllocateAWBs(
-    positionId,
-    currentULDId
+    positionId
   );
 
 };
 
 
-/* ============================================================
-   LOAD ALLOCATE AWBS
-   ============================================================ */
+/* ==============================================================
+   LOAD ALLOCATE
+   ============================================================== */
 
 async function loadAllocateAWBs(
-  posId,
-  uldId
+  posId
 ) {
 
   const table =
@@ -2379,8 +2281,10 @@ async function loadAllocateAWBs(
       "scanTable"
     );
 
+
   table.innerHTML =
     "<tr><td colspan='4'>Loading...</td></tr>";
+
 
   const q =
     query(
@@ -2398,17 +2302,38 @@ async function loadAllocateAWBs(
 
     );
 
+
   const snapshot =
     await getDocs(q);
 
+
+  if (
+    snapshot.empty
+  ) {
+
+    table.innerHTML =
+      `<tr>
+        <td colspan="4">
+          No AWBs allocated
+        </td>
+      </tr>`;
+
+    return;
+
+  }
+
+
   let html = "";
+
   let idx = 1;
+
 
   snapshot.forEach(
     docSnap => {
 
       const d =
         docSnap.data();
+
 
       if (
         d.positionId ===
@@ -2419,14 +2344,6 @@ async function loadAllocateAWBs(
 
       }
 
-      if (
-        uldId &&
-        d.uldId !== uldId
-      ) {
-
-        return;
-
-      }
 
       const scannedAt =
         d.scannedAt
@@ -2437,6 +2354,7 @@ async function loadAllocateAWBs(
             ).toLocaleString()
 
           : "N/A";
+
 
       html +=
         `<tr>
@@ -2464,16 +2382,16 @@ async function loadAllocateAWBs(
     }
   );
 
+
   table.innerHTML =
-    html ||
-    "<tr><td colspan='4'>No AWBs allocated</td></tr>";
+    html || "<tr><td colspan='4'>No AWBs</td></tr>";
 
 }
 
 
-/* ============================================================
+/* ==============================================================
    ALLOCATE AWB
-   ============================================================ */
+   ============================================================== */
 
 async function processAllocateAWB(
   code
@@ -2482,14 +2400,26 @@ async function processAllocateAWB(
   if (!code) {
 
     restartOCR();
+
     return;
 
   }
+
 
   setStatus(
     "⏳ Checking AWB...",
     "scanning"
   );
+
+
+  /*
+     IMPORTANT:
+
+     Search the entire database for the AWB.
+
+     This catches duplicates even when another
+     user scanned it.
+  */
 
   const q =
     query(
@@ -2507,17 +2437,21 @@ async function processAllocateAWB(
 
     );
 
+
   const snapshot =
     await getDocs(q);
 
+
   let duplicate =
     null;
+
 
   snapshot.forEach(
     docSnap => {
 
       const d =
         docSnap.data();
+
 
       if (
         d.positionId &&
@@ -2533,6 +2467,11 @@ async function processAllocateAWB(
     }
   );
 
+
+  /*
+     DUPLICATE FOUND
+  */
+
   if (duplicate) {
 
     await showVerification(
@@ -2547,18 +2486,27 @@ async function processAllocateAWB(
 
     );
 
+
     setStatus(
       "❌ Duplicate AWB",
       "error"
     );
 
+
     vibrate();
 
+
     restartOCR();
+
 
     return;
 
   }
+
+
+  /*
+     SAVE NEW AWB
+  */
 
   try {
 
@@ -2571,14 +2519,16 @@ async function processAllocateAWB(
 
       {
 
+        /*
+           Store ONLY:
+           13634095
+        */
+
         code:
           code,
 
         positionId:
           positionId,
-
-        uldId:
-          currentULDId,
 
         scannedAt:
           serverTimestamp(),
@@ -2590,10 +2540,11 @@ async function processAllocateAWB(
 
     );
 
+
     await loadAllocateAWBs(
-      positionId,
-      currentULDId
+      positionId
     );
+
 
     await showVerification(
 
@@ -2603,20 +2554,26 @@ async function processAllocateAWB(
 
       "AWB VERIFIED",
 
-      `AWB ${code} has been allocated to ULD ${currentULDId}.`
+      `AWB ${code} has been allocated to Position ID ${positionId}.`
 
     );
+
 
     setStatus(
       "🔎 Ready for next AWB",
       "scanning"
     );
 
+
     vibrate();
+
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
+
 
     await showVerification(
 
@@ -2630,16 +2587,18 @@ async function processAllocateAWB(
 
     );
 
+
   }
+
 
   restartOCR();
 
 }
 
 
-/* ============================================================
+/* ==============================================================
    OFFLOAD START
-   ============================================================ */
+   ============================================================== */
 
 window.startOffload =
 async () => {
@@ -2652,6 +2611,7 @@ async () => {
       .value
       .trim();
 
+
   if (!pos) {
 
     alert(
@@ -2662,8 +2622,10 @@ async () => {
 
   }
 
+
   positionId =
     pos;
+
 
   document
     .getElementById(
@@ -2672,6 +2634,7 @@ async () => {
     .innerText =
     positionId;
 
+
   document
     .getElementById(
       "offloadUser"
@@ -2679,9 +2642,11 @@ async () => {
     .innerText =
     currentUser;
 
+
   switchScreen(
     "offloadScan"
   );
+
 
   await loadOffloadAWBs(
     positionId
@@ -2690,9 +2655,9 @@ async () => {
 };
 
 
-/* ============================================================
+/* ==============================================================
    LOAD OFFLOAD
-   ============================================================ */
+   ============================================================== */
 
 async function loadOffloadAWBs(
   posId
@@ -2703,8 +2668,10 @@ async function loadOffloadAWBs(
       "offloadTable"
     );
 
+
   table.innerHTML =
     "<tr><td colspan='4'>Loading...</td></tr>";
+
 
   const q =
     query(
@@ -2722,17 +2689,38 @@ async function loadOffloadAWBs(
 
     );
 
+
   const snapshot =
     await getDocs(q);
 
+
+  if (
+    snapshot.empty
+  ) {
+
+    table.innerHTML =
+      `<tr>
+        <td colspan="4">
+          No AWBs found
+        </td>
+      </tr>`;
+
+    return;
+
+  }
+
+
   let html = "";
+
   let idx = 1;
+
 
   snapshot.forEach(
     docSnap => {
 
       const d =
         docSnap.data();
+
 
       if (
         d.positionId ===
@@ -2743,6 +2731,7 @@ async function loadOffloadAWBs(
 
       }
 
+
       const scannedAt =
         d.scannedAt
 
@@ -2752,6 +2741,7 @@ async function loadOffloadAWBs(
             ).toLocaleString()
 
           : "N/A";
+
 
       html +=
         `<tr>
@@ -2779,16 +2769,16 @@ async function loadOffloadAWBs(
     }
   );
 
+
   table.innerHTML =
-    html ||
-    "<tr><td colspan='4'>No AWBs found</td></tr>";
+    html || "<tr><td colspan='4'>No AWBs</td></tr>";
 
 }
 
 
-/* ============================================================
+/* ==============================================================
    OFFLOAD AWB
-   ============================================================ */
+   ============================================================== */
 
 async function processOffloadAWB(
   code
@@ -2797,14 +2787,17 @@ async function processOffloadAWB(
   if (!code) {
 
     restartOCR();
+
     return;
 
   }
+
 
   setStatus(
     "⏳ Checking AWB...",
     "scanning"
   );
+
 
   const q =
     query(
@@ -2822,8 +2815,10 @@ async function processOffloadAWB(
 
     );
 
+
   const snapshot =
     await getDocs(q);
+
 
   if (
     snapshot.empty
@@ -2841,10 +2836,12 @@ async function processOffloadAWB(
 
     );
 
+
     setStatus(
       "❌ AWB not found",
       "error"
     );
+
 
     vibrate();
 
@@ -2854,8 +2851,10 @@ async function processOffloadAWB(
 
   }
 
-  let foundDoc =
-    null;
+
+  let found =
+    false;
+
 
   for (
     const docSnap
@@ -2865,13 +2864,33 @@ async function processOffloadAWB(
     const d =
       docSnap.data();
 
+
     if (
       d.positionId ===
       positionId
     ) {
 
-      foundDoc =
-        docSnap;
+      await updateDoc(
+
+        doc(
+          db,
+          "scans",
+          docSnap.id
+        ),
+
+        {
+
+          positionId:
+            "[REMOVED]"
+
+        }
+
+      );
+
+
+      found =
+        true;
+
 
       break;
 
@@ -2879,104 +2898,13 @@ async function processOffloadAWB(
 
   }
 
-  if (!foundDoc) {
 
-    await showVerification(
-
-      false,
-
-      code,
-
-      "WRONG POSITION",
-
-      `This AWB is not allocated to Position ID ${positionId}.`
-
-    );
-
-    setStatus(
-      "❌ Wrong Position ID",
-      "error"
-    );
-
-    vibrate();
-
-    restartOCR();
-
-    return;
-
-  }
-
-  /*
-     IMPORTANT:
-     Nothing is changed yet.
-
-     Ask the operator for confirmation first.
-  */
-
-  pendingOffloadDocId =
-    foundDoc.id;
-
-  pendingOffloadCode =
-    code;
-
-  const confirmed =
-    await showConfirmation(
-
-      "CONFIRM OFFLOAD",
-
-      code,
-
-      `Are you sure you want to offload AWB ${code} from Position ID ${positionId}?`
-
-    );
-
-  if (!confirmed) {
-
-    pendingOffloadDocId =
-      null;
-
-    pendingOffloadCode =
-      null;
-
-    setStatus(
-      "🔎 Offload cancelled. Ready for next AWB",
-      "scanning"
-    );
-
-    restartOCR();
-
-    return;
-
-  }
-
-  try {
-
-    await updateDoc(
-
-      doc(
-        db,
-        "scans",
-        pendingOffloadDocId
-      ),
-
-      {
-
-        positionId:
-          "[REMOVED]",
-
-        offloadedAt:
-          serverTimestamp(),
-
-        offloadedBy:
-          currentUser
-
-      }
-
-    );
+  if (found) {
 
     await loadOffloadAWBs(
       positionId
     );
+
 
     await showVerification(
 
@@ -2990,16 +2918,16 @@ async function processOffloadAWB(
 
     );
 
+
     setStatus(
       "🔎 Ready for next AWB",
       "scanning"
     );
 
+
     vibrate();
 
-  } catch (error) {
-
-    console.error(error);
+  } else {
 
     await showVerification(
 
@@ -3007,34 +2935,41 @@ async function processOffloadAWB(
 
       code,
 
-      "OFFLOAD ERROR",
+      "WRONG POSITION",
 
-      "The AWB could not be offloaded."
+      `This AWB is not allocated to Position ID ${positionId}.`
 
     );
 
+
+    setStatus(
+      "❌ Wrong Position ID",
+      "error"
+    );
+
+
+    vibrate();
+
   }
 
-  pendingOffloadDocId =
-    null;
-
-  pendingOffloadCode =
-    null;
 
   restartOCR();
 
 }
 
 
-/* ============================================================
+/* ==============================================================
    RESTART OCR
-   ============================================================ */
+   ============================================================== */
 
 function restartOCR() {
 
   if (!currentCameraMode) {
+
     return;
+
   }
+
 
   setTimeout(
     () => {
@@ -3055,9 +2990,9 @@ function restartOCR() {
 }
 
 
-/* ============================================================
-   VERIFICATION
-   ============================================================ */
+/* ==============================================================
+   VERIFICATION POPUP
+   ============================================================== */
 
 function showVerification(
   success,
@@ -3074,63 +3009,72 @@ function showVerification(
           "verificationOverlay"
         );
 
+
       const box =
         document.getElementById(
           "verificationBox"
         );
+
 
       const titleEl =
         document.getElementById(
           "verificationTitle"
         );
 
+
       const awbEl =
         document.getElementById(
           "verificationAWB"
         );
+
 
       const messageEl =
         document.getElementById(
           "verificationMessage"
         );
 
-      const buttons =
-        document.getElementById(
-          "confirmationButtons"
-        );
-
-      buttons.classList.add(
-        "hidden"
-      );
-
-      box.classList.remove(
-        "confirmBox"
-      );
 
       box.classList.toggle(
         "errorBox",
         !success
       );
 
+
       titleEl.innerText =
         success
           ? "✓ " + title
           : "✕ " + title;
 
+
       awbEl.innerText =
         awb;
 
+
       messageEl.innerText =
         message;
+
 
       overlay.classList.add(
         "active"
       );
 
+
+      /*
+         Successful scan:
+
+         Short verification display.
+
+         Error:
+
+         Longer display so the operator
+         actually sees the error.
+      */
+
       const displayTime =
         success
           ? 1200
           : 2500;
+
 
       setTimeout(
         () => {
@@ -3138,6 +3082,7 @@ function showVerification(
           overlay.classList.remove(
             "active"
           );
+
 
           resolve();
 
@@ -3151,146 +3096,85 @@ function showVerification(
 }
 
 
-/* ============================================================
-   CONFIRMATION POPUP
-   ============================================================ */
-
-function showConfirmation(
-  title,
-  mainText,
-  message
-) {
-
-  return new Promise(
-    resolve => {
-
-      const overlay =
-        document.getElementById(
-          "verificationOverlay"
-        );
-
-      const box =
-        document.getElementById(
-          "verificationBox"
-        );
-
-      const titleEl =
-        document.getElementById(
-          "verificationTitle"
-        );
-
-      const awbEl =
-        document.getElementById(
-          "verificationAWB"
-        );
-
-      const messageEl =
-        document.getElementById(
-          "verificationMessage"
-        );
-
-      const buttons =
-        document.getElementById(
-          "confirmationButtons"
-        );
-
-      const yes =
-        document.getElementById(
-          "confirmYesButton"
-        );
-
-      const no =
-        document.getElementById(
-          "confirmNoButton"
-        );
-
-      box.classList.remove(
-        "errorBox"
-      );
-
-      box.classList.add(
-        "confirmBox"
-      );
-
-      titleEl.innerText =
-        "⚠ " + title;
-
-      awbEl.innerText =
-        mainText;
-
-      messageEl.innerText =
-        message;
-
-      buttons.classList.remove(
-        "hidden"
-      );
-
-      overlay.classList.add(
-        "active"
-      );
-
-      const cleanup =
-        result => {
-
-          overlay.classList.remove(
-            "active"
-          );
-
-          buttons.classList.add(
-            "hidden"
-          );
-
-          yes.onclick = null;
-          no.onclick = null;
-
-          resolve(result);
-
-        };
-
-      yes.onclick =
-        () => cleanup(true);
-
-      no.onclick =
-        () => cleanup(false);
-
-    }
-  );
-
-}
-
-
-/* ============================================================
+/* ==============================================================
    BARCODE SCANNER
-   ============================================================ */
+   ==============================================================
+   
+   Zebra scanner is normally configured as
+   keyboard wedge.
+
+   Example scan:
+
+       A12345678
+
+   The scanner sends the characters into
+   the hidden input.
+
+   ENTER / TAB ends the scan.
+   ============================================================== */
 
 window.openBarcodeScanner =
 function(mode) {
 
+  /*
+     Stop camera if running.
+  */
+
   closeCamera();
+
 
   barcodeMode =
     mode;
 
+
   barcodeBuffer =
     "";
+
 
   const input =
     document.getElementById(
       "barcodeScannerInput"
     );
 
+
   input.value =
     "";
 
+
+  /*
+     IMPORTANT:
+
+     Physical Zebra scanner needs focus.
+  */
+
   input.focus();
 
-  setStatus(
-    "▣ Barcode scanner ready. Scan barcode.",
-    "scanning"
-  );
+
+  if (mode === "allocate") {
+
+    setStatus(
+      "▣ Barcode scanner ready. Scan barcode.",
+      "scanning"
+    );
+
+  }
+
+
+  if (mode === "offload") {
+
+    setStatus(
+      "▣ Barcode scanner ready. Scan barcode.",
+      "scanning"
+    );
+
+  }
 
 };
 
+
+/* ==============================================================
+   BARCODE INPUT
+   ============================================================== */
 
 const barcodeInput =
   document.getElementById(
@@ -3303,8 +3187,16 @@ barcodeInput.addEventListener(
   async event => {
 
     if (!barcodeMode) {
+
       return;
+
     }
+
+
+    /*
+       Zebra usually sends ENTER
+       after the barcode.
+    */
 
     if (
       event.key === "Enter" ||
@@ -3313,12 +3205,15 @@ barcodeInput.addEventListener(
 
       event.preventDefault();
 
+
       const value =
         barcodeInput.value
           .trim();
 
+
       barcodeInput.value =
         "";
+
 
       if (value) {
 
@@ -3328,16 +3223,30 @@ barcodeInput.addEventListener(
 
       }
 
+
+      /*
+         Immediately refocus.
+
+         This allows the operator to scan
+         another barcode without touching
+         the screen.
+      */
+
       setTimeout(
         () => {
 
           if (barcodeMode) {
+
             barcodeInput.focus();
+
           }
 
         },
         100
       );
+
+
+      return;
 
     }
 
@@ -3345,17 +3254,27 @@ barcodeInput.addEventListener(
 );
 
 
+/*
+   Some Zebra configurations may NOT send ENTER.
+
+   This catches normal keyboard-wedge input.
+*/
+
 barcodeInput.addEventListener(
   "input",
   () => {
 
     if (!barcodeMode) {
+
       return;
+
     }
+
 
     clearTimeout(
       barcodeTimer
     );
+
 
     barcodeTimer =
       setTimeout(
@@ -3365,6 +3284,16 @@ barcodeInput.addEventListener(
             barcodeInput.value
               .trim();
 
+
+          /*
+             A12345678
+
+             Exactly 9 characters.
+
+             Process automatically even
+             without ENTER.
+          */
+
           if (
             /^A\d{8}$/.test(value)
           ) {
@@ -3372,15 +3301,19 @@ barcodeInput.addEventListener(
             barcodeInput.value =
               "";
 
+
             await processBarcode(
               value
             );
+
 
             setTimeout(
               () => {
 
                 if (barcodeMode) {
+
                   barcodeInput.focus();
+
                 }
 
               },
@@ -3397,9 +3330,9 @@ barcodeInput.addEventListener(
 );
 
 
-/* ============================================================
+/* ==============================================================
    PROCESS BARCODE
-   ============================================================ */
+   ============================================================== */
 
 async function processBarcode(
   raw
@@ -3407,6 +3340,7 @@ async function processBarcode(
 
   const code =
     normalizeAWB(raw);
+
 
   if (!code) {
 
@@ -3422,9 +3356,15 @@ async function processBarcode(
 
     );
 
+
     return;
 
   }
+
+
+  /*
+     Allocate
+  */
 
   if (
     barcodeMode ===
@@ -3436,6 +3376,11 @@ async function processBarcode(
     );
 
   }
+
+
+  /*
+     Offload
+  */
 
   if (
     barcodeMode ===
@@ -3451,651 +3396,44 @@ async function processBarcode(
 }
 
 
-/* ============================================================
+/* ==============================================================
    STOP BARCODE
-   ============================================================ */
+   ============================================================== */
 
 function stopBarcodeScanner() {
 
   barcodeMode =
     null;
 
+
   barcodeBuffer =
     "";
+
 
   clearTimeout(
     barcodeTimer
   );
+
 
   const input =
     document.getElementById(
       "barcodeScannerInput"
     );
 
+
   input.value =
     "";
+
 
   input.blur();
 
 }
 
 
-/* ============================================================
-   CLOSE ULD
-   ============================================================ */
-
-window.goToCloseULD =
-async () => {
-
-  switchScreen(
-    "closeULDStart"
-  );
-
-  await loadAvailableULDs(
-    "closeULDSelect"
-  );
-
-};
-
-
-window.continueCloseULD =
-async () => {
-
-  const select =
-    document.getElementById(
-      "closeULDSelect"
-    );
-
-  const selected =
-    select.value;
-
-  if (!selected) {
-
-    alert(
-      "Please select an open ULD."
-    );
-
-    return;
-
-  }
-
-  currentULDId =
-    selected;
-
-  document.getElementById(
-    "closeULDIdDisplay"
-  ).innerText =
-    currentULDId;
-
-  document.getElementById(
-    "weightLBS"
-  ).value =
-    "";
-
-  document.getElementById(
-    "weightKG"
-  ).innerText =
-    "0.00 KG";
-
-  switchScreen(
-    "closeULDWeight"
-  );
-
-};
-
-
-window.calculateKG =
-() => {
-
-  const lbs =
-    parseFloat(
-      document.getElementById(
-        "weightLBS"
-      ).value
-    );
-
-  if (
-    isNaN(lbs) ||
-    lbs < 0
-  ) {
-
-    document.getElementById(
-      "weightKG"
-    ).innerText =
-      "0.00 KG";
-
-    return;
-
-  }
-
-  const kg =
-    lbs * 0.45359237;
-
-  document.getElementById(
-    "weightKG"
-  ).innerText =
-    kg.toFixed(2) +
-    " KG";
-
-};
-
-
-window.confirmCloseULD =
-async () => {
-
-  const lbs =
-    parseFloat(
-      document.getElementById(
-        "weightLBS"
-      ).value
-    );
-
-  if (
-    isNaN(lbs) ||
-    lbs <= 0
-  ) {
-
-    alert(
-      "Please enter a valid weight in LBS."
-    );
-
-    return;
-
-  }
-
-  const kg =
-    lbs * 0.45359237;
-
-  const confirmed =
-    await showConfirmation(
-
-      "CONFIRM CLOSE ULD",
-
-      currentULDId,
-
-      `Close ULD ${currentULDId} with ${lbs.toFixed(2)} LBS (${kg.toFixed(2)} KGS)?`
-
-    );
-
-  if (!confirmed) {
-
-    return;
-
-  }
-
-  try {
-
-    const q =
-      query(
-
-        collection(db, "ulds"),
-
-        where(
-          "uldId",
-          "==",
-          currentULDId
-        )
-
-      );
-
-    const snapshot =
-      await getDocs(q);
-
-    if (snapshot.empty) {
-
-      alert(
-        "ULD could not be found."
-      );
-
-      return;
-
-    }
-
-    let closed =
-      false;
-
-    for (
-      const docSnap
-      of snapshot.docs
-    ) {
-
-      const d =
-        docSnap.data();
-
-      if (
-        d.status ===
-        "OPEN"
-      ) {
-
-        await updateDoc(
-
-          doc(
-            db,
-            "ulds",
-            docSnap.id
-          ),
-
-          {
-
-            status:
-              "CLOSED",
-
-            weightLbs:
-              Number(
-                lbs.toFixed(2)
-              ),
-
-            weightKgs:
-              Number(
-                kg.toFixed(2)
-              ),
-
-            closedAt:
-              serverTimestamp(),
-
-            closedBy:
-              currentUser
-
-          }
-
-        );
-
-        closed =
-          true;
-
-        break;
-
-      }
-
-    }
-
-    if (!closed) {
-
-      alert(
-        "This ULD is already closed."
-      );
-
-      return;
-
-    }
-
-    await showVerification(
-
-      true,
-
-      currentULDId,
-
-      "ULD CLOSED",
-
-      `${currentULDId} has been closed.\n\nWeight: ${lbs.toFixed(2)} LBS\n${kg.toFixed(2)} KGS`
-
-    );
-
-    currentULDId =
-      "";
-
-    switchScreen(
-      "home"
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(
-      "Could not close ULD.\n\n" +
-      error.message
-    );
-
-  }
-
-};
-
-
-/* ============================================================
-   CLOSE FLIGHT
-   ============================================================ */
-
-window.goToCloseFlight =
-async () => {
-
-  switchScreen(
-    "closeFlightScreen"
-  );
-
-  await loadFlightSummary();
-
-};
-
-
-async function loadFlightSummary() {
-
-  const container =
-    document.getElementById(
-      "flightSummary"
-    );
-
-  container.innerHTML =
-    "Loading...";
-
-  try {
-
-    const snapshot =
-      await getDocs(
-        collection(
-          db,
-          "ulds"
-        )
-      );
-
-    if (snapshot.empty) {
-
-      container.innerHTML =
-        "<p>No ULDs in the flight.</p>";
-
-      return;
-
-    }
-
-    let totalLbs =
-      0;
-
-    let totalKgs =
-      0;
-
-    let rows =
-      "";
-
-    let count =
-      0;
-
-    snapshot.forEach(
-      docSnap => {
-
-        const d =
-          docSnap.data();
-
-        if (!d.uldId) {
-          return;
-        }
-
-        count++;
-
-        const lbs =
-          Number(
-            d.weightLbs || 0
-          );
-
-        const kgs =
-          Number(
-            d.weightKgs || 0
-          );
-
-        totalLbs +=
-          lbs;
-
-        totalKgs +=
-          kgs;
-
-        rows +=
-          `<tr>
-
-            <td>
-              ${escapeHTML(d.uldId)}
-            </td>
-
-            <td>
-              ${escapeHTML(d.status || "OPEN")}
-            </td>
-
-            <td>
-              ${lbs.toFixed(2)}
-            </td>
-
-            <td>
-              ${kgs.toFixed(2)}
-            </td>
-
-          </tr>`;
-
-      }
-    );
-
-    if (count === 0) {
-
-      container.innerHTML =
-        "<p>No ULDs in the flight.</p>";
-
-      return;
-
-    }
-
-    container.innerHTML =
-
-      `<div class="summaryTitle">
-        Flight ULD Summary
-      </div>
-
-      <table>
-
-        <thead>
-
-          <tr>
-            <th>ULD</th>
-            <th>Status</th>
-            <th>LBS</th>
-            <th>KGS</th>
-          </tr>
-
-        </thead>
-
-        <tbody>
-          ${rows}
-        </tbody>
-
-      </table>
-
-      <div class="totalWeight">
-
-        TOTAL FLIGHT WEIGHT
-
-        <br>
-
-        ${totalLbs.toFixed(2)} LBS
-
-        <br>
-
-        ${totalKgs.toFixed(2)} KGS
-
-      </div>`;
-
-  } catch (error) {
-
-    console.error(error);
-
-    container.innerHTML =
-      `<p class="error">
-        Could not load flight data.
-      </p>`;
-
-  }
-
-}
-
-
-window.confirmCloseFlight =
-async () => {
-
-  const snapshot =
-    await getDocs(
-      collection(
-        db,
-        "ulds"
-      )
-    );
-
-  if (snapshot.empty) {
-
-    alert(
-      "There is no flight data to close."
-    );
-
-    return;
-
-  }
-
-  let totalLbs =
-    0;
-
-  let totalKgs =
-    0;
-
-  let uldCount =
-    0;
-
-  snapshot.forEach(
-    docSnap => {
-
-      const d =
-        docSnap.data();
-
-      if (!d.uldId) {
-        return;
-      }
-
-      uldCount++;
-
-      totalLbs +=
-        Number(
-          d.weightLbs || 0
-        );
-
-      totalKgs +=
-        Number(
-          d.weightKgs || 0
-        );
-
-    }
-  );
-
-  const confirmed =
-    await showConfirmation(
-
-      "CONFIRM CLOSE FLIGHT",
-
-      "CLOSE FLIGHT",
-
-      `This will permanently delete all flight data.\n\nULDs: ${uldCount}\nTotal: ${totalLbs.toFixed(2)} LBS / ${totalKgs.toFixed(2)} KGS\n\nAre you sure you want to close the flight?`
-
-    );
-
-  if (!confirmed) {
-
-    return;
-
-  }
-
-  try {
-
-    /*
-       Delete ALL scans.
-    */
-
-    const scansSnapshot =
-      await getDocs(
-        collection(
-          db,
-          "scans"
-        )
-      );
-
-    const deletePromises =
-      [];
-
-    scansSnapshot.forEach(
-      docSnap => {
-
-        deletePromises.push(
-
-          deleteDoc(
-
-            doc(
-              db,
-              "scans",
-              docSnap.id
-            )
-
-          )
-
-        );
-
-      }
-    );
-
-    /*
-       Delete ALL ULD records.
-    */
-
-    snapshot.forEach(
-      docSnap => {
-
-        deletePromises.push(
-
-          deleteDoc(
-
-            doc(
-              db,
-              "ulds",
-              docSnap.id
-            )
-
-          )
-
-        );
-
-      }
-    );
-
-    await Promise.all(
-      deletePromises
-    );
-
-    await showVerification(
-
-      true,
-
-      "FLIGHT CLOSED",
-
-      "FLIGHT CLOSED",
-
-      `Flight data has been cleared.\n\n${uldCount} ULD(s)\n${totalLbs.toFixed(2)} LBS\n${totalKgs.toFixed(2)} KGS`
-
-    );
-
-    switchScreen(
-      "home"
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Close flight error:",
-      error
-    );
-
-    alert(
-      "Could not close flight.\n\n" +
-      error.message
-    );
-
-  }
-
-};
-
-
-/* ============================================================
+/* ==============================================================
    LIVE VIEW
-   ============================================================ */
+   SEPARATE TABLE FOR EACH POSITION ID
+   ============================================================== */
 
 window.goToLiveView =
 () => {
@@ -4104,13 +3442,16 @@ window.goToLiveView =
     "liveView"
   );
 
+
   const container =
     document.getElementById(
       "liveTables"
     );
 
+
   container.innerHTML =
     "Loading...";
+
 
   if (
     typeof liveUnsubscribe ===
@@ -4120,300 +3461,6 @@ window.goToLiveView =
     liveUnsubscribe();
 
   }
-
-  if (
-    typeof liveULDUnsubscribe ===
-    "function"
-  ) {
-
-    liveULDUnsubscribe();
-
-  }
-
-  let scansData = [];
-  let uldsData = [];
-
-  const render =
-    () => {
-
-      const ulds =
-        {};
-
-      uldsData.forEach(
-        d => {
-
-          if (d.uldId) {
-
-            ulds[d.uldId] =
-              d;
-
-          }
-
-        }
-      );
-
-      const activeScans =
-        scansData.filter(
-          d =>
-            d.positionId &&
-            d.positionId !==
-            "[REMOVED]"
-        );
-
-      const grouped =
-        {};
-
-      activeScans.forEach(
-        d => {
-
-          const uld =
-            d.uldId ||
-            "NO ULD";
-
-          if (!grouped[uld]) {
-
-            grouped[uld] =
-              [];
-
-          }
-
-          grouped[uld]
-            .push(d);
-
-        }
-      );
-
-      const allULDIds =
-        Object.keys(ulds)
-          .sort();
-
-      if (
-        allULDIds.length === 0 &&
-        activeScans.length === 0
-      ) {
-
-        container.innerHTML =
-          "<p>No active flight data.</p>";
-
-        return;
-
-      }
-
-      let html =
-        "";
-
-      /*
-         Display every ULD, including closed ULDs.
-      */
-
-      allULDIds.forEach(
-        uldId => {
-
-          const uld =
-            ulds[uldId];
-
-          const isClosed =
-            uld.status ===
-            "CLOSED";
-
-          const lbs =
-            Number(
-              uld.weightLbs || 0
-            );
-
-          const kgs =
-            Number(
-              uld.weightKgs || 0
-            );
-
-          html +=
-
-            `<div class="liveULD ${isClosed ? "closed" : ""}">
-
-              <div class="uldHeader">
-                ULD: ${escapeHTML(uldId)}
-              </div>
-
-              <div class="uldStatus ${isClosed ? "uldClosed" : "uldOpen"}">
-
-                ${isClosed ? "✓ CLOSED" : "OPEN"}
-
-              </div>`;
-
-          if (isClosed) {
-
-            html +=
-
-              `<div class="uldWeights">
-
-                Weight:
-                <strong>
-                  ${lbs.toFixed(2)} LBS
-                </strong>
-
-                &nbsp; / &nbsp;
-
-                <strong>
-                  ${kgs.toFixed(2)} KGS
-                </strong>
-
-              </div>`;
-
-          }
-
-          const uldScans =
-            grouped[uldId] ||
-            [];
-
-          const positions =
-            {};
-
-          uldScans.forEach(
-            d => {
-
-              if (
-                !positions[d.positionId]
-              ) {
-
-                positions[d.positionId] =
-                  [];
-
-              }
-
-              positions[d.positionId]
-                .push(d);
-
-            }
-          );
-
-          const positionIds =
-            Object.keys(
-              positions
-            ).sort();
-
-          if (
-            positionIds.length === 0
-          ) {
-
-            html +=
-              `<p>No active AWBs.</p>`;
-
-          }
-
-          positionIds.forEach(
-            pos => {
-
-              html +=
-
-                `<div class="livePosition">
-
-                  <div class="livePositionTitle">
-                    Position ID:
-                    ${escapeHTML(pos)}
-                  </div>
-
-                  <table>
-
-                    <thead>
-
-                      <tr>
-                        <th>#</th>
-                        <th>AWB</th>
-                        <th>Scanned At</th>
-                        <th>Scanned By</th>
-                      </tr>
-
-                    </thead>
-
-                    <tbody>`;
-
-              positions[pos]
-                .forEach(
-                  (d,index) => {
-
-                    const scannedAt =
-                      d.scannedAt
-
-                        ? new Date(
-                            d.scannedAt.seconds *
-                            1000
-                          ).toLocaleString()
-
-                        : "N/A";
-
-                    html +=
-
-                      `<tr>
-
-                        <td>
-                          ${index + 1}
-                        </td>
-
-                        <td>
-                          ${escapeHTML(
-                            awbNumberOnly(
-                              d.code
-                            )
-                          )}
-                        </td>
-
-                        <td>
-                          ${scannedAt}
-                        </td>
-
-                        <td>
-                          ${escapeHTML(
-                            d.scannedBy || ""
-                          )}
-                        </td>
-
-                      </tr>`;
-
-                  }
-                );
-
-              html +=
-
-                    `</tbody>
-
-                  </table>
-
-                </div>`;
-
-            }
-          );
-
-          html +=
-            `</div>`;
-
-        }
-      );
-
-      /*
-         Legacy/orphan scans that don't have a ULD.
-      */
-
-      if (
-        grouped["NO ULD"] &&
-        grouped["NO ULD"].length
-      ) {
-
-        html +=
-
-          `<div class="liveULD">
-
-            <div class="uldHeader">
-              AWBs WITHOUT ULD
-            </div>
-
-          </div>`;
-
-      }
-
-      container.innerHTML =
-        html;
-
-    };
 
 
   liveUnsubscribe =
@@ -4426,65 +3473,170 @@ window.goToLiveView =
 
       snapshot => {
 
-        scansData =
-          [];
+        const positions =
+          {};
+
 
         snapshot.forEach(
           docSnap => {
 
-            scansData.push(
-              docSnap.data()
-            );
+            const d =
+              docSnap.data();
+
+
+            if (
+              !d.positionId ||
+              d.positionId ===
+              "[REMOVED]"
+            ) {
+
+              return;
+
+            }
+
+
+            if (
+              !positions[d.positionId]
+            ) {
+
+              positions[d.positionId] =
+                [];
+
+            }
+
+
+            positions[d.positionId]
+              .push(d);
 
           }
         );
 
-        render();
 
-      },
+        const positionIds =
+          Object.keys(
+            positions
+          )
+          .sort();
 
-      error => {
 
-        console.error(error);
+        if (
+          positionIds.length === 0
+        ) {
+
+          container.innerHTML =
+            "<p>No active AWBs.</p>";
+
+          return;
+
+        }
+
+
+        let html = "";
+
+
+        positionIds.forEach(
+          pos => {
+
+            positions[pos]
+              .sort(
+                (a,b) => {
+
+                  const aTime =
+                    a.scannedAt
+                      ? a.scannedAt.seconds
+                      : 0;
+
+                  const bTime =
+                    b.scannedAt
+                      ? b.scannedAt.seconds
+                      : 0;
+
+                  return bTime - aTime;
+
+                }
+              );
+
+
+            html +=
+              `<div class="livePosition">
+
+                <div class="livePositionTitle">
+                  Position ID: ${escapeHTML(pos)}
+                </div>
+
+                <table>
+
+                  <thead>
+
+                    <tr>
+                      <th>#</th>
+                      <th>AWB</th>
+                      <th>Scanned At</th>
+                      <th>Scanned By</th>
+                    </tr>
+
+                  </thead>
+
+                  <tbody>`;
+
+
+            positions[pos]
+              .forEach(
+                (d,index) => {
+
+                  const scannedAt =
+                    d.scannedAt
+
+                      ? new Date(
+                          d.scannedAt.seconds *
+                          1000
+                        ).toLocaleString()
+
+                      : "N/A";
+
+
+                  html +=
+                    `<tr>
+
+                      <td>
+                        ${index + 1}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          awbNumberOnly(
+                            d.code
+                          )
+                        )}
+                      </td>
+
+                      <td>
+                        ${scannedAt}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          d.scannedBy || ""
+                        )}
+                      </td>
+
+                    </tr>`;
+
+                }
+              );
+
+
+            html +=
+                  `</tbody>
+                </table>
+              </div>`;
+
+          }
+        );
+
 
         container.innerHTML =
-          "<p class='error'>Live View error.</p>";
-
-      }
-
-    );
-
-
-  liveULDUnsubscribe =
-    onSnapshot(
-
-      collection(
-        db,
-        "ulds"
-      ),
-
-      snapshot => {
-
-        uldsData =
-          [];
-
-        snapshot.forEach(
-          docSnap => {
-
-            uldsData.push(
-              docSnap.data()
-            );
-
-          }
-        );
-
-        render();
-
-      },
-
-      error => {
-
-        console.error(error);
+          html;
 
       }
 
@@ -4493,66 +3645,25 @@ window.goToLiveView =
 };
 
 
-/* ============================================================
+/* ==============================================================
    EXPORT
-   ============================================================ */
+   ============================================================== */
 
 window.exportToCSV =
 async () => {
 
   try {
 
-    const uldSnapshot =
-      await getDocs(
+    /*
+       ONE getDocs call.
 
-        collection(
-          db,
-          "ulds"
-        )
+       This is important.
 
-      );
+       The previous problem happened because
+       onSnapshot was being used for export.
+    */
 
-    const closedULDs =
-      {};
-
-    uldSnapshot.forEach(
-      docSnap => {
-
-        const d =
-          docSnap.data();
-
-        if (
-          d.status ===
-          "CLOSED" &&
-          d.uldId
-        ) {
-
-          closedULDs[d.uldId] =
-            d;
-
-        }
-
-      }
-    );
-
-    const closedULDIds =
-      Object.keys(
-        closedULDs
-      );
-
-    if (
-      closedULDIds.length === 0
-    ) {
-
-      alert(
-        "There are no CLOSED ULDs to export."
-      );
-
-      return;
-
-    }
-
-    const scanSnapshot =
+    const snapshot =
       await getDocs(
 
         collection(
@@ -4562,49 +3673,35 @@ async () => {
 
       );
 
-    let rows =
-      [];
 
-    scanSnapshot.forEach(
+    let rows = [];
+
+
+    snapshot.forEach(
       docSnap => {
 
         const d =
           docSnap.data();
 
-        const uldId =
-          d.uldId;
-
-        /*
-           Export only AWBs belonging
-           to CLOSED ULDs.
-        */
 
         if (
-          !uldId ||
-          !closedULDs[uldId]
+          d.positionId ===
+          "[REMOVED]"
         ) {
 
           return;
 
         }
 
-        const scannedAt =
-          d.scannedAt
 
-            ? new Date(
-                d.scannedAt.seconds *
-                1000
-              ).toLocaleString()
+        if (!d.scannedAt) {
 
-            : "";
+          return;
 
-        const uld =
-          closedULDs[uldId];
+        }
+
 
         rows.push({
-
-          uldId:
-            uldId,
 
           code:
             awbNumberOnly(
@@ -4612,26 +3709,13 @@ async () => {
             ),
 
           positionId:
-            d.positionId ===
-              "[REMOVED]"
-                ? "OFFLOADED"
-                : (
-                    d.positionId ||
-                    ""
-                  ),
-
-          weightLbs:
-            Number(
-              uld.weightLbs || 0
-            ).toFixed(2),
-
-          weightKgs:
-            Number(
-              uld.weightKgs || 0
-            ).toFixed(2),
+            d.positionId || "",
 
           scannedAt:
-            scannedAt,
+            new Date(
+              d.scannedAt.seconds *
+              1000
+            ).toLocaleString(),
 
           scannedBy:
             d.scannedBy || ""
@@ -4641,62 +3725,6 @@ async () => {
       }
     );
 
-    /*
-       It is possible to have a closed ULD
-       with no AWBs.
-
-       Add a ULD-only row so it is still
-       represented in the export.
-    */
-
-    closedULDIds.forEach(
-      uldId => {
-
-        const hasAWB =
-          rows.some(
-            row =>
-              row.uldId ===
-              uldId
-          );
-
-        if (!hasAWB) {
-
-          const uld =
-            closedULDs[uldId];
-
-          rows.push({
-
-            uldId:
-              uldId,
-
-            code:
-              "",
-
-            positionId:
-              "",
-
-            weightLbs:
-              Number(
-                uld.weightLbs || 0
-              ).toFixed(2),
-
-            weightKgs:
-              Number(
-                uld.weightKgs || 0
-              ).toFixed(2),
-
-            scannedAt:
-              "",
-
-            scannedBy:
-              ""
-
-          });
-
-        }
-
-      }
-    );
 
     if (
       rows.length === 0
@@ -4710,32 +3738,28 @@ async () => {
 
     }
 
+
     let csv =
       "\uFEFF" +
+      "Airway Bill,Position ID,Scanned At,Scanned By\n";
 
-      "ULD ID,Airway Bill,Position ID,ULD Weight LBS,ULD Weight KGS,Scanned At,Scanned By\n";
 
     rows.forEach(
       row => {
 
         csv +=
-
-          `"${csvEscape(row.uldId)}",` +
-
           `"${csvEscape(row.code)}",` +
-
           `"${csvEscape(row.positionId)}",` +
-
-          `"${csvEscape(row.weightLbs)}",` +
-
-          `"${csvEscape(row.weightKgs)}",` +
-
           `"${csvEscape(row.scannedAt)}",` +
-
           `"${csvEscape(row.scannedBy)}"\n`;
 
       }
     );
+
+
+    /*
+       ONE FILE ONLY.
+    */
 
     const blob =
       new Blob(
@@ -4746,53 +3770,97 @@ async () => {
         }
       );
 
+
     const url =
       URL.createObjectURL(
         blob
       );
+
 
     const link =
       document.createElement(
         "a"
       );
 
+
     link.href =
       url;
 
+
     link.download =
-      "FirstAirBuilder_Closed_ULD_Export.csv";
+      "FirstAirBuilder_Export.csv";
+
 
     document.body.appendChild(
       link
     );
 
+
     link.click();
+
 
     document.body.removeChild(
       link
     );
 
+
     URL.revokeObjectURL(
       url
     );
 
+
     /*
-       IMPORTANT:
-
-       NOTHING IS DELETED HERE.
-
-       Export is completely non-destructive.
+       Delete exported records
+       only AFTER the file has been
+       generated.
     */
 
-    alert(
+    const deletePromises =
+      [];
 
-      `Export complete.\n\n` +
 
-      `${closedULDIds.length} CLOSED ULD(s) exported.\n\n` +
+    snapshot.forEach(
+      docSnap => {
 
-      `No data was deleted.`
+        const d =
+          docSnap.data();
 
+
+        if (
+          d.positionId !==
+            "[REMOVED]" &&
+          d.scannedAt
+        ) {
+
+          deletePromises.push(
+
+            deleteDoc(
+
+              doc(
+                db,
+                "scans",
+                docSnap.id
+              )
+
+            )
+
+          );
+
+        }
+
+      }
     );
+
+
+    await Promise.all(
+      deletePromises
+    );
+
+
+    alert(
+      `Export complete.\n\n${rows.length} AWB(s) exported into ONE file.`
+    );
+
 
   } catch (error) {
 
@@ -4800,6 +3868,7 @@ async () => {
       "Export error:",
       error
     );
+
 
     alert(
       "Export failed.\n\n" +
@@ -4811,9 +3880,9 @@ async () => {
 };
 
 
-/* ============================================================
+/* ==============================================================
    CSV ESCAPE
-   ============================================================ */
+   ============================================================== */
 
 function csvEscape(value) {
 
@@ -4828,9 +3897,9 @@ function csvEscape(value) {
 }
 
 
-/* ============================================================
+/* ==============================================================
    HTML ESCAPE
-   ============================================================ */
+   ============================================================== */
 
 function escapeHTML(value) {
 
@@ -4861,9 +3930,9 @@ function escapeHTML(value) {
 }
 
 
-/* ============================================================
+/* ==============================================================
    VIBRATION
-   ============================================================ */
+   ============================================================== */
 
 function vibrate() {
 
@@ -4880,9 +3949,9 @@ function vibrate() {
 }
 
 
-/* ============================================================
+/* ==============================================================
    CLEANUP
-   ============================================================ */
+   ============================================================== */
 
 window.addEventListener(
   "pagehide",
@@ -4894,6 +3963,7 @@ window.addEventListener(
 
   }
 );
+
 
 </script>
 
