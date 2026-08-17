@@ -74,10 +74,13 @@ button:hover{
 .stopButton{background:#d32f2f}
 .backButton{background:#555}
 .barcodeButton{background:#8e24aa}
+.manualButton{background:#ef6c00}
 .createButton{background:#fb8c00}
 .closeULDButton{background:#6a1b9a}
 .closeFlightButton{background:#c62828}
 .confirmButton{background:#2e7d32}
+.rescanButton{background:#1565c0}
+.editButton{background:#f57c00}
 
 h2{
   margin:10px 0;
@@ -291,7 +294,7 @@ th{
 .confirmOverlay{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.85);
+  background:rgba(0,0,0,.88);
   display:none;
   align-items:center;
   justify-content:center;
@@ -333,6 +336,33 @@ th{
 
 .confirmCancel{
   background:#555;
+}
+
+.awbConfirmNumber{
+  font-size:3.2rem;
+  font-weight:bold;
+  color:#00e676;
+  background:#111;
+  border:2px solid #00e676;
+  border-radius:15px;
+  padding:18px 10px;
+  margin:15px 0;
+  word-break:break-all;
+  letter-spacing:2px;
+}
+
+.awbEditInput{
+  font-size:2.5rem!important;
+  text-align:center;
+  font-weight:bold;
+  letter-spacing:2px;
+  width:95%!important;
+}
+
+.manualHint{
+  color:#aaa;
+  font-size:1rem;
+  margin-top:5px;
 }
 
 #verificationOverlay{
@@ -436,6 +466,14 @@ th{
     font-size:2.3rem;
   }
 
+  .awbConfirmNumber{
+    font-size:2.5rem;
+  }
+
+  .awbEditInput{
+    font-size:2rem!important;
+  }
+
 }
 
 </style>
@@ -454,7 +492,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.08
+    Version 12.09
   </div>
 
   <input
@@ -589,6 +627,13 @@ th{
     ▣ BARCODE SCANNER
   </button>
 
+  <button
+    id="openAllocateManualButton"
+    class="manualButton"
+    onclick="openManualAWB('allocate')">
+    ⌨ MANUAL AWB INPUT
+  </button>
+
   <div
     id="allocateCameraOuter"
     class="cameraOuter">
@@ -714,6 +759,13 @@ th{
     class="barcodeButton"
     onclick="openBarcodeScanner('offload')">
     ▣ BARCODE SCANNER
+  </button>
+
+  <button
+    id="openOffloadManualButton"
+    class="manualButton"
+    onclick="openManualAWB('offload')">
+    ⌨ MANUAL AWB INPUT
   </button>
 
   <div
@@ -954,7 +1006,138 @@ th{
 
 
 <!-- =========================================================
-     CONFIRMATION POPUP
+     CAMERA AWB CONFIRMATION / EDIT POPUP
+     ========================================================= -->
+
+<div
+  id="awbConfirmOverlay"
+  class="confirmOverlay">
+
+  <div class="confirmBox">
+
+    <div
+      id="awbConfirmTitle"
+      class="confirmTitle">
+      Is this AWB correct?
+    </div>
+
+    <div
+      id="awbConfirmNumber"
+      class="awbConfirmNumber">
+    </div>
+
+    <div
+      id="awbConfirmMessage"
+      class="confirmText">
+      Please verify the AWB before accepting it.
+    </div>
+
+    <div
+      id="awbEditContainer"
+      class="hidden">
+
+      <input
+        id="awbEditInput"
+        class="awbEditInput"
+        type="text"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        maxlength="8"
+        autocomplete="off"
+        placeholder="8 digit AWB">
+
+      <div class="manualHint">
+        Enter the 8-digit AWB number only.
+      </div>
+
+    </div>
+
+    <button
+      id="awbConfirmButton"
+      class="confirmButton">
+      ✓ CONFIRM
+    </button>
+
+    <button
+      id="awbRescanButton"
+      class="rescanButton">
+      ↻ RESCAN
+    </button>
+
+    <button
+      id="awbEditButton"
+      class="editButton">
+      ✎ EDIT
+    </button>
+
+    <button
+      id="awbSaveEditButton"
+      class="confirmButton hidden">
+      ✓ ACCEPT EDITED AWB
+    </button>
+
+    <button
+      id="awbCancelEditButton"
+      class="confirmCancel hidden">
+      CANCEL EDIT
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     MANUAL AWB INPUT POPUP
+     ========================================================= -->
+
+<div
+  id="manualAWBOverlay"
+  class="confirmOverlay">
+
+  <div class="confirmBox">
+
+    <div class="confirmTitle">
+      MANUAL AWB INPUT
+    </div>
+
+    <div class="confirmText">
+      Enter the 8-digit AWB number.
+    </div>
+
+    <input
+      id="manualAWBInput"
+      class="awbEditInput"
+      type="text"
+      inputmode="numeric"
+      pattern="[0-9]*"
+      maxlength="8"
+      autocomplete="off"
+      placeholder="12345678">
+
+    <div class="manualHint">
+      Numbers only
+    </div>
+
+    <button
+      id="manualAWBSubmitButton"
+      class="confirmButton">
+      ✓ CHECK AWB
+    </button>
+
+    <button
+      class="confirmCancel"
+      onclick="closeManualAWB()">
+      CANCEL
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     GENERAL CONFIRMATION POPUP
      ========================================================= -->
 
 <div
@@ -1042,7 +1225,7 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.08";
+const CODE_VERSION = "12.09";
 
 
 /* =========================================================
@@ -1050,6 +1233,24 @@ const CODE_VERSION = "12.08";
    ========================================================= */
 
 const CLOSE_FLIGHT_PASSWORD = "2021";
+
+
+/* =========================================================
+   AWB VALIDATION SETTINGS
+   ========================================================= */
+
+const AWB_DIGITS = 8;
+
+/*
+   Camera must see the same AWB this many times
+   before showing the user confirmation popup.
+*/
+const REQUIRED_CAMERA_MATCHES = 2;
+
+/*
+   Maximum time between matching camera reads.
+*/
+const CAMERA_MATCH_WINDOW = 7000;
 
 
 /* =========================================================
@@ -1129,6 +1330,13 @@ const OCR_INTERVAL = 1500;
 
 let ocrTimer = null;
 
+/*
+   Camera recognition reliability.
+*/
+let cameraCandidateAWB = "";
+let cameraCandidateCount = 0;
+let cameraCandidateFirstTime = 0;
+
 let lastDetectedAWB = "";
 let lastDetectedTime = 0;
 
@@ -1141,6 +1349,13 @@ let barcodeTimer = null;
 let selectedCloseULD = "";
 
 let closeFlightPasswordUnlocked = false;
+
+/*
+   Current pending camera/manual AWB.
+*/
+let pendingAWB = "";
+let pendingAWBSource = "";
+let pendingAWBResolve = null;
 
 
 /* =========================================================
@@ -1169,6 +1384,10 @@ function switchScreen(id){
 
 window.goHome = async () => {
 
+  closeAWBConfirm();
+
+  closeManualAWB();
+
   await closeCamera();
 
   stopBarcodeScanner();
@@ -1185,6 +1404,8 @@ window.goHome = async () => {
   positionId = "";
   currentULD = "";
   currentCameraMode = null;
+
+  resetCameraCandidate();
 
   document
     .getElementById("scanTable")
@@ -1691,7 +1912,87 @@ window.startAllocate = async () => {
 
 
 /* =========================================================
-   AWB EXTRACTION
+   AWB VALIDATION
+   ========================================================= */
+
+/*
+   Returns ONLY the 8-digit AWB number.
+
+   Accepted examples:
+
+   12345678
+   A12345678
+   518-YWG-12345678
+
+   Camera OCR may contain spaces/dashes around the
+   518-YWG prefix, but the actual AWB must resolve
+   to exactly 8 numeric digits.
+*/
+
+function validateAWBNumber(value){
+
+  if(value === null || value === undefined)
+    return null;
+
+  let text =
+    String(value)
+      .toUpperCase()
+      .trim();
+
+  text =
+    text.replace(/[\r\n\t]/g," ");
+
+  text =
+    text.replace(/\s+/g," ");
+
+  /*
+     Direct 8 digit AWB.
+  */
+
+  if(
+    new RegExp(
+      "^\\d{" + AWB_DIGITS + "}$"
+    ).test(text)
+  ){
+
+    return text;
+
+  }
+
+  /*
+     Zebra barcode format:
+     A12345678
+  */
+
+  if(
+    new RegExp(
+      "^A\\d{" + AWB_DIGITS + "}$"
+    ).test(text)
+  ){
+
+    return text.substring(1);
+
+  }
+
+  /*
+     Full AWB.
+  */
+
+  let match =
+    text.match(
+      /^518-YWG-(\d{8})$/
+    );
+
+  if(match)
+    return match[1];
+
+  return null;
+
+}
+
+
+/* =========================================================
+   AWB EXTRACTION FROM OCR
    ========================================================= */
 
 function extract518Number(rawText){
@@ -1707,30 +2008,54 @@ function extract518Number(rawText){
       .replace(/\s+/g," ")
       .trim();
 
+  /*
+     Exact expected format.
+  */
+
   let match =
     text.match(
-      /\b518-[A-Z]{3}-\d{8}\b/
+      /\b518-YWG-\d{8}\b/
     );
 
   if(match)
     return match[0];
 
+
+  /*
+     OCR may insert spaces around punctuation.
+  */
+
   match =
     text.match(
-      /\b518\s*[-]?\s*[A-Z]{3}\s*[-]?\s*\d{8}\b/
+      /\b518\s*[-]?\s*YWG\s*[-]?\s*\d{8}\b/
     );
 
   if(match){
 
-    return match[0]
-      .replace(/\s+/g,"-")
-      .replace(/--+/g,"-");
+    const result =
+      match[0]
+        .replace(/\s+/g,"-")
+        .replace(/--+/g,"-");
+
+    if(
+      /^518-YWG-\d{8}$/.test(result)
+    ){
+
+      return result;
+
+    }
 
   }
 
+
+  /*
+     OCR can confuse O/I/L with numbers.
+     Only allow corrections in the numeric section.
+  */
+
   match =
     text.match(
-      /\b518\s*[- ]\s*[A-Z]{3}\s*[- ]\s*[0-9A-Z]{8}\b/
+      /\b518\s*[- ]\s*YWG\s*[- ]\s*[0-9A-Z]{8}\b/
     );
 
   if(match){
@@ -1738,15 +2063,32 @@ function extract518Number(rawText){
     let result =
       match[0]
         .replace(/\s+/g,"-")
-        .replace(/--+/g,"-")
-        .replace(/O/g,"0")
-        .replace(/I/g,"1")
-        .replace(/L/g,"1");
+        .replace(/--+/g,"-");
 
-    if(
-      /^518-[A-Z]{3}-\d{8}$/.test(result)
-    )
-      return result;
+    const parts =
+      result.split("-");
+
+    if(parts.length === 3){
+
+      const numberPart =
+        parts[2]
+          .replace(/O/g,"0")
+          .replace(/I/g,"1")
+          .replace(/L/g,"1");
+
+      result =
+        "518-YWG-" +
+        numberPart;
+
+      if(
+        /^518-YWG-\d{8}$/.test(result)
+      ){
+
+        return result;
+
+      }
+
+    }
 
   }
 
@@ -1755,25 +2097,29 @@ function extract518Number(rawText){
 }
 
 
+/* =========================================================
+   AWB NUMBER ONLY
+   ========================================================= */
+
 function awbNumberOnly(code){
 
   if(!code)
     return null;
 
-  const match =
-    String(code)
-      .toUpperCase()
-      .match(
-        /^518-YWG-(\d{8})$/
-      );
+  const validated =
+    validateAWBNumber(code);
 
-  if(match)
-    return match[1];
+  if(validated)
+    return validated;
 
-  return code;
+  return String(code);
 
 }
 
+
+/* =========================================================
+   NORMALIZE AWB
+   ========================================================= */
 
 function normalizeAWB(raw){
 
@@ -1785,25 +2131,42 @@ function normalizeAWB(raw){
       .trim()
       .toUpperCase();
 
-  if(/^A\d{8}$/.test(text))
-    return text.substring(1);
+  /*
+     First handle exact numeric AWB.
+  */
 
-  text =
-    text
-      .replace(/[\r\n]/g,"")
-      .trim();
+  const direct =
+    validateAWBNumber(text);
 
-  if(/^A\d{8}$/.test(text))
-    return text.substring(1);
+  if(direct)
+    return direct;
+
+  /*
+     Full AWB.
+  */
 
   const extracted =
     extract518Number(text);
 
-  if(extracted)
-    return awbNumberOnly(extracted);
+  if(extracted){
 
-  if(/^\d{8}$/.test(text))
-    return text;
+    return validateAWBNumber(
+      extracted
+    );
+
+  }
+
+  /*
+     Zebra A########
+  */
+
+  if(
+    /^A\d{8}$/.test(text)
+  ){
+
+    return text.substring(1);
+
+  }
 
   return null;
 
@@ -1910,6 +2273,19 @@ function setStatus(message,type=""){
 
 
 /* =========================================================
+   RESET CAMERA RECOGNITION
+   ========================================================= */
+
+function resetCameraCandidate(){
+
+  cameraCandidateAWB = "";
+  cameraCandidateCount = 0;
+  cameraCandidateFirstTime = 0;
+
+}
+
+
+/* =========================================================
    CAMERA
    ========================================================= */
 
@@ -1917,7 +2293,11 @@ async function startCamera(mode){
 
   await closeCamera();
 
+  stopBarcodeScanner();
+
   currentCameraMode = mode;
+
+  resetCameraCandidate();
 
   const video =
     mode === "allocate"
@@ -1938,6 +2318,11 @@ async function startCamera(mode){
     mode === "allocate"
       ? document.getElementById("openAllocateBarcodeButton")
       : document.getElementById("openOffloadBarcodeButton");
+
+  const manualButton =
+    mode === "allocate"
+      ? document.getElementById("openAllocateManualButton")
+      : document.getElementById("openOffloadManualButton");
 
   const closeButton =
     mode === "allocate"
@@ -1990,6 +2375,7 @@ async function startCamera(mode){
 
     openButton.classList.add("hidden");
     barcodeButton.classList.add("hidden");
+    manualButton.classList.add("hidden");
     closeButton.classList.remove("hidden");
 
     setStatus(
@@ -2050,6 +2436,8 @@ async () => {
 
   stopContinuousOCR();
 
+  resetCameraCandidate();
+
   if(cameraStream){
 
     cameraStream
@@ -2090,12 +2478,16 @@ async () => {
     "openAllocateCameraButton",
     "openOffloadCameraButton",
     "openAllocateBarcodeButton",
-    "openOffloadBarcodeButton"
+    "openOffloadBarcodeButton",
+    "openAllocateManualButton",
+    "openOffloadManualButton"
   ].forEach(id => {
 
-    document
-      .getElementById(id)
-      .classList.remove("hidden");
+    const el =
+      document.getElementById(id);
+
+    if(el)
+      el.classList.remove("hidden");
 
   });
 
@@ -2245,6 +2637,18 @@ async function performOCR(){
   if(!currentCameraMode)
     return;
 
+  /*
+     Don't run OCR if the AWB confirmation popup
+     is currently open.
+  */
+
+  if(
+    document
+      .getElementById("awbConfirmOverlay")
+      .classList.contains("active")
+  )
+    return;
+
   ocrBusy = true;
 
   try{
@@ -2258,39 +2662,167 @@ async function performOCR(){
     const result =
       await ocrWorker.recognize(canvas);
 
-    const awb =
+    const awbFull =
       extract518Number(
         result.data.text
       );
 
-    if(!awb)
+    /*
+       Invalid OCR result is ignored.
+    */
+
+    if(!awbFull){
+
+      resetCameraCandidate();
+
+      setStatus(
+        "🔎 Searching for valid AWB...",
+        "scanning"
+      );
+
       return;
 
+    }
+
     const number =
-      awbNumberOnly(awb);
+      normalizeAWB(awbFull);
+
+    /*
+       Extra validation.
+    */
+
+    if(!number){
+
+      resetCameraCandidate();
+
+      return;
+
+    }
 
     const now =
       Date.now();
 
+    /*
+       If a different AWB is seen,
+       start a completely new candidate.
+    */
+
     if(
-      number === lastDetectedAWB &&
-      now-lastDetectedTime < 5000
-    )
+      cameraCandidateAWB !== number ||
+      now-cameraCandidateFirstTime >
+        CAMERA_MATCH_WINDOW
+    ){
+
+      cameraCandidateAWB = number;
+
+      cameraCandidateCount = 1;
+
+      cameraCandidateFirstTime = now;
+
+      setStatus(
+        "👁 AWB detected. Confirming read 1/" +
+        REQUIRED_CAMERA_MATCHES,
+        "scanning"
+      );
+
       return;
 
-    lastDetectedAWB =
-      number;
+    }
 
-    lastDetectedTime =
-      now;
+    /*
+       Same AWB detected again.
+    */
 
-    stopContinuousOCR();
+    cameraCandidateCount++;
 
-    if(currentCameraMode === "allocate")
-      await processAllocateAWB(number);
+    setStatus(
+      "✓ AWB read confirmed " +
+      cameraCandidateCount +
+      "/" +
+      REQUIRED_CAMERA_MATCHES,
+      "success"
+    );
 
-    if(currentCameraMode === "offload")
-      await processOffloadAWB(number);
+    /*
+       Require multiple matching OCR passes.
+    */
+
+    if(
+      cameraCandidateCount >=
+      REQUIRED_CAMERA_MATCHES
+    ){
+
+      stopContinuousOCR();
+
+      lastDetectedAWB =
+        number;
+
+      lastDetectedTime =
+        now;
+
+      resetCameraCandidate();
+
+      /*
+         IMPORTANT:
+         Camera does NOT save yet.
+         User must confirm.
+      */
+
+      const confirmed =
+        await showAWBConfirmation(
+          number,
+          "camera"
+        );
+
+      /*
+         If the user chose RESCAN,
+         showAWBConfirmation returns false.
+      */
+
+      if(!confirmed){
+
+        if(currentCameraMode){
+
+          setStatus(
+            "↻ Rescanning...",
+            "scanning"
+          );
+
+          restartOCR();
+
+        }
+
+        return;
+
+      }
+
+      /*
+         CONFIRM or EDIT accepted the AWB.
+      */
+
+      if(
+        currentCameraMode ===
+        "allocate"
+      ){
+
+        await processAllocateAWB(
+          number
+        );
+
+      }
+
+      if(
+        currentCameraMode ===
+        "offload"
+      ){
+
+        await processOffloadAWB(
+          number
+        );
+
+      }
+
+    }
 
   }catch(error){
 
@@ -2404,68 +2936,82 @@ async function loadAllocateAWBs(uldId){
 
 async function processAllocateAWB(code){
 
-  if(!code){
+  const validated =
+    normalizeAWB(code);
+
+  if(!validated){
+
+    await showVerification(
+      false,
+      code || "",
+      "INVALID AWB",
+      "The AWB is not a valid 8-digit AWB."
+    );
 
     restartOCR();
+
     return;
 
   }
+
+  code =
+    validated;
 
   setStatus(
     "⏳ Checking AWB...",
     "scanning"
   );
 
-  const q =
-    query(
-      collection(db,"scans"),
-      where("code","==",code)
-    );
+  try{
 
-  const snapshot =
-    await getDocs(q);
+    const q =
+      query(
+        collection(db,"scans"),
+        where("code","==",code)
+      );
 
-  let duplicate = null;
+    const snapshot =
+      await getDocs(q);
 
-  snapshot.forEach(docSnap => {
+    let duplicate = null;
 
-    const d =
-      docSnap.data();
+    snapshot.forEach(docSnap => {
 
-    if(
-      d.positionId &&
-      d.positionId !== "[REMOVED]"
-    ){
+      const d =
+        docSnap.data();
 
-      duplicate = d;
+      if(
+        d.positionId &&
+        d.positionId !== "[REMOVED]"
+      ){
+
+        duplicate = d;
+
+      }
+
+    });
+
+    if(duplicate){
+
+      await showVerification(
+        false,
+        code,
+        "DUPLICATE AWB",
+        `This AWB is already allocated to ULD ${duplicate.uldId || duplicate.positionId}.`
+      );
+
+      setStatus(
+        "❌ Duplicate AWB",
+        "error"
+      );
+
+      vibrate();
+
+      restartOCR();
+
+      return;
 
     }
-
-  });
-
-  if(duplicate){
-
-    await showVerification(
-      false,
-      code,
-      "DUPLICATE AWB",
-      `This AWB is already allocated to ULD ${duplicate.uldId || duplicate.positionId}.`
-    );
-
-    setStatus(
-      "❌ Duplicate AWB",
-      "error"
-    );
-
-    vibrate();
-
-    restartOCR();
-
-    return;
-
-  }
-
-  try{
 
     await addDoc(
       collection(db,"scans"),
@@ -2699,109 +3245,123 @@ async function loadOffloadAWBs(uldId){
 
 async function processOffloadAWB(code){
 
-  if(!code){
+  const validated =
+    normalizeAWB(code);
+
+  if(!validated){
+
+    await showVerification(
+      false,
+      code || "",
+      "INVALID AWB",
+      "The AWB is not a valid 8-digit AWB."
+    );
 
     restartOCR();
+
     return;
 
   }
+
+  code =
+    validated;
 
   setStatus(
     "⏳ Checking AWB...",
     "scanning"
   );
 
-  const q =
-    query(
-      collection(db,"scans"),
-      where("code","==",code)
-    );
+  try{
 
-  const snapshot =
-    await getDocs(q);
+    const q =
+      query(
+        collection(db,"scans"),
+        where("code","==",code)
+      );
 
-  if(snapshot.empty){
+    const snapshot =
+      await getDocs(q);
 
-    await showVerification(
-      false,
-      code,
-      "AWB NOT FOUND",
-      "This AWB does not exist in the system."
-    );
+    if(snapshot.empty){
 
-    setStatus(
-      "❌ AWB not found",
-      "error"
-    );
+      await showVerification(
+        false,
+        code,
+        "AWB NOT FOUND",
+        "This AWB does not exist in the system."
+      );
 
-    vibrate();
+      setStatus(
+        "❌ AWB not found",
+        "error"
+      );
 
-    restartOCR();
+      vibrate();
 
-    return;
+      restartOCR();
 
-  }
-
-  let matchingDoc = null;
-
-  snapshot.forEach(docSnap => {
-
-    const d =
-      docSnap.data();
-
-    if(
-      d.uldId === currentULD &&
-      d.positionId !== "[REMOVED]"
-    ){
-
-      matchingDoc = docSnap;
+      return;
 
     }
 
-  });
+    let matchingDoc = null;
 
-  if(!matchingDoc){
+    snapshot.forEach(docSnap => {
 
-    await showVerification(
-      false,
-      code,
-      "WRONG ULD",
-      `This AWB is not currently allocated to ULD ${currentULD}.`
-    );
+      const d =
+        docSnap.data();
 
-    setStatus(
-      "❌ Wrong ULD",
-      "error"
-    );
+      if(
+        d.uldId === currentULD &&
+        d.positionId !== "[REMOVED]"
+      ){
 
-    vibrate();
+        matchingDoc = docSnap;
 
-    restartOCR();
+      }
 
-    return;
+    });
 
-  }
+    if(!matchingDoc){
 
-  const confirmed =
-    await showConfirmation(
-      "CONFIRM OFFLOAD",
-      `Are you sure you want to offload AWB ${code} from ULD ${currentULD}?`
-    );
+      await showVerification(
+        false,
+        code,
+        "WRONG ULD",
+        `This AWB is not currently allocated to ULD ${currentULD}.`
+      );
 
-  if(!confirmed){
+      setStatus(
+        "❌ Wrong ULD",
+        "error"
+      );
 
-    setStatus(
-      "🔎 Offload cancelled. Ready for next AWB.",
-      "scanning"
-    );
+      vibrate();
 
-    restartOCR();
+      restartOCR();
 
-    return;
+      return;
 
-  }
+    }
 
-  try{
+    const confirmed =
+      await showConfirmation(
+        "CONFIRM OFFLOAD",
+        `Are you sure you want to offload AWB ${code} from ULD ${currentULD}?`
+      );
+
+    if(!confirmed){
+
+      setStatus(
+        "🔎 Offload cancelled. Ready for next AWB.",
+        "scanning"
+      );
+
+      restartOCR();
+
+      return;
+
+    }
 
     await updateDoc(
       doc(
@@ -2867,6 +3427,8 @@ function restartOCR(){
   if(!currentCameraMode)
     return;
 
+  resetCameraCandidate();
+
   setTimeout(
     () => {
 
@@ -2880,15 +3442,847 @@ function restartOCR(){
       }
 
     },
-    1200
+    700
   );
 
 }
 
 
 /* =========================================================
-   CLOSE ULD LIST
-   ONLY OPEN ULDs
+   CAMERA AWB CONFIRMATION
+   ========================================================= */
+
+function showAWBConfirmation(
+  awb,
+  source
+){
+
+  return new Promise(resolve => {
+
+    pendingAWB =
+      awb;
+
+    pendingAWBSource =
+      source;
+
+    pendingAWBResolve =
+      resolve;
+
+    const overlay =
+      document.getElementById(
+        "awbConfirmOverlay"
+      );
+
+    const numberEl =
+      document.getElementById(
+        "awbConfirmNumber"
+      );
+
+    const messageEl =
+      document.getElementById(
+        "awbConfirmMessage"
+      );
+
+    const editContainer =
+      document.getElementById(
+        "awbEditContainer"
+      );
+
+    const confirmButton =
+      document.getElementById(
+        "awbConfirmButton"
+      );
+
+    const rescanButton =
+      document.getElementById(
+        "awbRescanButton"
+      );
+
+    const editButton =
+      document.getElementById(
+        "awbEditButton"
+      );
+
+    const saveEditButton =
+      document.getElementById(
+        "awbSaveEditButton"
+      );
+
+    const cancelEditButton =
+      document.getElementById(
+        "awbCancelEditButton"
+      );
+
+    const editInput =
+      document.getElementById(
+        "awbEditInput"
+      );
+
+    numberEl.innerText =
+      awb;
+
+    messageEl.innerText =
+      source === "camera"
+        ? "Camera detected this AWB.\n\nPlease verify the number before accepting it."
+        : "Please verify this AWB before accepting it.";
+
+    editContainer.classList.add(
+      "hidden"
+    );
+
+    confirmButton.classList.remove(
+      "hidden"
+    );
+
+    rescanButton.classList.remove(
+      "hidden"
+    );
+
+    editButton.classList.remove(
+      "hidden"
+    );
+
+    saveEditButton.classList.add(
+      "hidden"
+    );
+
+    cancelEditButton.classList.add(
+      "hidden"
+    );
+
+    editInput.value =
+      awb;
+
+    overlay.classList.add(
+      "active"
+    );
+
+  });
+
+}
+
+
+/* =========================================================
+   CAMERA AWB CONFIRM BUTTON
+   ========================================================= */
+
+document
+  .getElementById(
+    "awbConfirmButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      const awb =
+        normalizeAWB(
+          pendingAWB
+        );
+
+      if(!awb){
+
+        alert(
+          "Invalid AWB."
+        );
+
+        return;
+
+      }
+
+      resolveAWBConfirmation(
+        awb,
+        true
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   CAMERA AWB RESCAN
+   ========================================================= */
+
+document
+  .getElementById(
+    "awbRescanButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      resolveAWBConfirmation(
+        null,
+        false
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   CAMERA AWB EDIT
+   ========================================================= */
+
+document
+  .getElementById(
+    "awbEditButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      document
+        .getElementById(
+          "awbEditContainer"
+        )
+        .classList.remove(
+          "hidden"
+        );
+
+      document
+        .getElementById(
+          "awbConfirmButton"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+      document
+        .getElementById(
+          "awbRescanButton"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+      document
+        .getElementById(
+          "awbEditButton"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+      document
+        .getElementById(
+          "awbSaveEditButton"
+        )
+        .classList.remove(
+          "hidden"
+        );
+
+      document
+        .getElementById(
+          "awbCancelEditButton"
+        )
+        .classList.remove(
+          "hidden"
+        );
+
+      const input =
+        document.getElementById(
+          "awbEditInput"
+        );
+
+      input.value =
+        pendingAWB;
+
+      setTimeout(
+        () => {
+
+          input.focus();
+          input.select();
+
+        },
+        100
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   SAVE EDITED CAMERA AWB
+   ========================================================= */
+
+document
+  .getElementById(
+    "awbSaveEditButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      const input =
+        document.getElementById(
+          "awbEditInput"
+        );
+
+      const awb =
+        normalizeAWB(
+          input.value
+        );
+
+      if(!awb){
+
+        alert(
+          "Invalid AWB.\n\n" +
+          "Please enter exactly 8 digits."
+        );
+
+        input.focus();
+
+        return;
+
+      }
+
+      resolveAWBConfirmation(
+        awb,
+        true
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   CANCEL EDIT
+   ========================================================= */
+
+document
+  .getElementById(
+    "awbCancelEditButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      const input =
+        document.getElementById(
+          "awbEditInput"
+        );
+
+      input.value =
+        pendingAWB;
+
+      document
+        .getElementById(
+          "awbEditContainer"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+      document
+        .getElementById(
+          "awbConfirmButton"
+        )
+        .classList.remove(
+          "hidden"
+        );
+
+      document
+        .getElementById(
+          "awbRescanButton"
+        )
+        .classList.remove(
+          "hidden"
+        );
+
+      document
+        .getElementById(
+          "awbEditButton"
+        )
+        .classList.remove(
+          "hidden"
+        );
+
+      document
+        .getElementById(
+          "awbSaveEditButton"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+      document
+        .getElementById(
+          "awbCancelEditButton"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+    }
+  );
+
+
+/* =========================================================
+   RESOLVE AWB CONFIRMATION
+   ========================================================= */
+
+function resolveAWBConfirmation(
+  awb,
+  accepted
+){
+
+  const resolve =
+    pendingAWBResolve;
+
+  closeAWBConfirm();
+
+  pendingAWB =
+    "";
+
+  pendingAWBSource =
+    "";
+
+  pendingAWBResolve =
+    null;
+
+  if(typeof resolve === "function"){
+
+    resolve(
+      accepted
+        ? awb
+        : false
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   CLOSE AWB CONFIRMATION
+   ========================================================= */
+
+function closeAWBConfirm(){
+
+  document
+    .getElementById(
+      "awbConfirmOverlay"
+    )
+    .classList.remove(
+      "active"
+    );
+
+}
+
+
+/* =========================================================
+   MANUAL AWB INPUT
+   ========================================================= */
+
+window.openManualAWB =
+async function(mode){
+
+  await closeCamera();
+
+  stopBarcodeScanner();
+
+  barcodeMode = null;
+
+  /*
+     Store which operation the manual AWB
+     belongs to.
+  */
+
+  pendingAWBSource =
+    mode;
+
+  const input =
+    document.getElementById(
+      "manualAWBInput"
+    );
+
+  input.value =
+    "";
+
+  document
+    .getElementById(
+      "manualAWBOverlay"
+    )
+    .classList.add(
+      "active"
+    );
+
+  setTimeout(
+    () => {
+
+      input.focus();
+
+    },
+    150
+  );
+
+};
+
+
+/* =========================================================
+   CLOSE MANUAL AWB
+   ========================================================= */
+
+window.closeManualAWB =
+function(){
+
+  document
+    .getElementById(
+      "manualAWBOverlay"
+    )
+    .classList.remove(
+      "active"
+    );
+
+  document
+    .getElementById(
+      "manualAWBInput"
+    )
+    .value = "";
+
+};
+
+
+/* =========================================================
+   MANUAL AWB SUBMIT
+   ========================================================= */
+
+document
+  .getElementById(
+    "manualAWBSubmitButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      const input =
+        document.getElementById(
+          "manualAWBInput"
+        );
+
+      const raw =
+        input.value.trim();
+
+      const code =
+        normalizeAWB(raw);
+
+      if(!code){
+
+        alert(
+          "Invalid AWB.\n\n" +
+          "Please enter exactly 8 numbers."
+        );
+
+        input.focus();
+
+        return;
+
+      }
+
+      const mode =
+        pendingAWBSource;
+
+      closeManualAWB();
+
+      /*
+         Manual input also gets a user verification
+         before being processed.
+      */
+
+      const confirmed =
+        await showAWBConfirmation(
+          code,
+          "manual"
+        );
+
+      if(!confirmed){
+
+        return;
+
+      }
+
+      if(mode === "allocate"){
+
+        await processAllocateAWB(
+          code
+        );
+
+      }
+
+      if(mode === "offload"){
+
+        await processOffloadAWB(
+          code
+        );
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   MANUAL INPUT - ENTER KEY
+   ========================================================= */
+
+document
+  .getElementById(
+    "manualAWBInput"
+  )
+  .addEventListener(
+    "keydown",
+    event => {
+
+      if(event.key === "Enter"){
+
+        event.preventDefault();
+
+        document
+          .getElementById(
+            "manualAWBSubmitButton"
+          )
+          .click();
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   NUMERIC INPUT CLEANUP
+   ========================================================= */
+
+document
+  .getElementById(
+    "manualAWBInput"
+  )
+  .addEventListener(
+    "input",
+    event => {
+
+      event.target.value =
+        event.target.value
+          .replace(/\D/g,"")
+          .substring(0,AWB_DIGITS);
+
+    }
+  );
+
+
+document
+  .getElementById(
+    "awbEditInput"
+  )
+  .addEventListener(
+    "input",
+    event => {
+
+      event.target.value =
+        event.target.value
+          .replace(/\D/g,"")
+          .substring(0,AWB_DIGITS);
+
+    }
+  );
+
+
+/* =========================================================
+   BARCODE SCANNER
+   ========================================================= */
+
+window.openBarcodeScanner =
+function(mode){
+
+  closeCamera();
+
+  barcodeMode =
+    mode;
+
+  barcodeBuffer =
+    "";
+
+  const input =
+    document.getElementById(
+      "barcodeScannerInput"
+    );
+
+  input.value = "";
+
+  input.focus();
+
+  setStatus(
+    "▣ Barcode scanner ready. Scan barcode.",
+    "scanning"
+  );
+
+};
+
+
+/* =========================================================
+   BARCODE INPUT
+   ========================================================= */
+
+const barcodeInput =
+  document.getElementById(
+    "barcodeScannerInput"
+  );
+
+
+barcodeInput.addEventListener(
+  "keydown",
+  async event => {
+
+    if(!barcodeMode)
+      return;
+
+    if(
+      event.key === "Enter" ||
+      event.key === "Tab"
+    ){
+
+      event.preventDefault();
+
+      const value =
+        barcodeInput.value.trim();
+
+      barcodeInput.value = "";
+
+      if(value)
+        await processBarcode(value);
+
+      setTimeout(() => {
+
+        if(barcodeMode)
+          barcodeInput.focus();
+
+      },100);
+
+    }
+
+  }
+);
+
+
+barcodeInput.addEventListener(
+  "input",
+  () => {
+
+    if(!barcodeMode)
+      return;
+
+    clearTimeout(
+      barcodeTimer
+    );
+
+    barcodeTimer =
+      setTimeout(
+        async () => {
+
+          const value =
+            barcodeInput.value.trim();
+
+          /*
+             A######## is the expected Zebra
+             scanner format.
+          */
+
+          if(
+            /^A\d{8}$/.test(value)
+          ){
+
+            barcodeInput.value = "";
+
+            await processBarcode(
+              value
+            );
+
+            setTimeout(() => {
+
+              if(barcodeMode)
+                barcodeInput.focus();
+
+            },100);
+
+          }
+
+        },
+        80
+      );
+
+  }
+);
+
+
+/* =========================================================
+   PROCESS BARCODE
+   ========================================================= */
+
+async function processBarcode(raw){
+
+  const code =
+    normalizeAWB(raw);
+
+  if(!code){
+
+    await showVerification(
+      false,
+      raw,
+      "INVALID BARCODE",
+      "Barcode format is not recognized.\n\n" +
+      "Expected an 8-digit AWB."
+    );
+
+    return;
+
+  }
+
+  /*
+     Barcode is already machine-read,
+     so it does not require the camera's
+     double OCR confirmation.
+
+     It still goes through all AWB validation
+     and duplicate/system checks.
+  */
+
+  if(barcodeMode === "allocate")
+    await processAllocateAWB(code);
+
+  if(barcodeMode === "offload")
+    await processOffloadAWB(code);
+
+}
+
+
+/* =========================================================
+   STOP BARCODE
+   ========================================================= */
+
+function stopBarcodeScanner(){
+
+  barcodeMode = null;
+
+  barcodeBuffer = "";
+
+  clearTimeout(
+    barcodeTimer
+  );
+
+  const input =
+    document.getElementById(
+      "barcodeScannerInput"
+    );
+
+  input.value = "";
+
+  input.blur();
+
+}
+
+
+/* =========================================================
+   LOAD OPEN ULDs FOR CLOSE
    ========================================================= */
 
 async function loadOpenULDsForClose(){
@@ -3425,16 +4819,6 @@ window.goToLiveView = () => {
 
 /* =========================================================
    EXPORT CLOSED ULDs
-   CSV FORMAT:
-
-   AWB
-   SCANNED AT
-   SCANNED BY
-   ULD ID
-   WEIGHT
-
-   ULD DETAILS APPEAR ON FIRST ROW
-   OF EACH ULD.
    ========================================================= */
 
 window.exportToCSV = async () => {
@@ -3514,10 +4898,6 @@ window.exportToCSV = async () => {
 
       });
 
-      /*
-         First row contains ULD details.
-      */
-
       if(activeScans.length === 0){
 
         rows.push({
@@ -3567,20 +4947,10 @@ window.exportToCSV = async () => {
             scannedBy:
               d.scannedBy || "",
 
-            /*
-               ULD appears on the first
-               AWB row only.
-            */
-
             uldId:
               index === 0
                 ? uldId
                 : "",
-
-            /*
-               Weight appears on the
-               first ULD row only.
-            */
 
             weight:
               index === 0
@@ -3857,11 +5227,6 @@ async function loadCloseFlightData(){
 
 window.confirmCloseFlight = async () => {
 
-  /*
-     Extra security check.
-     Password must have been entered.
-  */
-
   if(!closeFlightPasswordUnlocked){
 
     alert(
@@ -4057,7 +5422,7 @@ async function closeEntireFlight(){
 
 
 /* =========================================================
-   CONFIRMATION POPUP
+   GENERAL CONFIRMATION POPUP
    ========================================================= */
 
 function showConfirmation(
@@ -4208,183 +5573,6 @@ function showVerification(
     },displayTime);
 
   });
-
-}
-
-
-/* =========================================================
-   BARCODE SCANNER
-   ========================================================= */
-
-window.openBarcodeScanner =
-function(mode){
-
-  closeCamera();
-
-  barcodeMode =
-    mode;
-
-  barcodeBuffer =
-    "";
-
-  const input =
-    document.getElementById(
-      "barcodeScannerInput"
-    );
-
-  input.value = "";
-
-  input.focus();
-
-  setStatus(
-    "▣ Barcode scanner ready. Scan barcode.",
-    "scanning"
-  );
-
-};
-
-
-/* =========================================================
-   BARCODE INPUT
-   ========================================================= */
-
-const barcodeInput =
-  document.getElementById(
-    "barcodeScannerInput"
-  );
-
-
-barcodeInput.addEventListener(
-  "keydown",
-  async event => {
-
-    if(!barcodeMode)
-      return;
-
-    if(
-      event.key === "Enter" ||
-      event.key === "Tab"
-    ){
-
-      event.preventDefault();
-
-      const value =
-        barcodeInput.value.trim();
-
-      barcodeInput.value = "";
-
-      if(value)
-        await processBarcode(value);
-
-      setTimeout(() => {
-
-        if(barcodeMode)
-          barcodeInput.focus();
-
-      },100);
-
-    }
-
-  }
-);
-
-
-barcodeInput.addEventListener(
-  "input",
-  () => {
-
-    if(!barcodeMode)
-      return;
-
-    clearTimeout(
-      barcodeTimer
-    );
-
-    barcodeTimer =
-      setTimeout(
-        async () => {
-
-          const value =
-            barcodeInput.value.trim();
-
-          if(/^A\d{8}$/.test(value)){
-
-            barcodeInput.value = "";
-
-            await processBarcode(
-              value
-            );
-
-            setTimeout(() => {
-
-              if(barcodeMode)
-                barcodeInput.focus();
-
-            },100);
-
-          }
-
-        },
-        80
-      );
-
-  }
-);
-
-
-/* =========================================================
-   PROCESS BARCODE
-   ========================================================= */
-
-async function processBarcode(raw){
-
-  const code =
-    normalizeAWB(raw);
-
-  if(!code){
-
-    await showVerification(
-      false,
-      raw,
-      "INVALID BARCODE",
-      "Barcode format is not recognized."
-    );
-
-    return;
-
-  }
-
-  if(barcodeMode === "allocate")
-    await processAllocateAWB(code);
-
-  if(barcodeMode === "offload")
-    await processOffloadAWB(code);
-
-}
-
-
-/* =========================================================
-   STOP BARCODE
-   ========================================================= */
-
-function stopBarcodeScanner(){
-
-  barcodeMode = null;
-
-  barcodeBuffer = "";
-
-  clearTimeout(
-    barcodeTimer
-  );
-
-  const input =
-    document.getElementById(
-      "barcodeScannerInput"
-    );
-
-  input.value = "";
-
-  input.blur();
 
 }
 
