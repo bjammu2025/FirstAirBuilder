@@ -672,11 +672,16 @@ th{
   <h3>Reset Password</h3>
 
   <div class="infoBox">
-    <input
-      type="text"
-      id="resetUsername"
-      placeholder="Username"
-      autocomplete="off">
+
+    <div class="infoTitle">
+      Select User
+    </div>
+
+    <select
+      id="resetUsernameSelect"
+      onchange="selectResetUser()">
+      <option value="">Loading users...</option>
+    </select>
 
     <input
       type="password"
@@ -689,6 +694,11 @@ th{
       id="resetPasswordConfirm"
       placeholder="Confirm New Password"
       autocomplete="new-password">
+
+    <div class="manualHint">
+      Select the username whose password you want to reset, or delete.
+    </div>
+
   </div>
 
   <button
@@ -698,8 +708,14 @@ th{
   </button>
 
   <button
+    class="closeFlightButton"
+    onclick="deleteSelectedUser()">
+    DELETE USER
+  </button>
+
+  <button
     class="backButton"
-    onclick="switchScreen('adminMenu')">
+    onclick="backToAdminMenu()">
     ⬅ BACK
   </button>
 
@@ -1396,7 +1412,7 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.13";
+const CODE_VERSION = "12.14";
 
 
 /* =========================================================
@@ -1726,11 +1742,77 @@ window.openCreateUser = () => {
   document.getElementById("newUsername").focus();
 };
 
-window.openResetUser = () => {
+window.openResetUser = async () => {
   if(!adminMenuUnlocked) return;
-  ["resetUsername","resetPassword","resetPasswordConfirm"].forEach(id => document.getElementById(id).value = "");
+
+  document.getElementById("resetPassword").value = "";
+  document.getElementById("resetPasswordConfirm").value = "";
+
   switchScreen("resetUser");
-  document.getElementById("resetUsername").focus();
+  await loadUsersForReset();
+};
+
+window.backToAdminMenu = () => {
+  document.getElementById("resetPassword").value = "";
+  document.getElementById("resetPasswordConfirm").value = "";
+  switchScreen("adminMenu");
+};
+
+async function loadUsersForReset(){
+  const select = document.getElementById("resetUsernameSelect");
+
+  select.innerHTML = `<option value="">Loading users...</option>`;
+
+  try{
+    const snapshot = await getDocs(collection(db,USERS_COLLECTION));
+    const users = [];
+
+    snapshot.forEach(docSnap => {
+      const d = docSnap.data();
+      if(d.username){
+        users.push({
+          id:docSnap.id,
+          username:String(d.username)
+        });
+      }
+    });
+
+    users.sort((a,b) =>
+      a.username.localeCompare(b.username,undefined,{sensitivity:"base"})
+    );
+
+    select.innerHTML = `<option value="">Select a username</option>`;
+
+    users.forEach(user => {
+      const option = document.createElement("option");
+      option.value = user.id;
+      option.textContent = user.username;
+      select.appendChild(option);
+    });
+
+    if(users.length === 0){
+      select.innerHTML = `<option value="">No users found</option>`;
+    }
+  }catch(error){
+    console.error("Load users error:",error);
+    select.innerHTML = `<option value="">Could not load users</option>`;
+    alert("Could not load users.\n\n" + error.message);
+  }
+}
+
+function getSelectedResetUser(){
+  const select = document.getElementById("resetUsernameSelect");
+  const selectedId = select.value;
+  const selectedText = selectedId
+    ? select.options[select.selectedIndex].textContent.trim()
+    : "";
+
+  return {id:selectedId, username:selectedText};
+}
+
+window.selectResetUser = () => {
+  document.getElementById("resetPassword").value = "";
+  document.getElementById("resetPasswordConfirm").value = "";
 };
 
 window.createUserAccount = async () => {
@@ -1763,32 +1845,73 @@ window.createUserAccount = async () => {
 };
 
 window.resetUserPassword = async () => {
-  const username = document.getElementById("resetUsername").value.trim();
+  const selected = getSelectedResetUser();
   const password = document.getElementById("resetPassword").value;
   const confirm = document.getElementById("resetPasswordConfirm").value;
 
-  if(!username || !password){ alert("Enter username and new password."); return; }
-  if(password !== confirm){ alert("Passwords do not match."); return; }
+  if(!selected.id){
+    alert("Please select a username.");
+    return;
+  }
+
+  if(!password){
+    alert("Enter the new password.");
+    return;
+  }
+
+  if(password !== confirm){
+    alert("Passwords do not match.");
+    return;
+  }
 
   try{
-    const q = query(collection(db,USERS_COLLECTION),where("username","==",username));
-    const snapshot = await getDocs(q);
-    if(snapshot.empty){
-      alert("Username not found.");
-      return;
-    }
-
-    await updateDoc(snapshot.docs[0].ref,{
-      passwordHash:await hashPassword(password),
-      passwordResetAt:serverTimestamp(),
-      passwordResetBy:currentUser
-    });
+    await updateDoc(
+      doc(db,USERS_COLLECTION,selected.id),
+      {
+        passwordHash:await hashPassword(password),
+        passwordResetAt:serverTimestamp(),
+        passwordResetBy:currentUser
+      }
+    );
 
     alert("Password reset successfully.");
-    switchScreen("adminMenu");
+    backToAdminMenu();
   }catch(error){
     console.error(error);
     alert("Could not reset password.\n\n" + error.message);
+  }
+};
+
+window.deleteSelectedUser = async () => {
+  const selected = getSelectedResetUser();
+
+  if(!selected.id){
+    alert("Please select a username.");
+    return;
+  }
+
+  if(selected.username.toLowerCase() === DEFAULT_ADMIN_USERNAME.toLowerCase()){
+    alert("The default Admin account cannot be deleted.");
+    return;
+  }
+
+  const confirmed = await showConfirmation(
+    "DELETE USER",
+    `Are you sure you want to permanently delete the user \"${selected.username}\"?\n\nThis cannot be undone.`
+  );
+
+  if(!confirmed) return;
+
+  try{
+    await deleteDoc(doc(db,USERS_COLLECTION,selected.id));
+
+    alert("User deleted successfully.");
+    await loadUsersForReset();
+    document.getElementById("resetPassword").value = "";
+    document.getElementById("resetPasswordConfirm").value = "";
+  }catch(error){
+    console.error(error);
+    alert("Could not delete user.\n\n" + error.message);
   }
 };
 
