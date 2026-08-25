@@ -439,6 +439,43 @@ th{
   color:#ffca28;
 }
 
+#management label{
+  display:block;
+  width:95%;
+  max-width:900px;
+  margin:6px auto;
+  padding:10px;
+  background:#252525;
+  border-radius:10px;
+  text-align:left;
+  font-size:1.1rem;
+  box-sizing:border-box;
+}
+
+#management label input{
+  width:auto;
+  margin-right:10px;
+  transform:scale(1.2);
+}
+
+.userCard{
+  background:#181818;
+  border:1px solid #555;
+  border-radius:12px;
+  padding:12px;
+  margin:10px 0;
+  text-align:left;
+}
+
+.userCardTitle{
+  font-size:1.35rem;
+  font-weight:bold;
+  margin-bottom:5px;
+}
+
+.userEnabled{color:#00e676}
+.userDisabled{color:#ff5252}
+
 @media(max-width:600px){
 
   input,select,button{
@@ -483,32 +520,44 @@ th{
 
 <div class="container">
 
-<!-- LOGIN -->
-<div id="login" class="screen visible">
-<h2>First Air Builder</h2><div class="version">Version 15.00</div>
-<div class="infoBox"><div class="infoTitle">Secure Login</div>
-<input type="text" id="loginUsername" placeholder="Username" autocomplete="username" autocapitalize="none">
-<input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
-<button class="confirmButton" onclick="loginUser()">LOGIN</button>
-<div id="loginMessage" class="cameraStatus"></div></div>
-</div>
-
 <!-- =========================================================
      HOME
      ========================================================= -->
 
+<div id="login" class="screen visible">
+  <h2>First Air Builder</h2>
+  <div class="version">Version 15.00</div>
+  <div class="infoBox">
+    <div class="infoTitle">LOGIN</div>
+    <input id="loginUsername" type="text" placeholder="Username"
+           autocomplete="username" autocapitalize="none">
+    <input id="loginPassword" type="password" placeholder="Password"
+           autocomplete="current-password">
+    <button class="confirmButton" onclick="loginUser()">LOGIN</button>
+    <div id="loginStatus" class="cameraStatus"></div>
+    <div class="manualHint">
+      First setup uses the internal Firebase identifier
+      <b>admin@firstairbuilder.local</b>. Users will only enter usernames.
+    </div>
+  </div>
+</div>
+
 <div id="home" class="screen">
-<h2>First Air Builder</h2>
-<div class="version">Version 15.00</div>
-<div class="infoBox"><div class="infoTitle">Logged In</div><div style="font-size:1.35rem"><span id="loggedInUser"></span><br><span id="loggedInRole" style="color:#aaa"></span></div></div>
-<button id="homeAllocateButton" onclick="goToAllocate()">ALLOCATE</button>
-<button id="homeOffloadButton" onclick="goToOffload()">OFFLOAD</button>
-<button id="homeCloseULDButton" class="closeULDButton" onclick="goToCloseULD()">CLOSE ULD</button>
-<button id="homeLiveViewButton" onclick="goToLiveView()">LIVE VIEW</button>
-<button id="homeExportButton" onclick="exportToCSV()">EXPORT CLOSED ULDs</button>
-<button id="homeCloseFlightButton" class="closeFlightButton" onclick="goToCloseFlight()">CLOSE FLIGHT</button>
-<button id="homeManagementButton" class="createButton" onclick="openManagement()">MANAGEMENT</button>
-<button class="backButton" onclick="logoutUser()">LOG OUT</button>
+  <h2>First Air Builder</h2>
+  <div class="version">Version 15.00</div>
+  <div class="infoBox">
+    <div class="infoTitle">SIGNED IN</div>
+    <div id="loggedInUser"></div>
+    <div id="loggedInRole" class="manualHint"></div>
+  </div>
+  <button id="allocateHomeButton" onclick="goToAllocate()">ALLOCATE</button>
+  <button id="offloadHomeButton" onclick="goToOffload()">OFFLOAD</button>
+  <button id="closeULDHomeButton" class="closeULDButton" onclick="goToCloseULD()">CLOSE ULD</button>
+  <button id="liveViewHomeButton" onclick="goToLiveView()">LIVE VIEW</button>
+  <button id="exportHomeButton" onclick="exportToCSV()">EXPORT CLOSED ULDs</button>
+  <button id="closeFlightHomeButton" class="closeFlightButton" onclick="goToCloseFlight()">CLOSE FLIGHT</button>
+  <button id="managementHomeButton" class="createButton hidden" onclick="goToManagement()">MANAGEMENT</button>
+  <button class="backButton" onclick="logoutUser()">LOG OUT</button>
 </div>
 
 
@@ -942,24 +991,46 @@ th{
 </div>
 
 
-<!-- MANAGEMENT -->
+<!-- =========================================================
+     MANAGEMENT
+     ========================================================= -->
+
 <div id="management" class="screen">
-<h3>Management</h3>
-<div class="infoBox"><div class="infoTitle">Create User</div>
-<input id="newUsername" type="text" placeholder="Username" autocomplete="off">
-<input id="newUserPassword" type="password" placeholder="Temporary Password" autocomplete="new-password">
-<select id="newUserRole"><option value="User">User</option><option value="Admin">Admin</option></select>
-<button class="createButton" onclick="createManagedUser()">CREATE USER</button></div>
-<div class="infoBox"><div class="infoTitle">Manage Existing User</div>
-<select id="managedUserSelect" onchange="loadManagedUser()"></select>
-<input id="managedUserPassword" type="password" placeholder="New Password" autocomplete="new-password">
-<button class="confirmButton" onclick="changeManagedPassword()">CHANGE PASSWORD</button>
-<button class="editButton" onclick="toggleManagedUserStatus()" id="managedStatusButton">DEACTIVATE USER</button></div>
-<div class="infoBox"><div class="infoTitle">User Permissions</div><div id="managedPermissions"></div>
-<button class="confirmButton" onclick="saveManagedPermissions()">SAVE PERMISSIONS</button></div>
-<div class="infoBox"><div class="infoTitle">Users</div><div id="managedUsersTable">Loading...</div></div>
-<button class="backButton" onclick="goHome()">⬅ BACK</button>
+  <h3>Management</h3>
+
+  <div class="infoBox">
+    <div class="infoTitle">CREATE USER PROFILE</div>
+    <input id="newUsername" type="text" placeholder="Username" autocomplete="off" autocapitalize="none">
+    <input id="newUserPassword" type="password" placeholder="Password (used when creating Firebase account)" autocomplete="new-password">
+    <select id="newUserRole">
+      <option value="user">USER</option>
+      <option value="admin">ADMIN</option>
+    </select>
+
+    <div class="manualHint">Permissions for USER accounts:</div>
+    <label><input type="checkbox" id="permAllocate"> ALLOCATE</label>
+    <label><input type="checkbox" id="permOffload"> OFFLOAD</label>
+    <label><input type="checkbox" id="permCloseULD"> CLOSE ULD</label>
+    <label><input type="checkbox" id="permLiveView"> LIVE VIEW</label>
+    <label><input type="checkbox" id="permExport"> EXPORT CLOSED ULDs</label>
+    <label><input type="checkbox" id="permCloseFlight"> CLOSE FLIGHT</label>
+
+    <button class="createButton" onclick="createManagedUser()">CREATE USER PROFILE</button>
+    <div id="managementStatus" class="cameraStatus"></div>
+  </div>
+
+  <div class="infoBox">
+    <div class="infoTitle">USERS</div>
+    <div class="manualHint">
+      On the Spark/free plan, the Firebase Authentication account is created
+      in Authentication → Users. Passwords are never stored in Firestore.
+    </div>
+    <div id="userManagementList">Loading...</div>
+  </div>
+
+  <button class="backButton" onclick="goHome()">⬅ BACK</button>
 </div>
+
 
 <!-- =========================================================
      HIDDEN ZEBRA INPUT
@@ -1173,6 +1244,48 @@ th{
 </div>
 
 
+<!-- =========================================================
+     PASSWORD POPUP
+     ========================================================= -->
+
+<div
+  id="passwordOverlay"
+  class="confirmOverlay">
+
+  <div class="confirmBox passwordBox">
+
+    <div
+      class="confirmTitle passwordTitle">
+      🔒 CLOSE FLIGHT
+    </div>
+
+    <div class="confirmText">
+      Enter the password to continue.
+    </div>
+
+    <input
+      type="password"
+      id="closeFlightPassword"
+      placeholder="Enter Password"
+      autocomplete="off">
+
+    <button
+      class="confirmButton"
+      onclick="submitCloseFlightPassword()">
+      UNLOCK
+    </button>
+
+    <button
+      class="confirmCancel"
+      onclick="cancelCloseFlightPassword()">
+      CANCEL
+    </button>
+
+  </div>
+
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 
@@ -1183,6 +1296,13 @@ th{
    ========================================================= */
 
 const CODE_VERSION = "15.00";
+
+
+/* =========================================================
+   CLOSE FLIGHT PASSWORD
+   ========================================================= */
+
+const CLOSE_FLIGHT_PASSWORD = "";
 
 
 /* =========================================================
@@ -1225,7 +1345,6 @@ import {
   query,
   where,
   getDocs,
-  getDoc,
   deleteDoc
 
 }
@@ -1262,11 +1381,13 @@ const app =
 const db =
   getFirestore(app);
 
-const auth = getAuth(app);
-const functions = getFunctions(app, "us-central1");
-const DEFAULT_ADMIN_USERNAME = "admin";
-const DEFAULT_ADMIN_PASSWORD = "ChangeMe123!";
-const PERMISSIONS = { allocate:"ALLOCATE", offload:"OFFLOAD", closeULD:"CLOSE ULD", liveView:"LIVE VIEW", export:"EXPORT CLOSED ULDs", closeFlight:"CLOSE FLIGHT", management:"MANAGEMENT" };
+const auth =
+  getAuth(app);
+
+let currentAccount = null;
+let currentPermissions = {};
+let currentRole = "";
+let authReady = false;
 
 
 /* =========================================================
@@ -1276,9 +1397,6 @@ const PERMISSIONS = { allocate:"ALLOCATE", offload:"OFFLOAD", closeULD:"CLOSE UL
 let positionId = "";
 let currentULD = "";
 let currentUser = "";
-let currentUserRole = "";
-let currentUserPermissions = {};
-let currentAuthUser = null;
 
 let currentCameraMode = null;
 let cameraStream = null;
@@ -1317,6 +1435,253 @@ let pendingAWB = "";
 let pendingAWBSource = "";
 let pendingAWBResolve = null;
 
+
+
+/* =========================================================
+   V15 AUTHENTICATION / USER PROFILES
+   ========================================================= */
+
+const USERNAME_EMAIL_DOMAIN = "@firstairbuilder.local";
+
+function internalAuthEmail(username){
+  return username.trim().toLowerCase() + USERNAME_EMAIL_DOMAIN;
+}
+
+function setLoginStatus(message,type=""){
+  const el = document.getElementById("loginStatus");
+  if(el){
+    el.innerText = message;
+    el.className = "cameraStatus " + type;
+  }
+}
+
+function setManagementStatus(message,type=""){
+  const el = document.getElementById("managementStatus");
+  if(el){
+    el.innerText = message;
+    el.className = "cameraStatus " + type;
+  }
+}
+
+async function loadCurrentUserProfile(user){
+  const snap = await getDocs(
+    query(collection(db,"users"),where("uid","==",user.uid))
+  );
+
+  if(snap.empty){
+    await signOut(auth);
+    setLoginStatus("No First Air Builder user profile exists for this account.","error");
+    return false;
+  }
+
+  const data = snap.docs[0].data();
+
+  if(data.active === false){
+    await signOut(auth);
+    setLoginStatus("This account is disabled.","error");
+    return false;
+  }
+
+  currentAccount = user;
+  currentUser = data.username || "";
+  currentRole = data.role || "user";
+  currentPermissions = data.permissions || {};
+
+  if(currentRole === "admin"){
+    currentPermissions = {
+      allocate:true, offload:true, closeULD:true, liveView:true,
+      export:true, closeFlight:true, management:true
+    };
+  }
+
+  document.getElementById("loggedInUser").innerText =
+    "Username: " + currentUser;
+  document.getElementById("loggedInRole").innerText =
+    "Role: " + currentRole.toUpperCase();
+
+  applyHomePermissions();
+  switchScreen("home");
+  return true;
+}
+
+function applyHomePermissions(){
+  const map = {
+    allocateHomeButton:"allocate",
+    offloadHomeButton:"offload",
+    closeULDHomeButton:"closeULD",
+    liveViewHomeButton:"liveView",
+    exportHomeButton:"export",
+    closeFlightHomeButton:"closeFlight",
+    managementHomeButton:"management"
+  };
+
+  Object.entries(map).forEach(([id,permission])=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle("hidden",!hasPermission(permission));
+  });
+}
+
+window.loginUser = async () => {
+  const username = document.getElementById("loginUsername").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  if(!username || !password){
+    setLoginStatus("Enter username and password.","error");
+    return;
+  }
+
+  setLoginStatus("Logging in...","scanning");
+
+  try{
+    await signInWithEmailAndPassword(
+      auth,
+      internalAuthEmail(username),
+      password
+    );
+  }catch(error){
+    console.error(error);
+    setLoginStatus("Invalid username or password.","error");
+    document.getElementById("loginPassword").value = "";
+  }
+};
+
+window.logoutUser = async () => {
+  try{
+    await closeCamera();
+    stopBarcodeScanner();
+    if(typeof liveUnsubscribe === "function"){
+      liveUnsubscribe();
+      liveUnsubscribe = null;
+    }
+    await signOut(auth);
+  }catch(error){
+    console.error(error);
+  }
+};
+
+window.goToManagement = async () => {
+  if(!requirePermission("management")) return;
+  switchScreen("management");
+  await loadUserManagementList();
+};
+
+async function loadUserManagementList(){
+  const container = document.getElementById("userManagementList");
+  container.innerHTML = "Loading...";
+
+  try{
+    const snapshot = await getDocs(collection(db,"users"));
+    if(snapshot.empty){
+      container.innerHTML = "<div class='manualHint'>No user profiles found.</div>";
+      return;
+    }
+
+    let html = "";
+    snapshot.forEach(s=>{
+      const d=s.data();
+      const username=d.username || s.id;
+      const role=d.role || "user";
+      const active=d.active !== false;
+
+      html += `<div class="userCard">
+        <div class="userCardTitle">${escapeHTML(username)}</div>
+        <div>Role: ${escapeHTML(role.toUpperCase())}</div>
+        <div class="${active ? "userEnabled":"userDisabled"}">
+          ${active ? "ACTIVE":"DISABLED"}
+        </div>
+      </div>`;
+    });
+    container.innerHTML=html;
+  }catch(error){
+    console.error(error);
+    container.innerHTML="<div class='error'>"+escapeHTML(error.message)+"</div>";
+  }
+}
+
+window.createManagedUser = async () => {
+  if(currentRole !== "admin"){
+    alert("Admin access required.");
+    return;
+  }
+
+  const username=document.getElementById("newUsername").value.trim();
+  const password=document.getElementById("newUserPassword").value;
+  const role=document.getElementById("newUserRole").value;
+
+  if(!/^[A-Za-z0-9._-]{3,32}$/.test(username)){
+    setManagementStatus("Username must be 3-32 characters using letters, numbers, dot, underscore or dash.","error");
+    return;
+  }
+
+  if(password.length < 6){
+    setManagementStatus("Password must be at least 6 characters.","error");
+    return;
+  }
+
+  const existing=await getDocs(
+    query(collection(db,"users"),where("usernameLower","==",username.toLowerCase()))
+  );
+
+  if(!existing.empty){
+    setManagementStatus("That username already exists.","error");
+    return;
+  }
+
+  const permissions={
+    allocate:document.getElementById("permAllocate").checked,
+    offload:document.getElementById("permOffload").checked,
+    closeULD:document.getElementById("permCloseULD").checked,
+    liveView:document.getElementById("permLiveView").checked,
+    export:document.getElementById("permExport").checked,
+    closeFlight:document.getElementById("permCloseFlight").checked
+  };
+
+  if(role==="admin"){
+    Object.keys(permissions).forEach(k=>permissions[k]=true);
+    permissions.management=true;
+  }
+
+  await addDoc(collection(db,"users"),{
+    username,
+    usernameLower:username.toLowerCase(),
+    role,
+    active:true,
+    permissions,
+    createdAt:serverTimestamp(),
+    createdBy:currentUser
+  });
+
+  document.getElementById("newUsername").value="";
+  document.getElementById("newUserPassword").value="";
+
+  setManagementStatus(
+    "Profile created. Now create the matching Firebase Authentication account as " +
+    internalAuthEmail(username) +
+    " in Authentication → Users. The password you entered is NOT stored in Firestore.",
+    "success"
+  );
+
+  await loadUserManagementList();
+};
+
+onAuthStateChanged(auth,async user=>{
+  if(!user){
+    currentAccount=null;
+    currentUser="";
+    currentRole="";
+    currentPermissions={};
+    switchScreen("login");
+    return;
+  }
+
+  try{
+    await loadCurrentUserProfile(user);
+  }catch(error){
+    console.error(error);
+    await signOut(auth);
+    setLoginStatus("Could not load user profile.","error");
+  }
+});
 
 /* =========================================================
    SCREEN
@@ -1381,30 +1746,151 @@ window.goHome = async () => {
 
 
 /* =========================================================
-   AUTHENTICATION + PERMISSIONS
+   USER
    ========================================================= */
-function usernameToEmail(username){ return String(username||"").trim().toLowerCase()+"@firstairbuilder.local"; }
-function hasPermission(permission){ return currentUserRole==="Admin" || currentUserPermissions[permission]===true; }
-function requirePermission(permission){ if(hasPermission(permission)) return true; alert("You do not have permission to use this function."); return false; }
-function applyPermissions(){ const map={homeAllocateButton:PERMISSIONS.allocate,homeOffloadButton:PERMISSIONS.offload,homeCloseULDButton:PERMISSIONS.closeULD,homeLiveViewButton:PERMISSIONS.liveView,homeExportButton:PERMISSIONS.export,homeCloseFlightButton:PERMISSIONS.closeFlight,homeManagementButton:PERMISSIONS.management}; Object.entries(map).forEach(([id,p])=>{const e=document.getElementById(id);if(e)e.classList.toggle("hidden",!hasPermission(p));}); }
-function setLoginMessage(message,type="error"){const e=document.getElementById("loginMessage");e.innerText=message;e.className="cameraStatus "+type;}
-async function loadUserProfile(user){ const snap=await getDoc(doc(db,"users",user.uid)); if(!snap.exists()) throw new Error("User profile was not found."); const p=snap.data(); if(p.active===false) throw new Error("This account is deactivated."); currentUser=p.username||user.email.split("@")[0]; currentUserRole=p.role||"User"; currentUserPermissions=p.permissions||{}; currentAuthUser=user; document.getElementById("loggedInUser").innerText=currentUser; document.getElementById("loggedInRole").innerText=currentUserRole; applyPermissions(); }
-window.loginUser=async()=>{const u=document.getElementById("loginUsername").value.trim(),pw=document.getElementById("loginPassword").value;if(!u||!pw){setLoginMessage("Enter username and password.");return;}setLoginMessage("Signing in...","scanning");try{const c=await signInWithEmailAndPassword(auth,usernameToEmail(u),pw);await loadUserProfile(c.user);document.getElementById("loginPassword").value="";setLoginMessage("");switchScreen("home");}catch(e){console.error(e);try{await signOut(auth);}catch(x){}setLoginMessage("Invalid username/password or account unavailable.");document.getElementById("loginPassword").value="";}};
-window.logoutUser=async()=>{try{await signOut(auth);}catch(e){}currentUser="";currentUserRole="";currentUserPermissions={};currentAuthUser=null;switchScreen("login");document.getElementById("loginUsername").value="";document.getElementById("loginPassword").value="";setLoginMessage("");};
-window.goToAllocate=async()=>{if(!requirePermission(PERMISSIONS.allocate))return;switchScreen("allocateStart");await loadOpenULDsForAllocate();};
-window.goToOffload=async()=>{if(!requirePermission(PERMISSIONS.offload))return;switchScreen("offloadStart");await loadOpenULDsForOffload();};
-window.goToCloseULD=async()=>{if(!requirePermission(PERMISSIONS.closeULD))return;switchScreen("closeULDStart");await loadOpenULDsForClose();};
-window.goToCloseFlight=async()=>{if(!requirePermission(PERMISSIONS.closeFlight))return;closeFlightPasswordUnlocked=true;switchScreen("closeFlight");await loadCloseFlightData();};
-window.goToLiveView=async()=>{if(!requirePermission(PERMISSIONS.liveView))return;switchScreen("liveView");await loadLiveView();};
-let managedUsers=[];
-window.openManagement=async()=>{if(!requirePermission(PERMISSIONS.management))return;switchScreen("management");await loadManagedUsers();};
-async function loadManagedUsers(){const select=document.getElementById("managedUserSelect"),table=document.getElementById("managedUsersTable");try{const snap=await getDocs(collection(db,"users"));managedUsers=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.username||"").localeCompare(b.username||""));select.innerHTML=managedUsers.map(u=>`<option value="${u.id}">${escapeHTML(u.username)} (${escapeHTML(u.role||"User")})</option>`).join("")||`<option value="">No users</option>`;table.innerHTML=managedUsers.length?`<table><thead><tr><th>Username</th><th>Role</th><th>Status</th></tr></thead><tbody>${managedUsers.map(u=>`<tr><td>${escapeHTML(u.username)}</td><td>${escapeHTML(u.role)}</td><td>${u.active===false?"DEACTIVATED":"ACTIVE"}</td></tr>`).join("")}</tbody></table>`:"No users found.";loadManagedUser();}catch(e){table.innerHTML=`<p class="error">${escapeHTML(e.message)}</p>`;}}
-function getManagedUser(){return managedUsers.find(u=>u.id===document.getElementById("managedUserSelect").value);}
-window.loadManagedUser=()=>{const u=getManagedUser(),box=document.getElementById("managedPermissions"),button=document.getElementById("managedStatusButton");if(!u){box.innerHTML="";return;}button.innerText=u.active===false?"ACTIVATE USER":"DEACTIVATE USER";if(u.role==="Admin"){box.innerHTML=`<p class="success">Admin users automatically have access to every function.</p>`;return;}const entries=Object.entries(PERMISSIONS).filter(([k])=>k!=="management");box.innerHTML=entries.map(([k,label])=>`<label style="display:block;text-align:left;font-size:1.2rem;padding:8px"><input style="width:auto" type="checkbox" data-permission="${k}" ${u.permissions?.[label]===true?"checked":""}> ${escapeHTML(label)}</label>`).join("");};
-window.createManagedUser=async()=>{if(currentUserRole!=="Admin")return alert("Admin access required.");const username=document.getElementById("newUsername").value.trim(),password=document.getElementById("newUserPassword").value,role=document.getElementById("newUserRole").value;if(!username||!password)return alert("Enter username and password.");if(!/^[A-Za-z0-9._-]{3,30}$/.test(username))return alert("Username must be 3-30 characters and use only letters, numbers, dot, underscore or hyphen.");try{const permissions={};Object.values(PERMISSIONS).forEach(p=>permissions[p]=role==="Admin");if(role==="User"){permissions[PERMISSIONS.allocate]=true;permissions[PERMISSIONS.offload]=true;permissions[PERMISSIONS.closeULD]=true;permissions[PERMISSIONS.liveView]=true;permissions[PERMISSIONS.export]=false;permissions[PERMISSIONS.closeFlight]=false;permissions[PERMISSIONS.management]=false;}await httpsCallable(functions,"adminCreateUser")({username,password,role,permissions});alert(`User ${username} created.`);document.getElementById("newUsername").value="";document.getElementById("newUserPassword").value="";await loadManagedUsers();}catch(e){alert("Could not create user.\n\n"+e.message);}};
-window.changeManagedPassword=async()=>{const u=getManagedUser(),password=document.getElementById("managedUserPassword").value;if(!u||!password)return alert("Select a user and enter a new password.");try{await httpsCallable(functions,"adminSetUserPassword")({uid:u.uid,password});alert(`Password changed for ${u.username}.`);document.getElementById("managedUserPassword").value="";}catch(e){alert("Could not change password.\n\n"+e.message);}};
-window.toggleManagedUserStatus=async()=>{const u=getManagedUser();if(!u)return;if(u.uid===currentAuthUser?.uid)return alert("You cannot deactivate your own account.");try{await httpsCallable(functions,"adminSetUserStatus")({uid:u.uid,active:u.active===false});await loadManagedUsers();}catch(e){alert("Could not change user status.\n\n"+e.message);}};
-window.saveManagedPermissions=async()=>{const u=getManagedUser();if(!u)return;if(u.role==="Admin")return alert("Admin users already have access to everything.");const permissions={};document.querySelectorAll("#managedPermissions input[data-permission]").forEach(e=>{permissions[PERMISSIONS[e.dataset.permission]]=e.checked;});permissions[PERMISSIONS.management]=false;try{await updateDoc(doc(db,"users",u.id),{permissions});alert(`Permissions saved for ${u.username}.`);await loadManagedUsers();}catch(e){alert("Could not save permissions.\n\n"+e.message);}};
+
+function getCurrentUser(){
+  return currentUser || "";
+}
+
+function hasPermission(name){
+  if(currentRole === "admin") return true;
+  return currentPermissions[name] === true;
+}
+
+function requirePermission(name){
+  if(!hasPermission(name)){
+    alert("You do not have permission to use this function.");
+    return false;
+  }
+  return true;
+}
+
+
+/* =========================================================
+   ALLOCATE
+   ========================================================= */
+
+window.goToAllocate = async () => {
+
+  if(!requirePermission("allocate")) return;
+
+  if(!getCurrentUser()){
+
+    alert("Please enter user name");
+    return;
+
+  }
+
+  switchScreen("allocateStart");
+
+  await loadOpenULDsForAllocate();
+
+};
+
+
+window.goToOffload = async () => {
+
+  if(!requirePermission("offload")) return;
+
+  if(!getCurrentUser()){
+
+    alert("Please enter user name");
+    return;
+
+  }
+
+  switchScreen("offloadStart");
+
+  await loadOpenULDsForOffload();
+
+};
+
+
+window.goToCloseULD = async () => {
+
+  if(!requirePermission("closeULD")) return;
+
+  if(!getCurrentUser()){
+
+    alert("Please enter user name");
+    return;
+
+  }
+
+  switchScreen("closeULDStart");
+
+  await loadOpenULDsForClose();
+
+};
+
+
+/* =========================================================
+   CLOSE FLIGHT
+   PASSWORD FIRST
+   ========================================================= */
+
+window.goToCloseFlight = async () => {
+
+  if(!requirePermission("closeFlight")) return;
+
+  if(!getCurrentUser()){
+
+    alert("Please enter user name");
+    return;
+
+  }
+
+  closeFlightPasswordUnlocked = false;
+
+  document
+    .getElementById("closeFlightPassword")
+    .value = "";
+
+  document
+    .getElementById("passwordOverlay")
+    .classList.add("active");
+
+  setTimeout(() => {
+
+    document
+      .getElementById("closeFlightPassword")
+      .focus();
+
+  },100);
+
+};
+
+
+window.submitCloseFlightPassword = async () => {
+
+  if(!requirePermission("closeFlight")) return;
+
+  closeFlightPasswordUnlocked = true;
+
+  document
+    .getElementById("passwordOverlay")
+    .classList.remove("active");
+
+  switchScreen("closeFlight");
+
+  await loadCloseFlightData();
+
+};
+
+
+window.cancelCloseFlightPassword = () => {
+
+  document
+    .getElementById("passwordOverlay")
+    .classList.remove("active");
+
+  document
+    .getElementById("closeFlightPassword")
+    .value = "";
+
+};
+
 
 /* =========================================================
    ULD LOAD - ALLOCATE
@@ -4410,7 +4896,7 @@ window.confirmCloseULD = async () => {
    LIVE VIEW
    ========================================================= */
 
-async function loadLiveView(){
+window.goToLiveView = () => {
 
   switchScreen("liveView");
 
@@ -4656,7 +5142,7 @@ async function loadLiveView(){
 
 window.exportToCSV = async () => {
 
-  if(!requirePermission(PERMISSIONS.export)) return;
+  if(!requirePermission("export")) return;
 
   try{
 
@@ -5061,29 +5547,111 @@ async function loadCloseFlightData(){
    ========================================================= */
 
 window.confirmCloseFlight = async () => {
-  if(!requirePermission(PERMISSIONS.closeFlight)) return;
+
+  if(!closeFlightPasswordUnlocked){
+
+    alert(
+      "Password required."
+    );
+
+    return;
+
+  }
+
   try{
-    const snapshot=await getDocs(collection(db,"ulds"));
-    if(snapshot.empty){alert("There is no flight data to close.");return;}
-    let totalLbs=0,totalKg=0,openCount=0;
-    snapshot.forEach(ds=>{const d=ds.data();if(d.status==="OPEN")openCount++;if(d.status==="CLOSED"){totalLbs+=Number(d.weightLbs||0);totalKg+=Number(d.weightKg||0);}});
-    if(openCount>0){const ok=await showConfirmation("OPEN ULDs FOUND",`There are ${openCount} OPEN ULD(s).
 
-Only CLOSED ULDs have final weights.
+    const snapshot =
+      await getDocs(
+        collection(db,"ulds")
+      );
 
-Do you still want to close the entire flight and DELETE ALL flight data?`);if(!ok)return;}
-    const confirmed=await showConfirmation("CLOSE ENTIRE FLIGHT",`Are you absolutely sure you want to close this flight?
+    if(snapshot.empty){
 
-Total CLOSED ULD weight:
-${totalLbs.toFixed(2)} LBS
-${totalKg.toFixed(2)} KGS
+      alert(
+        "There is no flight data to close."
+      );
 
-The complete AWB + ULD file will download first, then ALL flight data will be permanently deleted. User accounts will NOT be deleted.`);
-    if(!confirmed)return;
+      return;
+
+    }
+
+    let totalLbs = 0;
+    let totalKg = 0;
+
+    let openCount = 0;
+
+    snapshot.forEach(docSnap => {
+
+      const d =
+        docSnap.data();
+
+      if(d.status === "OPEN")
+        openCount++;
+
+      if(d.status === "CLOSED"){
+
+        totalLbs +=
+          Number(
+            d.weightLbs || 0
+          );
+
+        totalKg +=
+          Number(
+            d.weightKg || 0
+          );
+
+      }
+
+    });
+
+    if(openCount > 0){
+
+      const continueAnyway =
+        await showConfirmation(
+          "OPEN ULDs FOUND",
+          `There are ${openCount} OPEN ULD(s).\n\n` +
+          `Only CLOSED ULDs have final weights.\n\n` +
+          `Do you still want to close the entire flight and DELETE ALL flight data?`
+        );
+
+      if(!continueAnyway)
+        return;
+
+    }
+
+    const confirmed =
+      await showConfirmation(
+        "CLOSE ENTIRE FLIGHT",
+        `Are you absolutely sure you want to close this flight?\n\n` +
+        `Total CLOSED ULD weight:\n` +
+        `${totalLbs.toFixed(2)} LBS\n` +
+        `${totalKg.toFixed(2)} KGS\n\n` +
+        `ALL ULD AND AWB DATA will be permanently deleted from Live View and Firebase.`
+      );
+
+    if(!confirmed)
+      return;
+
+    const exported = await exportEntireFlightBeforeDelete();
+
+    if(!exported){
+      alert("Flight was NOT deleted because the export could not be completed.");
+      return;
+    }
+
     await closeEntireFlight();
-  }catch(error){console.error(error);alert("Could not close flight.
 
-"+error.message);}
+  }catch(error){
+
+    console.error(error);
+
+    alert(
+      "Could not close flight.\n\n" +
+      error.message
+    );
+
+  }
+
 };
 
 
@@ -5092,20 +5660,176 @@ The complete AWB + ULD file will download first, then ALL flight data will be pe
    DELETE ULDs + SCANS
    ========================================================= */
 
-async function closeEntireFlight(){
+
+async function exportEntireFlightBeforeDelete(){
   try{
-    const scanSnapshot=await getDocs(collection(db,"scans"));
     const uldSnapshot=await getDocs(collection(db,"ulds"));
-    if(uldSnapshot.empty&&scanSnapshot.empty){alert("There is no flight data to close.");return;}
-    const scansByULD={};
-    scanSnapshot.forEach(ds=>{const d=ds.data();if(d.positionId==="[REMOVED]")return;const id=d.uldId||"";(scansByULD[id]??=[]).push(d);});
+    const scanSnapshot=await getDocs(collection(db,"scans"));
+
+    if(uldSnapshot.empty && scanSnapshot.empty){
+      alert("There is no AWB/ULD data to export.");
+      return false;
+    }
+
+    const ulds=[];
+    uldSnapshot.forEach(s=>ulds.push({id:s.id,...s.data()}));
+
+    const scans=[];
+    scanSnapshot.forEach(s=>{
+      const d=s.data();
+      if(d.positionId==="[REMOVED]") return;
+      scans.push({id:s.id,...d});
+    });
+
     const rows=[];
-    uldSnapshot.forEach(ds=>{const u=ds.data(),uldId=u.uldId||ds.id,scans=scansByULD[uldId]||[],weight=Number(u.weightLbs||0).toFixed(2)+" LBS / "+Number(u.weightKg||0).toFixed(2)+" KGS";if(!scans.length)rows.push({awb:"",uld:uldId,scannedAt:"",scannedBy:"",status:u.status||"OPEN",weight});else scans.forEach((d,i)=>{const t=d.scannedAt?.seconds?new Date(d.scannedAt.seconds*1000).toLocaleString():"";rows.push({awb:awbNumberOnly(d.code),uld:i===0?uldId:"",scannedAt:t,scannedBy:d.scannedBy||"",status:i===0?(u.status||"OPEN"):"",weight:i===0?weight:""});});});
-    let csv="\uFEFFAirway Bill,ULD,Scanned At,Scanned By,ULD Status,Weight\n";rows.forEach(r=>{csv+=`"${csvEscape(r.awb)}","${csvEscape(r.uld)}","${csvEscape(r.scannedAt)}","${csvEscape(r.scannedBy)}","${csvEscape(r.status)}","${csvEscape(r.weight)}"\n`;});
-    const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=`FirstAirBuilder_Flight_${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(link);link.click();document.body.removeChild(link);URL.revokeObjectURL(url);
-    const deletes=[];scanSnapshot.forEach(ds=>deletes.push(deleteDoc(doc(db,"scans",ds.id))));uldSnapshot.forEach(ds=>deletes.push(deleteDoc(doc(db,"ulds",ds.id))));await Promise.all(deletes);
-    closeFlightPasswordUnlocked=false;if(typeof liveUnsubscribe==="function"){liveUnsubscribe();liveUnsubscribe=null;}document.getElementById("liveTables").innerHTML="<p>No ULDs.</p>";alert("FLIGHT CLOSED.\n\nThe complete flight file was downloaded.\nAll flight AWB and ULD data has been cleared.\nUser accounts were not changed.");switchScreen("home");
-  }catch(error){console.error("Close flight error:",error);alert("CLOSE FLIGHT FAILED.\n\n"+error.message);}
+
+    ulds.forEach(uld=>{
+      const uldId=uld.uldId || uld.id;
+      const matching=scans.filter(s=>s.uldId===uldId);
+
+      if(matching.length===0){
+        rows.push(["",uldId,uld.status||"",
+          Number(uld.weightLbs||0).toFixed(2),
+          Number(uld.weightKg||0).toFixed(2),"",""]);
+      }else{
+        matching.forEach(s=>{
+          let scannedAt="";
+          if(s.scannedAt){
+            if(typeof s.scannedAt.toDate==="function")
+              scannedAt=s.scannedAt.toDate().toLocaleString();
+            else if(s.scannedAt.seconds)
+              scannedAt=new Date(s.scannedAt.seconds*1000).toLocaleString();
+          }
+
+          rows.push([
+            s.awb || s.airwayBill || "",
+            uldId,
+            uld.status || "",
+            Number(uld.weightLbs||0).toFixed(2),
+            Number(uld.weightKg||0).toFixed(2),
+            s.scannedBy || "",
+            scannedAt
+          ]);
+        });
+      }
+    });
+
+    const headers=["AWB","ULD","ULD Status","Weight LBS","Weight KGS","Scanned By","Scanned At"];
+    const csv=[headers,...rows]
+      .map(row=>row.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(","))
+      .join("\r\n");
+
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    const now=new Date();
+    const stamp=now.getFullYear()+
+      String(now.getMonth()+1).padStart(2,"0")+
+      String(now.getDate()).padStart(2,"0")+"_"+ 
+      String(now.getHours()).padStart(2,"0")+
+      String(now.getMinutes()).padStart(2,"0")+
+      String(now.getSeconds()).padStart(2,"0");
+
+    a.href=url;
+    a.download="First_Air_Flight_"+stamp+".csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    return true;
+  }catch(error){
+    console.error(error);
+    alert("Could not create the flight export.\n\n"+error.message);
+    return false;
+  }
+}
+
+async function closeEntireFlight(){
+
+  try{
+
+    const scanSnapshot =
+      await getDocs(
+        collection(db,"scans")
+      );
+
+    const uldSnapshot =
+      await getDocs(
+        collection(db,"ulds")
+      );
+
+    const deletePromises = [];
+
+    scanSnapshot.forEach(docSnap => {
+
+      deletePromises.push(
+        deleteDoc(
+          doc(
+            db,
+            "scans",
+            docSnap.id
+          )
+        )
+      );
+
+    });
+
+    uldSnapshot.forEach(docSnap => {
+
+      deletePromises.push(
+        deleteDoc(
+          doc(
+            db,
+            "ulds",
+            docSnap.id
+          )
+        )
+      );
+
+    });
+
+    await Promise.all(
+      deletePromises
+    );
+
+    closeFlightPasswordUnlocked = false;
+
+    alert(
+      "FLIGHT CLOSED.\n\n" +
+      "All ULD and AWB data has been cleared."
+    );
+
+    if(
+      typeof liveUnsubscribe ===
+      "function"
+    ){
+
+      liveUnsubscribe();
+      liveUnsubscribe = null;
+
+    }
+
+    document
+      .getElementById("liveTables")
+      .innerHTML =
+      "<p>No ULDs.</p>";
+
+    switchScreen("home");
+
+  }catch(error){
+
+    console.error(
+      "Close flight error:",
+      error
+    );
+
+    alert(
+      "CLOSE FLIGHT FAILED.\n\n" +
+      error.message
+    );
+
+  }
+
 }
 
 
@@ -5332,21 +6056,28 @@ function vibrate(){
 
 
 /* =========================================================
-   DEFAULT ADMIN BOOTSTRAP
+   ENTER KEY FOR PASSWORD
    ========================================================= */
 
-(async()=>{
-  try{
-    await httpsCallable(functions,"ensureDefaultAdmin")({});
-  }catch(error){
-    console.warn("Default admin bootstrap:",error.message);
-  }
-})();
+document
+  .getElementById(
+    "closeFlightPassword"
+  )
+  .addEventListener(
+    "keydown",
+    event => {
 
-/* =========================================================
-   LOGIN ENTER KEY
-   ========================================================= */
-document.getElementById("loginPassword").addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();loginUser();}});
+      if(event.key === "Enter"){
+
+        event.preventDefault();
+
+        submitCloseFlightPassword();
+
+      }
+
+    }
+  );
+
 
 /* =========================================================
    CLEANUP
