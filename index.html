@@ -496,7 +496,7 @@ th{
 <div class="container">
 
 <!-- =========================================================
-     HOME
+     LOGIN
      ========================================================= -->
 
 <div id="login" class="screen visible">
@@ -504,28 +504,27 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.12
+    Version 12.13
   </div>
 
   <div class="infoBox">
-    <div class="infoTitle">LOGIN</div>
+    <div class="infoTitle">Login</div>
 
     <input
       type="text"
-      id="loginUserName"
-      placeholder="Enter Username"
-      autocomplete="username"
-      autocapitalize="none">
+      id="loginUsername"
+      placeholder="Username"
+      autocomplete="username">
 
     <input
       type="password"
       id="loginPassword"
-      placeholder="Enter Password"
+      placeholder="Password"
       autocomplete="current-password">
 
     <button
       class="confirmButton"
-      onclick="loginToApp()">
+      onclick="loginUser()">
       LOGIN
     </button>
 
@@ -534,9 +533,8 @@ th{
 
 </div>
 
-
 <!-- =========================================================
-     MAIN MENU
+     HOME / MAIN MENU
      ========================================================= -->
 
 <div id="home" class="screen">
@@ -544,7 +542,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.12
+    Version 12.13
   </div>
 
   <div class="infoBox">
@@ -577,8 +575,13 @@ th{
     ADMIN MENU
   </button>
 
-</div>
+  <button
+    class="backButton"
+    onclick="logoutUser()">
+    LOG OUT
+  </button>
 
+</div>
 
 <!-- =========================================================
      ADMIN MENU
@@ -587,10 +590,6 @@ th{
 <div id="adminMenu" class="screen">
 
   <h3>Admin Menu</h3>
-
-  <div class="infoBox">
-    <div class="infoTitle">ADMIN FUNCTIONS</div>
-  </div>
 
   <button onclick="exportToCSV()">
     EXPORT CLOSED ULDs
@@ -604,24 +603,43 @@ th{
 
   <button
     class="createButton"
-    onclick="showCreateUserBox()">
-    CREATE USERNAME & PASSWORD
+    onclick="openCreateUser()">
+    CREATE USERNAME &amp; PASSWORD
   </button>
 
-  <div id="createUserBox" class="infoBox hidden">
-    <div class="infoTitle">CREATE USER</div>
+  <button
+    class="manualButton"
+    onclick="openResetUser()">
+    RESET PASSWORD
+  </button>
 
+  <button
+    class="backButton"
+    onclick="goHome()">
+    ⬅ BACK
+  </button>
+
+</div>
+
+<!-- =========================================================
+     CREATE USER
+     ========================================================= -->
+
+<div id="createUser" class="screen">
+
+  <h3>Create Username &amp; Password</h3>
+
+  <div class="infoBox">
     <input
       type="text"
       id="newUsername"
-      placeholder="Enter New Username"
-      autocomplete="off"
-      autocapitalize="none">
+      placeholder="New Username"
+      autocomplete="off">
 
     <input
       type="password"
       id="newUserPassword"
-      placeholder="Enter Password"
+      placeholder="New Password"
       autocomplete="new-password">
 
     <input
@@ -629,69 +647,103 @@ th{
       id="newUserPasswordConfirm"
       placeholder="Confirm Password"
       autocomplete="new-password">
-
-    <button
-      class="confirmButton"
-      onclick="createNewUser()">
-      CREATE USER
-    </button>
-
-    <button
-      class="confirmCancel"
-      onclick="hideCreateUserBox()">
-      CANCEL
-    </button>
   </div>
 
   <button
-    class="editButton"
-    onclick="showResetPasswordBox()">
-    RESET PASSWORD
+    class="confirmButton"
+    onclick="createUserAccount()">
+    CREATE USER
   </button>
-
-  <div id="resetPasswordBox" class="infoBox hidden">
-    <div class="infoTitle">RESET PASSWORD</div>
-
-    <input
-      type="text"
-      id="resetUsername"
-      placeholder="Enter Username"
-      autocomplete="off"
-      autocapitalize="none">
-
-    <input
-      type="password"
-      id="resetUserPassword"
-      placeholder="Enter New Password"
-      autocomplete="new-password">
-
-    <input
-      type="password"
-      id="resetUserPasswordConfirm"
-      placeholder="Confirm New Password"
-      autocomplete="new-password">
-
-    <button
-      class="confirmButton"
-      onclick="performPasswordReset()">
-      RESET PASSWORD
-    </button>
-
-    <button
-      class="confirmCancel"
-      onclick="hideResetPasswordBox()">
-      CANCEL
-    </button>
-  </div>
 
   <button
     class="backButton"
-    onclick="closeAdminMenu()">
+    onclick="switchScreen('adminMenu')">
     ⬅ BACK
   </button>
 
 </div>
 
+<!-- =========================================================
+     RESET USER PASSWORD
+     ========================================================= -->
+
+<div id="resetUser" class="screen">
+
+  <h3>Reset Password</h3>
+
+  <div class="infoBox">
+    <input
+      type="text"
+      id="resetUsername"
+      placeholder="Username"
+      autocomplete="off">
+
+    <input
+      type="password"
+      id="resetPassword"
+      placeholder="New Password"
+      autocomplete="new-password">
+
+    <input
+      type="password"
+      id="resetPasswordConfirm"
+      placeholder="Confirm New Password"
+      autocomplete="new-password">
+  </div>
+
+  <button
+    class="confirmButton"
+    onclick="resetUserPassword()">
+    RESET PASSWORD
+  </button>
+
+  <button
+    class="backButton"
+    onclick="switchScreen('adminMenu')">
+    ⬅ BACK
+  </button>
+
+</div>
+
+<!-- =========================================================
+     ADMIN MENU PASSWORD
+     ========================================================= -->
+
+<div
+  id="adminPasswordOverlay"
+  class="confirmOverlay">
+
+  <div class="confirmBox passwordBox">
+
+    <div class="confirmTitle passwordTitle">
+      🔒 ADMIN MENU
+    </div>
+
+    <div class="confirmText">
+      Enter the Admin Menu password.
+    </div>
+
+    <input
+      type="password"
+      id="adminMenuPassword"
+      placeholder="Enter Password"
+      autocomplete="off">
+
+    <button
+      class="confirmButton"
+      onclick="submitAdminMenuPassword()">
+      UNLOCK
+    </button>
+
+    <button
+      class="confirmCancel"
+      onclick="cancelAdminMenuPassword()">
+      CANCEL
+    </button>
+
+  </div>
+
+</div>
 
 <!-- =========================================================
      ALLOCATE START
@@ -1335,45 +1387,6 @@ th{
 </div>
 
 
-<!-- =========================================================
-     ADMIN MENU PASSWORD
-     ========================================================= -->
-
-<div id="adminPasswordOverlay" class="confirmOverlay">
-
-  <div class="confirmBox passwordBox">
-
-    <div class="confirmTitle passwordTitle">
-      🔒 ADMIN MENU
-    </div>
-
-    <div class="confirmText">
-      Enter the Admin Menu password.
-    </div>
-
-    <input
-      type="password"
-      id="adminMenuPassword"
-      placeholder="Enter Password"
-      autocomplete="off">
-
-    <button
-      class="confirmButton"
-      onclick="submitAdminMenuPassword()">
-      UNLOCK
-    </button>
-
-    <button
-      class="confirmCancel"
-      onclick="cancelAdminMenuPassword()">
-      CANCEL
-    </button>
-
-  </div>
-
-</div>
-
-
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 
@@ -1383,16 +1396,17 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.12";
+const CODE_VERSION = "12.13";
 
 
 /* =========================================================
-   ADMIN MENU PASSWORD
+   CLOSE FLIGHT PASSWORD
    ========================================================= */
 
 const ADMIN_MENU_PASSWORD = "2021";
-const DEFAULT_USERNAME = "Admin";
-const DEFAULT_PASSWORD = "Admin";
+const DEFAULT_ADMIN_USERNAME = "Admin";
+const DEFAULT_ADMIN_PASSWORD = "Admin";
+const USERS_COLLECTION = "appUsers";
 
 
 /* =========================================================
@@ -1594,27 +1608,189 @@ window.goHome = async () => {
    ========================================================= */
 
 function getCurrentUser(){
-  return currentUser.trim();
+  return currentUser;
 }
 
 async function hashPassword(password){
-
   const data = new TextEncoder().encode(password);
-  const hashBuffer = await crypto.subtle.digest("SHA-256",data);
-  return Array.from(new Uint8Array(hashBuffer))
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
     .map(b => b.toString(16).padStart(2,"0"))
     .join("");
 }
 
-function normalizeUsername(username){
-  return String(username || "").trim().toLowerCase();
+function setLoginStatus(message,type=""){
+  const el = document.getElementById("loginStatus");
+  if(el){
+    el.innerText = message;
+    el.className = "cameraStatus " + type;
+  }
 }
 
-function showLoginStatus(message,type=""){
-  const el = document.getElementById("loginStatus");
-  el.innerText = message;
-  el.className = "cameraStatus " + type;
-}
+window.loginUser = async () => {
+  const username = document.getElementById("loginUsername").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  if(!username || !password){
+    setLoginStatus("Enter username and password.","error");
+    return;
+  }
+
+  setLoginStatus("Checking login...","scanning");
+
+  try{
+    const q = query(
+      collection(db,USERS_COLLECTION),
+      where("username","==",username)
+    );
+    const snapshot = await getDocs(q);
+    const passwordHash = await hashPassword(password);
+    let valid = false;
+
+    if(snapshot.empty &&
+       username === DEFAULT_ADMIN_USERNAME &&
+       password === DEFAULT_ADMIN_PASSWORD){
+      valid = true;
+      await addDoc(collection(db,USERS_COLLECTION),{
+        username:DEFAULT_ADMIN_USERNAME,
+        passwordHash:passwordHash,
+        createdAt:serverTimestamp(),
+        createdBy:DEFAULT_ADMIN_USERNAME
+      });
+    }else if(!snapshot.empty){
+      const user = snapshot.docs[0].data();
+      valid = user.passwordHash === passwordHash;
+    }
+
+    if(!valid){
+      setLoginStatus("Invalid username or password.","error");
+      document.getElementById("loginPassword").value = "";
+      document.getElementById("loginPassword").focus();
+      return;
+    }
+
+    currentUser = username;
+    document.getElementById("loggedInUser").innerText = currentUser;
+    document.getElementById("loginUsername").value = "";
+    document.getElementById("loginPassword").value = "";
+    setLoginStatus("");
+    switchScreen("home");
+  }catch(error){
+    console.error("Login error:",error);
+    setLoginStatus("Login failed. " + error.message,"error");
+  }
+};
+
+window.logoutUser = async () => {
+  await closeCamera();
+  stopBarcodeScanner();
+  currentUser = "";
+  currentULD = "";
+  positionId = "";
+  adminMenuUnlocked = false;
+  switchScreen("login");
+};
+
+window.openAdminMenu = () => {
+  if(!currentUser){
+    switchScreen("login");
+    return;
+  }
+  document.getElementById("adminMenuPassword").value = "";
+  document.getElementById("adminPasswordOverlay").classList.add("active");
+  setTimeout(() => document.getElementById("adminMenuPassword").focus(),100);
+};
+
+window.submitAdminMenuPassword = async () => {
+  const password = document.getElementById("adminMenuPassword").value;
+  if(password !== ADMIN_MENU_PASSWORD){
+    alert("Incorrect Admin Menu password.");
+    document.getElementById("adminMenuPassword").value = "";
+    document.getElementById("adminMenuPassword").focus();
+    return;
+  }
+  adminMenuUnlocked = true;
+  document.getElementById("adminPasswordOverlay").classList.remove("active");
+  switchScreen("adminMenu");
+};
+
+window.cancelAdminMenuPassword = () => {
+  document.getElementById("adminPasswordOverlay").classList.remove("active");
+  document.getElementById("adminMenuPassword").value = "";
+};
+
+window.openCreateUser = () => {
+  if(!adminMenuUnlocked) return;
+  ["newUsername","newUserPassword","newUserPasswordConfirm"].forEach(id => document.getElementById(id).value = "");
+  switchScreen("createUser");
+  document.getElementById("newUsername").focus();
+};
+
+window.openResetUser = () => {
+  if(!adminMenuUnlocked) return;
+  ["resetUsername","resetPassword","resetPasswordConfirm"].forEach(id => document.getElementById(id).value = "");
+  switchScreen("resetUser");
+  document.getElementById("resetUsername").focus();
+};
+
+window.createUserAccount = async () => {
+  const username = document.getElementById("newUsername").value.trim();
+  const password = document.getElementById("newUserPassword").value;
+  const confirm = document.getElementById("newUserPasswordConfirm").value;
+
+  if(!username || !password){ alert("Enter a username and password."); return; }
+  if(password !== confirm){ alert("Passwords do not match."); return; }
+  if(username.length < 2){ alert("Username must be at least 2 characters."); return; }
+
+  try{
+    const q = query(collection(db,USERS_COLLECTION),where("username","==",username));
+    const existing = await getDocs(q);
+    if(!existing.empty){ alert("That username already exists."); return; }
+
+    await addDoc(collection(db,USERS_COLLECTION),{
+      username:username,
+      passwordHash:await hashPassword(password),
+      createdAt:serverTimestamp(),
+      createdBy:currentUser
+    });
+
+    alert("User created successfully.");
+    switchScreen("adminMenu");
+  }catch(error){
+    console.error(error);
+    alert("Could not create user.\n\n" + error.message);
+  }
+};
+
+window.resetUserPassword = async () => {
+  const username = document.getElementById("resetUsername").value.trim();
+  const password = document.getElementById("resetPassword").value;
+  const confirm = document.getElementById("resetPasswordConfirm").value;
+
+  if(!username || !password){ alert("Enter username and new password."); return; }
+  if(password !== confirm){ alert("Passwords do not match."); return; }
+
+  try{
+    const q = query(collection(db,USERS_COLLECTION),where("username","==",username));
+    const snapshot = await getDocs(q);
+    if(snapshot.empty){
+      alert("Username not found.");
+      return;
+    }
+
+    await updateDoc(snapshot.docs[0].ref,{
+      passwordHash:await hashPassword(password),
+      passwordResetAt:serverTimestamp(),
+      passwordResetBy:currentUser
+    });
+
+    alert("Password reset successfully.");
+    switchScreen("adminMenu");
+  }catch(error){
+    console.error(error);
+    alert("Could not reset password.\n\n" + error.message);
+  }
+};
 
 
 /* =========================================================
@@ -1679,333 +1855,18 @@ window.goToCloseULD = async () => {
 
 
 /* =========================================================
-   LOGIN
-   ========================================================= */
-
-window.loginToApp = async () => {
-
-  const username =
-    document.getElementById("loginUserName").value.trim();
-
-  const password =
-    document.getElementById("loginPassword").value;
-
-  if(!username || !password){
-    showLoginStatus("Please enter username and password.","error");
-    return;
-  }
-
-  try{
-
-    const usernameKey = normalizeUsername(username);
-    const passwordHash = await hashPassword(password);
-
-    const q = query(
-      collection(db,"users"),
-      where("usernameKey","==",usernameKey)
-    );
-
-    const snapshot = await getDocs(q);
-
-    /* If no Admin record has ever been created/reset, use the default Admin/Admin account. */
-    if(
-      snapshot.empty &&
-      usernameKey === "admin" &&
-      password === DEFAULT_PASSWORD
-    ){
-      currentUser = DEFAULT_USERNAME;
-      document.getElementById("loggedInUser").innerText = currentUser;
-      document.getElementById("loginPassword").value = "";
-      showLoginStatus("");
-      switchScreen("home");
-      return;
-    }
-
-    if(snapshot.empty){
-      showLoginStatus("Invalid username or password.","error");
-      document.getElementById("loginPassword").value = "";
-      return;
-    }
-
-    const userData = snapshot.docs[0].data();
-
-    if(userData.passwordHash !== passwordHash){
-      showLoginStatus("Invalid username or password.","error");
-      document.getElementById("loginPassword").value = "";
-      return;
-    }
-
-    currentUser = userData.username || username;
-    document.getElementById("loggedInUser").innerText = currentUser;
-    document.getElementById("loginPassword").value = "";
-    showLoginStatus("");
-    switchScreen("home");
-
-  }catch(error){
-    console.error("Login error:",error);
-    showLoginStatus(
-      "Login failed. " + error.message,
-      "error"
-    );
-  }
-};
-
-
-/* =========================================================
-   ADMIN MENU
-   ========================================================= */
-
-window.openAdminMenu = async () => {
-
-  if(!getCurrentUser()){
-    switchScreen("login");
-    return;
-  }
-
-  adminMenuUnlocked = false;
-
-  const input = document.getElementById("adminMenuPassword");
-  input.value = "";
-
-  document
-    .getElementById("adminPasswordOverlay")
-    .classList.add("active");
-
-  setTimeout(() => input.focus(),100);
-};
-
-window.submitAdminMenuPassword = async () => {
-
-  const input = document.getElementById("adminMenuPassword");
-  const password = input.value;
-
-  if(password !== ADMIN_MENU_PASSWORD){
-    alert("Incorrect admin password.");
-    input.value = "";
-    input.focus();
-    return;
-  }
-
-  adminMenuUnlocked = true;
-  input.value = "";
-  document
-    .getElementById("adminPasswordOverlay")
-    .classList.remove("active");
-
-  hideCreateUserBox();
-  hideResetPasswordBox();
-  switchScreen("adminMenu");
-};
-
-window.cancelAdminMenuPassword = () => {
-  adminMenuUnlocked = false;
-  document
-    .getElementById("adminPasswordOverlay")
-    .classList.remove("active");
-  document.getElementById("adminMenuPassword").value = "";
-};
-
-window.closeAdminMenu = () => {
-  adminMenuUnlocked = false;
-  hideCreateUserBox();
-  hideResetPasswordBox();
-  switchScreen("home");
-};
-
-window.showCreateUserBox = () => {
-  document.getElementById("createUserBox").classList.remove("hidden");
-  document.getElementById("resetPasswordBox").classList.add("hidden");
-  document.getElementById("newUsername").focus();
-};
-
-window.hideCreateUserBox = () => {
-  const box = document.getElementById("createUserBox");
-  if(box) box.classList.add("hidden");
-  ["newUsername","newUserPassword","newUserPasswordConfirm"]
-    .forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.value = "";
-    });
-};
-
-window.showResetPasswordBox = () => {
-  document.getElementById("resetPasswordBox").classList.remove("hidden");
-  document.getElementById("createUserBox").classList.add("hidden");
-  document.getElementById("resetUsername").focus();
-};
-
-window.hideResetPasswordBox = () => {
-  const box = document.getElementById("resetPasswordBox");
-  if(box) box.classList.add("hidden");
-  ["resetUsername","resetUserPassword","resetUserPasswordConfirm"]
-    .forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.value = "";
-    });
-};
-
-window.createNewUser = async () => {
-
-  if(!adminMenuUnlocked){
-    alert("Admin access required.");
-    return;
-  }
-
-  const username = document.getElementById("newUsername").value.trim();
-  const password = document.getElementById("newUserPassword").value;
-  const confirm = document.getElementById("newUserPasswordConfirm").value;
-  const usernameKey = normalizeUsername(username);
-
-  if(!username || !password || !confirm){
-    alert("Please complete all fields.");
-    return;
-  }
-
-  if(password !== confirm){
-    alert("Passwords do not match.");
-    return;
-  }
-
-  if(usernameKey === "admin"){
-    alert("The username Admin is reserved for the default administrator account.");
-    return;
-  }
-
-  try{
-
-    const existing = await getDocs(
-      query(
-        collection(db,"users"),
-        where("usernameKey","==",usernameKey)
-      )
-    );
-
-    if(!existing.empty){
-      alert("That username already exists.");
-      return;
-    }
-
-    await addDoc(collection(db,"users"),{
-      username: username,
-      usernameKey: usernameKey,
-      passwordHash: await hashPassword(password),
-      createdAt: serverTimestamp(),
-      createdBy: currentUser
-    });
-
-    hideCreateUserBox();
-    alert("User created successfully.");
-
-  }catch(error){
-    console.error("Create user error:",error);
-    alert("Could not create user.\n\n" + error.message);
-  }
-};
-
-window.performPasswordReset = async () => {
-
-  if(!adminMenuUnlocked){
-    alert("Admin access required.");
-    return;
-  }
-
-  const username = document.getElementById("resetUsername").value.trim();
-  const password = document.getElementById("resetUserPassword").value;
-  const confirm = document.getElementById("resetUserPasswordConfirm").value;
-  const usernameKey = normalizeUsername(username);
-
-  if(!username || !password || !confirm){
-    alert("Please complete all fields.");
-    return;
-  }
-
-  if(password !== confirm){
-    alert("Passwords do not match.");
-    return;
-  }
-
-  try{
-
-    if(usernameKey === "admin"){
-      /* Resetting Admin creates an explicit Admin credential. */
-      const existingAdmin = await getDocs(
-        query(
-          collection(db,"users"),
-          where("usernameKey","==","admin")
-        )
-      );
-
-      if(existingAdmin.empty){
-        await addDoc(collection(db,"users"),{
-          username: "Admin",
-          usernameKey: "admin",
-          passwordHash: await hashPassword(password),
-          createdAt: serverTimestamp(),
-          createdBy: currentUser
-        });
-      }else{
-        await updateDoc(
-          doc(db,"users",existingAdmin.docs[0].id),
-          {
-            passwordHash: await hashPassword(password),
-            updatedAt: serverTimestamp(),
-            updatedBy: currentUser
-          }
-        );
-      }
-
-      hideResetPasswordBox();
-      alert("Admin password reset successfully.");
-      return;
-    }
-
-    const existing = await getDocs(
-      query(
-        collection(db,"users"),
-        where("usernameKey","==",usernameKey)
-      )
-    );
-
-    if(existing.empty){
-      alert("Username not found.");
-      return;
-    }
-
-    await updateDoc(
-      doc(db,"users",existing.docs[0].id),
-      {
-        passwordHash: await hashPassword(password),
-        updatedAt: serverTimestamp(),
-        updatedBy: currentUser
-      }
-    );
-
-    hideResetPasswordBox();
-    alert("Password reset successfully.");
-
-  }catch(error){
-    console.error("Reset password error:",error);
-    alert("Could not reset password.\n\n" + error.message);
-  }
-};
-
-
-/* =========================================================
    CLOSE FLIGHT
-   NO SEPARATE PASSWORD
+   ADMIN MENU ONLY - NO SEPARATE PASSWORD
    ========================================================= */
 
 window.goToCloseFlight = async () => {
-
   if(!adminMenuUnlocked){
-    alert("Admin access required.");
+    openAdminMenu();
     return;
   }
-
   switchScreen("closeFlight");
   await loadCloseFlightData();
 };
-
 
 /* =========================================================
    ULD LOAD - ALLOCATE
@@ -5674,7 +5535,7 @@ async function loadCloseFlightData(){
 window.confirmCloseFlight = async () => {
 
   if(!adminMenuUnlocked){
-    alert("Admin access required.");
+    openAdminMenu();
     return;
   }
 
@@ -6329,32 +6190,22 @@ function vibrate(){
 
 
 /* =========================================================
-   LOGIN ENTER KEY
+   ENTER KEY HANDLERS
    ========================================================= */
 
-document
-  .getElementById("loginPassword")
-  .addEventListener("keydown",event => {
-    if(event.key === "Enter"){
-      event.preventDefault();
-      loginToApp();
-    }
-  });
+document.getElementById("loginPassword").addEventListener("keydown",event=>{
+  if(event.key === "Enter"){
+    event.preventDefault();
+    loginUser();
+  }
+});
 
-
-/* =========================================================
-   ADMIN PASSWORD ENTER KEY
-   ========================================================= */
-
-document
-  .getElementById("adminMenuPassword")
-  .addEventListener("keydown",event => {
-    if(event.key === "Enter"){
-      event.preventDefault();
-      submitAdminMenuPassword();
-    }
-  });
-
+document.getElementById("adminMenuPassword").addEventListener("keydown",event=>{
+  if(event.key === "Enter"){
+    event.preventDefault();
+    submitAdminMenuPassword();
+  }
+});
 
 /* =========================================================
    CLEANUP
