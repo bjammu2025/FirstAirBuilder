@@ -75,6 +75,18 @@ button:hover{
 .backButton{background:#555}
 .barcodeButton{background:#8e24aa}
 .manualButton{background:#ef6c00}
+
+/* AWB input methods */
+#allocateScan > .barcodeButton,
+#allocateScan > .cameraButton,
+#allocateScan > .manualButton,
+#offloadScan > .barcodeButton,
+#offloadScan > .cameraButton,
+#offloadScan > .manualButton{
+  margin-top:1rem;
+  margin-bottom:1rem;
+}
+
 .createButton{background:#fb8c00}
 .closeULDButton{background:#6a1b9a}
 .closeFlightButton{background:#c62828}
@@ -492,7 +504,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.09
+    Version 12.10
   </div>
 
   <input
@@ -614,17 +626,17 @@ th{
   </h3>
 
   <button
-    id="openAllocateCameraButton"
-    class="cameraButton"
-    onclick="openAllocateCamera()">
-    📷 OPEN CAMERA
-  </button>
-
-  <button
     id="openAllocateBarcodeButton"
     class="barcodeButton"
     onclick="openBarcodeScanner('allocate')">
     ▣ BARCODE SCANNER
+  </button>
+
+  <button
+    id="openAllocateCameraButton"
+    class="cameraButton"
+    onclick="openAllocateCamera()">
+    📷 OPEN CAMERA
   </button>
 
   <button
@@ -748,17 +760,17 @@ th{
   </h3>
 
   <button
-    id="openOffloadCameraButton"
-    class="cameraButton"
-    onclick="openOffloadCamera()">
-    📷 OPEN CAMERA
-  </button>
-
-  <button
     id="openOffloadBarcodeButton"
     class="barcodeButton"
     onclick="openBarcodeScanner('offload')">
     ▣ BARCODE SCANNER
+  </button>
+
+  <button
+    id="openOffloadCameraButton"
+    class="cameraButton"
+    onclick="openOffloadCamera()">
+    📷 OPEN CAMERA
   </button>
 
   <button
@@ -1225,7 +1237,7 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.09";
+const CODE_VERSION = "12.10";
 
 
 /* =========================================================
@@ -1417,6 +1429,15 @@ window.goHome = async () => {
 
   closeFlightPasswordUnlocked = false;
 
+  /* Reset New ULD entry so the previous ULD never remains */
+  document
+    .getElementById("newULDId")
+    .value = "";
+
+  document
+    .getElementById("newULDBox")
+    .classList.add("hidden");
+
 };
 
 
@@ -1449,6 +1470,15 @@ window.goToAllocate = async () => {
     return;
 
   }
+
+  /* Always start the ULD creation box empty */
+  document
+    .getElementById("newULDId")
+    .value = "";
+
+  document
+    .getElementById("newULDBox")
+    .classList.add("hidden");
 
   switchScreen("allocateStart");
 
@@ -1844,6 +1874,12 @@ window.createNewULD = async () => {
     currentULD = uldId;
     positionId = uldId;
 
+    /* Clear the New ULD box immediately after successful creation */
+    input.value = "";
+    document
+      .getElementById("newULDBox")
+      .classList.add("hidden");
+
     document
       .getElementById("allocULD")
       .innerText = uldId;
@@ -1855,6 +1891,9 @@ window.createNewULD = async () => {
     switchScreen("allocateScan");
 
     await loadAllocateAWBs(uldId);
+
+    /* Barcode scanner is the default AWB input method */
+    openBarcodeScanner("allocate");
 
   }catch(error){
 
@@ -1907,6 +1946,9 @@ window.startAllocate = async () => {
   switchScreen("allocateScan");
 
   await loadAllocateAWBs(uld);
+
+  /* Barcode scanner is the default AWB input method */
+  openBarcodeScanner("allocate");
 
 };
 
@@ -3131,6 +3173,9 @@ window.startOffload = async () => {
     switchScreen("offloadScan");
 
     await loadOffloadAWBs(uld);
+
+    /* Barcode scanner is the default AWB input method */
+    openBarcodeScanner("offload");
 
   }catch(error){
 
@@ -5328,6 +5373,186 @@ window.confirmCloseFlight = async () => {
 
 
 /* =========================================================
+   CLOSE FLIGHT EXPORT
+   EXPORT ALL AWB + ULD DATA BEFORE DELETE
+   ========================================================= */
+
+function formatExportTimestamp(value){
+
+  if(!value)
+    return "";
+
+  try{
+
+    if(
+      typeof value === "object" &&
+      typeof value.toDate === "function"
+    ){
+      return value.toDate().toLocaleString();
+    }
+
+    if(
+      typeof value === "object" &&
+      typeof value.seconds === "number"
+    ){
+      return new Date(
+        value.seconds * 1000
+      ).toLocaleString();
+    }
+
+    const date = new Date(value);
+
+    if(!isNaN(date.getTime()))
+      return date.toLocaleString();
+
+  }catch(error){
+
+    console.error(
+      "Timestamp formatting error:",
+      error
+    );
+
+  }
+
+  return String(value);
+
+}
+
+
+async function exportEntireFlightData(
+  scanSnapshot,
+  uldSnapshot
+){
+
+  const ulds = [];
+  const scans = [];
+
+  uldSnapshot.forEach(docSnap => {
+
+    ulds.push({
+      firestoreId:docSnap.id,
+      ...docSnap.data()
+    });
+
+  });
+
+  scanSnapshot.forEach(docSnap => {
+
+    scans.push({
+      firestoreId:docSnap.id,
+      ...docSnap.data()
+    });
+
+  });
+
+  let csv =
+    "\uFEFF" +
+    "Record Type,Firestore Document ID,AWB,ULD ID,ULD Status,Weight LBS,Weight KGS,Scanned At,Scanned By,Position ID,Offloaded At,Offloaded By,ULD Created At,ULD Created By,ULD Closed At,ULD Closed By\n";
+
+  /*
+     Export every ULD, even if it has no AWBs.
+  */
+  ulds.forEach(uld => {
+
+    const uldId =
+      uld.uldId || uld.firestoreId;
+
+    csv +=
+      `"ULD","${csvEscape(uld.firestoreId)}","",` +
+      `"${csvEscape(uldId)}",` +
+      `"${csvEscape(uld.status || "")}",` +
+      `"${csvEscape(uld.weightLbs ?? "")}",` +
+      `"${csvEscape(uld.weightKg ?? "")}",` +
+      `"","","","",` +
+      `"${csvEscape(formatExportTimestamp(uld.createdAt))}",` +
+      `"${csvEscape(uld.createdBy || "")}",` +
+      `"${csvEscape(formatExportTimestamp(uld.closedAt))}",` +
+      `"${csvEscape(uld.closedBy || "")}"\n`;
+
+  });
+
+  /*
+     Export every AWB scan record, including offloaded records,
+     so the flight backup contains the complete AWB history.
+  */
+  scans.forEach(scan => {
+
+    const awb =
+      awbNumberOnly(scan.code);
+
+    csv +=
+      `"AWB","${csvEscape(scan.firestoreId)}",` +
+      `"${csvEscape(awb)}",` +
+      `"${csvEscape(scan.uldId || "")}",` +
+      `"${csvEscape("")}",` +
+      `"${csvEscape("")}",` +
+      `"${csvEscape("")}",` +
+      `"${csvEscape(formatExportTimestamp(scan.scannedAt))}",` +
+      `"${csvEscape(scan.scannedBy || "")}",` +
+      `"${csvEscape(scan.positionId || "")}",` +
+      `"${csvEscape(formatExportTimestamp(scan.offloadedAt))}",` +
+      `"${csvEscape(scan.offloadedBy || "")}",` +
+      `"","","",""\n`;
+
+  });
+
+  const blob =
+    new Blob(
+      [csv],
+      {
+        type:
+          "text/csv;charset=utf-8;"
+      }
+    );
+
+  const url =
+    URL.createObjectURL(blob);
+
+  const link =
+    document.createElement("a");
+
+  const stamp =
+    new Date()
+      .toISOString()
+      .replace(/[:.]/g,"-")
+      .slice(0,19);
+
+  link.href = url;
+
+  link.download =
+    "FirstAirBuilder_Flight_Export_" +
+    stamp +
+    ".csv";
+
+  document
+    .body
+    .appendChild(link);
+
+  link.click();
+
+  document
+    .body
+    .removeChild(link);
+
+  URL.revokeObjectURL(url);
+
+  /*
+     Let the browser receive the download click before
+     Firebase records are deleted.
+  */
+  await new Promise(
+    resolve => setTimeout(resolve,300)
+  );
+
+  return {
+    uldCount:ulds.length,
+    awbCount:scans.length
+  };
+
+}
+
+
+/* =========================================================
    CLOSE ENTIRE FLIGHT
    DELETE ULDs + SCANS
    ========================================================= */
@@ -5336,6 +5561,12 @@ async function closeEntireFlight(){
 
   try{
 
+    /*
+       IMPORTANT:
+       Read everything first. Nothing is deleted until the
+       complete flight CSV has been generated and download
+       has been triggered successfully.
+    */
     const scanSnapshot =
       await getDocs(
         collection(db,"scans")
@@ -5344,6 +5575,12 @@ async function closeEntireFlight(){
     const uldSnapshot =
       await getDocs(
         collection(db,"ulds")
+      );
+
+    const exportResult =
+      await exportEntireFlightData(
+        scanSnapshot,
+        uldSnapshot
       );
 
     const deletePromises = [];
@@ -5384,7 +5621,10 @@ async function closeEntireFlight(){
 
     alert(
       "FLIGHT CLOSED.\n\n" +
-      "All ULD and AWB data has been cleared."
+      "Flight data was exported before deletion.\n\n" +
+      `${exportResult.uldCount} ULD(s) exported.\n` +
+      `${exportResult.awbCount} AWB record(s) exported.\n\n` +
+      "All ULD and AWB data has now been cleared."
     );
 
     if(
@@ -5411,8 +5651,13 @@ async function closeEntireFlight(){
       error
     );
 
+    /*
+       If export/download preparation fails, this function
+       never reaches the delete section.
+    */
     alert(
       "CLOSE FLIGHT FAILED.\n\n" +
+      "NO DATA WAS DELETED.\n\n" +
       error.message
     );
 
