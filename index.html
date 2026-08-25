@@ -504,7 +504,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.10
+    Version 12.11
   </div>
 
   <input
@@ -1237,7 +1237,7 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.10";
+const CODE_VERSION = "12.11";
 
 
 /* =========================================================
@@ -5066,11 +5066,8 @@ window.exportToCSV = async () => {
 
     URL.revokeObjectURL(url);
 
-    alert(
-      `Export complete.\n\n` +
-      `${closedULDs.length} CLOSED ULD(s) exported.\n\n` +
-      `No Live View data was deleted.`
-    );
+    // Export completed successfully.
+    // No browser notification is shown.
 
   }catch(error){
 
@@ -5350,7 +5347,7 @@ window.confirmCloseFlight = async () => {
         `Total CLOSED ULD weight:\n` +
         `${totalLbs.toFixed(2)} LBS\n` +
         `${totalKg.toFixed(2)} KGS\n\n` +
-        `ALL ULD AND AWB DATA will be permanently deleted from Live View and Firebase.`
+        `ALL ULD AND AWB DATA will be permanently deleted after the report is downloaded.`
       );
 
     if(!confirmed)
@@ -5424,75 +5421,134 @@ async function exportEntireFlightData(
   uldSnapshot
 ){
 
-  const ulds = [];
-  const scans = [];
+  /*
+     CLOSE FLIGHT uses the exact same report format and data
+     as EXPORT CLOSED ULDs.
+  */
+  const closedULDs = [];
 
   uldSnapshot.forEach(docSnap => {
 
-    ulds.push({
-      firestoreId:docSnap.id,
-      ...docSnap.data()
-    });
+    const d =
+      docSnap.data();
+
+    if(d.status === "CLOSED"){
+
+      closedULDs.push({
+        id:docSnap.id,
+        ...d
+      });
+
+    }
 
   });
 
-  scanSnapshot.forEach(docSnap => {
+  if(closedULDs.length === 0){
 
-    scans.push({
-      firestoreId:docSnap.id,
-      ...docSnap.data()
+    throw new Error(
+      "There are no CLOSED ULDs to export."
+    );
+
+  }
+
+  let rows = [];
+
+  for(const uld of closedULDs){
+
+    const uldId =
+      uld.uldId || uld.id;
+
+    const activeScans = [];
+
+    scanSnapshot.forEach(docSnap => {
+
+      const d =
+        docSnap.data();
+
+      if((d.uldId || "") !== uldId)
+        return;
+
+      if(d.positionId === "[REMOVED]")
+        return;
+
+      if(!d.scannedAt)
+        return;
+
+      activeScans.push(d);
+
     });
 
-  });
+    if(activeScans.length === 0){
+
+      rows.push({
+
+        awb:"",
+        scannedAt:"",
+        scannedBy:"",
+        uldId:uldId,
+        weight:
+          Number(uld.weightLbs || 0).toFixed(2) +
+          " LBS / " +
+          Number(uld.weightKg || 0).toFixed(2) +
+          " KGS"
+
+      });
+
+      continue;
+
+    }
+
+    activeScans.forEach((d,index) => {
+
+      const scannedAt =
+        d.scannedAt
+          ? new Date(
+              d.scannedAt.seconds * 1000
+            ).toLocaleString()
+          : "";
+
+      rows.push({
+
+        awb:
+          awbNumberOnly(d.code),
+
+        scannedAt:
+          scannedAt,
+
+        scannedBy:
+          d.scannedBy || "",
+
+        uldId:
+          index === 0
+            ? uldId
+            : "",
+
+        weight:
+          index === 0
+            ? Number(uld.weightLbs || 0).toFixed(2) +
+              " LBS / " +
+              Number(uld.weightKg || 0).toFixed(2) +
+              " KGS"
+            : ""
+
+      });
+
+    });
+
+  }
 
   let csv =
     "\uFEFF" +
-    "Record Type,Firestore Document ID,AWB,ULD ID,ULD Status,Weight LBS,Weight KGS,Scanned At,Scanned By,Position ID,Offloaded At,Offloaded By,ULD Created At,ULD Created By,ULD Closed At,ULD Closed By\n";
+    "Airway Bill,Scanned At,Scanned By,ULD ID,Weight\n";
 
-  /*
-     Export every ULD, even if it has no AWBs.
-  */
-  ulds.forEach(uld => {
-
-    const uldId =
-      uld.uldId || uld.firestoreId;
+  rows.forEach(row => {
 
     csv +=
-      `"ULD","${csvEscape(uld.firestoreId)}","",` +
-      `"${csvEscape(uldId)}",` +
-      `"${csvEscape(uld.status || "")}",` +
-      `"${csvEscape(uld.weightLbs ?? "")}",` +
-      `"${csvEscape(uld.weightKg ?? "")}",` +
-      `"","","","",` +
-      `"${csvEscape(formatExportTimestamp(uld.createdAt))}",` +
-      `"${csvEscape(uld.createdBy || "")}",` +
-      `"${csvEscape(formatExportTimestamp(uld.closedAt))}",` +
-      `"${csvEscape(uld.closedBy || "")}"\n`;
-
-  });
-
-  /*
-     Export every AWB scan record, including offloaded records,
-     so the flight backup contains the complete AWB history.
-  */
-  scans.forEach(scan => {
-
-    const awb =
-      awbNumberOnly(scan.code);
-
-    csv +=
-      `"AWB","${csvEscape(scan.firestoreId)}",` +
-      `"${csvEscape(awb)}",` +
-      `"${csvEscape(scan.uldId || "")}",` +
-      `"${csvEscape("")}",` +
-      `"${csvEscape("")}",` +
-      `"${csvEscape("")}",` +
-      `"${csvEscape(formatExportTimestamp(scan.scannedAt))}",` +
-      `"${csvEscape(scan.scannedBy || "")}",` +
-      `"${csvEscape(scan.positionId || "")}",` +
-      `"${csvEscape(formatExportTimestamp(scan.offloadedAt))}",` +
-      `"${csvEscape(scan.offloadedBy || "")}",` +
-      `"","","",""\n`;
+      `"${csvEscape(row.awb)}",` +
+      `"${csvEscape(row.scannedAt)}",` +
+      `"${csvEscape(row.scannedBy)}",` +
+      `"${csvEscape(row.uldId)}",` +
+      `"${csvEscape(row.weight)}"\\n`;
 
   });
 
@@ -5511,18 +5567,10 @@ async function exportEntireFlightData(
   const link =
     document.createElement("a");
 
-  const stamp =
-    new Date()
-      .toISOString()
-      .replace(/[:.]/g,"-")
-      .slice(0,19);
-
   link.href = url;
 
   link.download =
-    "FirstAirBuilder_Flight_Export_" +
-    stamp +
-    ".csv";
+    "FirstAirBuilder_Closed_ULDs.csv";
 
   document
     .body
@@ -5536,21 +5584,18 @@ async function exportEntireFlightData(
 
   URL.revokeObjectURL(url);
 
-  /*
-     Let the browser receive the download click before
-     Firebase records are deleted.
-  */
   await new Promise(
     resolve => setTimeout(resolve,300)
   );
 
   return {
-    uldCount:ulds.length,
-    awbCount:scans.length
+    uldCount:closedULDs.length,
+    awbCount:rows.filter(
+      row => !!row.awb
+    ).length
   };
 
 }
-
 
 /* =========================================================
    CLOSE ENTIRE FLIGHT
@@ -5619,13 +5664,9 @@ async function closeEntireFlight(){
 
     closeFlightPasswordUnlocked = false;
 
-    alert(
-      "FLIGHT CLOSED.\n\n" +
-      "Flight data was exported before deletion.\n\n" +
-      `${exportResult.uldCount} ULD(s) exported.\n` +
-      `${exportResult.awbCount} AWB record(s) exported.\n\n` +
-      "All ULD and AWB data has now been cleared."
-    );
+    // Flight closed successfully.
+    // The report has already been downloaded before deletion.
+    // No browser notification is shown.
 
     if(
       typeof liveUnsubscribe ===
