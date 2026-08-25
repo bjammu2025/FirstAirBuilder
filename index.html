@@ -499,19 +499,59 @@ th{
      HOME
      ========================================================= -->
 
-<div id="home" class="screen visible">
+<div id="login" class="screen visible">
 
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.11
+    Version 12.12
   </div>
 
-  <input
-    type="text"
-    id="userName"
-    placeholder="Enter User Name"
-    autocomplete="off">
+  <div class="infoBox">
+    <div class="infoTitle">LOGIN</div>
+
+    <input
+      type="text"
+      id="loginUserName"
+      placeholder="Enter Username"
+      autocomplete="username"
+      autocapitalize="none">
+
+    <input
+      type="password"
+      id="loginPassword"
+      placeholder="Enter Password"
+      autocomplete="current-password">
+
+    <button
+      class="confirmButton"
+      onclick="loginToApp()">
+      LOGIN
+    </button>
+
+    <div id="loginStatus" class="cameraStatus"></div>
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     MAIN MENU
+     ========================================================= -->
+
+<div id="home" class="screen">
+
+  <h2>First Air Builder</h2>
+
+  <div class="version">
+    Version 12.12
+  </div>
+
+  <div class="infoBox">
+    <div class="infoTitle">
+      Logged in as: <span id="loggedInUser"></span>
+    </div>
+  </div>
 
   <button onclick="goToAllocate()">
     ALLOCATE
@@ -531,6 +571,27 @@ th{
     LIVE VIEW
   </button>
 
+  <button
+    class="closeFlightButton"
+    onclick="openAdminMenu()">
+    ADMIN MENU
+  </button>
+
+</div>
+
+
+<!-- =========================================================
+     ADMIN MENU
+     ========================================================= -->
+
+<div id="adminMenu" class="screen">
+
+  <h3>Admin Menu</h3>
+
+  <div class="infoBox">
+    <div class="infoTitle">ADMIN FUNCTIONS</div>
+  </div>
+
   <button onclick="exportToCSV()">
     EXPORT CLOSED ULDs
   </button>
@@ -539,6 +600,94 @@ th{
     class="closeFlightButton"
     onclick="goToCloseFlight()">
     CLOSE FLIGHT
+  </button>
+
+  <button
+    class="createButton"
+    onclick="showCreateUserBox()">
+    CREATE USERNAME & PASSWORD
+  </button>
+
+  <div id="createUserBox" class="infoBox hidden">
+    <div class="infoTitle">CREATE USER</div>
+
+    <input
+      type="text"
+      id="newUsername"
+      placeholder="Enter New Username"
+      autocomplete="off"
+      autocapitalize="none">
+
+    <input
+      type="password"
+      id="newUserPassword"
+      placeholder="Enter Password"
+      autocomplete="new-password">
+
+    <input
+      type="password"
+      id="newUserPasswordConfirm"
+      placeholder="Confirm Password"
+      autocomplete="new-password">
+
+    <button
+      class="confirmButton"
+      onclick="createNewUser()">
+      CREATE USER
+    </button>
+
+    <button
+      class="confirmCancel"
+      onclick="hideCreateUserBox()">
+      CANCEL
+    </button>
+  </div>
+
+  <button
+    class="editButton"
+    onclick="showResetPasswordBox()">
+    RESET PASSWORD
+  </button>
+
+  <div id="resetPasswordBox" class="infoBox hidden">
+    <div class="infoTitle">RESET PASSWORD</div>
+
+    <input
+      type="text"
+      id="resetUsername"
+      placeholder="Enter Username"
+      autocomplete="off"
+      autocapitalize="none">
+
+    <input
+      type="password"
+      id="resetUserPassword"
+      placeholder="Enter New Password"
+      autocomplete="new-password">
+
+    <input
+      type="password"
+      id="resetUserPasswordConfirm"
+      placeholder="Confirm New Password"
+      autocomplete="new-password">
+
+    <button
+      class="confirmButton"
+      onclick="performPasswordReset()">
+      RESET PASSWORD
+    </button>
+
+    <button
+      class="confirmCancel"
+      onclick="hideResetPasswordBox()">
+      CANCEL
+    </button>
+  </div>
+
+  <button
+    class="backButton"
+    onclick="closeAdminMenu()">
+    ⬅ BACK
   </button>
 
 </div>
@@ -1187,39 +1336,36 @@ th{
 
 
 <!-- =========================================================
-     PASSWORD POPUP
+     ADMIN MENU PASSWORD
      ========================================================= -->
 
-<div
-  id="passwordOverlay"
-  class="confirmOverlay">
+<div id="adminPasswordOverlay" class="confirmOverlay">
 
   <div class="confirmBox passwordBox">
 
-    <div
-      class="confirmTitle passwordTitle">
-      🔒 CLOSE FLIGHT
+    <div class="confirmTitle passwordTitle">
+      🔒 ADMIN MENU
     </div>
 
     <div class="confirmText">
-      Enter the password to continue.
+      Enter the Admin Menu password.
     </div>
 
     <input
       type="password"
-      id="closeFlightPassword"
+      id="adminMenuPassword"
       placeholder="Enter Password"
       autocomplete="off">
 
     <button
       class="confirmButton"
-      onclick="submitCloseFlightPassword()">
+      onclick="submitAdminMenuPassword()">
       UNLOCK
     </button>
 
     <button
       class="confirmCancel"
-      onclick="cancelCloseFlightPassword()">
+      onclick="cancelAdminMenuPassword()">
       CANCEL
     </button>
 
@@ -1237,14 +1383,16 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.11";
+const CODE_VERSION = "12.12";
 
 
 /* =========================================================
-   CLOSE FLIGHT PASSWORD
+   ADMIN MENU PASSWORD
    ========================================================= */
 
-const CLOSE_FLIGHT_PASSWORD = "2021";
+const ADMIN_MENU_PASSWORD = "2021";
+const DEFAULT_USERNAME = "Admin";
+const DEFAULT_PASSWORD = "Admin";
 
 
 /* =========================================================
@@ -1360,7 +1508,7 @@ let barcodeTimer = null;
 
 let selectedCloseULD = "";
 
-let closeFlightPasswordUnlocked = false;
+let adminMenuUnlocked = false;
 
 /*
    Current pending camera/manual AWB.
@@ -1427,7 +1575,7 @@ window.goHome = async () => {
     .getElementById("offloadTable")
     .innerHTML = "";
 
-  closeFlightPasswordUnlocked = false;
+  adminMenuUnlocked = false;
 
   /* Reset New ULD entry so the previous ULD never remains */
   document
@@ -1446,15 +1594,26 @@ window.goHome = async () => {
    ========================================================= */
 
 function getCurrentUser(){
+  return currentUser.trim();
+}
 
-  currentUser =
-    document
-      .getElementById("userName")
-      .value
-      .trim();
+async function hashPassword(password){
 
-  return currentUser;
+  const data = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256",data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2,"0"))
+    .join("");
+}
 
+function normalizeUsername(username){
+  return String(username || "").trim().toLowerCase();
+}
+
+function showLoginStatus(message,type=""){
+  const el = document.getElementById("loginStatus");
+  el.innerText = message;
+  el.className = "cameraStatus " + type;
 }
 
 
@@ -1520,86 +1679,331 @@ window.goToCloseULD = async () => {
 
 
 /* =========================================================
+   LOGIN
+   ========================================================= */
+
+window.loginToApp = async () => {
+
+  const username =
+    document.getElementById("loginUserName").value.trim();
+
+  const password =
+    document.getElementById("loginPassword").value;
+
+  if(!username || !password){
+    showLoginStatus("Please enter username and password.","error");
+    return;
+  }
+
+  try{
+
+    const usernameKey = normalizeUsername(username);
+    const passwordHash = await hashPassword(password);
+
+    const q = query(
+      collection(db,"users"),
+      where("usernameKey","==",usernameKey)
+    );
+
+    const snapshot = await getDocs(q);
+
+    /* If no Admin record has ever been created/reset, use the default Admin/Admin account. */
+    if(
+      snapshot.empty &&
+      usernameKey === "admin" &&
+      password === DEFAULT_PASSWORD
+    ){
+      currentUser = DEFAULT_USERNAME;
+      document.getElementById("loggedInUser").innerText = currentUser;
+      document.getElementById("loginPassword").value = "";
+      showLoginStatus("");
+      switchScreen("home");
+      return;
+    }
+
+    if(snapshot.empty){
+      showLoginStatus("Invalid username or password.","error");
+      document.getElementById("loginPassword").value = "";
+      return;
+    }
+
+    const userData = snapshot.docs[0].data();
+
+    if(userData.passwordHash !== passwordHash){
+      showLoginStatus("Invalid username or password.","error");
+      document.getElementById("loginPassword").value = "";
+      return;
+    }
+
+    currentUser = userData.username || username;
+    document.getElementById("loggedInUser").innerText = currentUser;
+    document.getElementById("loginPassword").value = "";
+    showLoginStatus("");
+    switchScreen("home");
+
+  }catch(error){
+    console.error("Login error:",error);
+    showLoginStatus(
+      "Login failed. " + error.message,
+      "error"
+    );
+  }
+};
+
+
+/* =========================================================
+   ADMIN MENU
+   ========================================================= */
+
+window.openAdminMenu = async () => {
+
+  if(!getCurrentUser()){
+    switchScreen("login");
+    return;
+  }
+
+  adminMenuUnlocked = false;
+
+  const input = document.getElementById("adminMenuPassword");
+  input.value = "";
+
+  document
+    .getElementById("adminPasswordOverlay")
+    .classList.add("active");
+
+  setTimeout(() => input.focus(),100);
+};
+
+window.submitAdminMenuPassword = async () => {
+
+  const input = document.getElementById("adminMenuPassword");
+  const password = input.value;
+
+  if(password !== ADMIN_MENU_PASSWORD){
+    alert("Incorrect admin password.");
+    input.value = "";
+    input.focus();
+    return;
+  }
+
+  adminMenuUnlocked = true;
+  input.value = "";
+  document
+    .getElementById("adminPasswordOverlay")
+    .classList.remove("active");
+
+  hideCreateUserBox();
+  hideResetPasswordBox();
+  switchScreen("adminMenu");
+};
+
+window.cancelAdminMenuPassword = () => {
+  adminMenuUnlocked = false;
+  document
+    .getElementById("adminPasswordOverlay")
+    .classList.remove("active");
+  document.getElementById("adminMenuPassword").value = "";
+};
+
+window.closeAdminMenu = () => {
+  adminMenuUnlocked = false;
+  hideCreateUserBox();
+  hideResetPasswordBox();
+  switchScreen("home");
+};
+
+window.showCreateUserBox = () => {
+  document.getElementById("createUserBox").classList.remove("hidden");
+  document.getElementById("resetPasswordBox").classList.add("hidden");
+  document.getElementById("newUsername").focus();
+};
+
+window.hideCreateUserBox = () => {
+  const box = document.getElementById("createUserBox");
+  if(box) box.classList.add("hidden");
+  ["newUsername","newUserPassword","newUserPasswordConfirm"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = "";
+    });
+};
+
+window.showResetPasswordBox = () => {
+  document.getElementById("resetPasswordBox").classList.remove("hidden");
+  document.getElementById("createUserBox").classList.add("hidden");
+  document.getElementById("resetUsername").focus();
+};
+
+window.hideResetPasswordBox = () => {
+  const box = document.getElementById("resetPasswordBox");
+  if(box) box.classList.add("hidden");
+  ["resetUsername","resetUserPassword","resetUserPasswordConfirm"]
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = "";
+    });
+};
+
+window.createNewUser = async () => {
+
+  if(!adminMenuUnlocked){
+    alert("Admin access required.");
+    return;
+  }
+
+  const username = document.getElementById("newUsername").value.trim();
+  const password = document.getElementById("newUserPassword").value;
+  const confirm = document.getElementById("newUserPasswordConfirm").value;
+  const usernameKey = normalizeUsername(username);
+
+  if(!username || !password || !confirm){
+    alert("Please complete all fields.");
+    return;
+  }
+
+  if(password !== confirm){
+    alert("Passwords do not match.");
+    return;
+  }
+
+  if(usernameKey === "admin"){
+    alert("The username Admin is reserved for the default administrator account.");
+    return;
+  }
+
+  try{
+
+    const existing = await getDocs(
+      query(
+        collection(db,"users"),
+        where("usernameKey","==",usernameKey)
+      )
+    );
+
+    if(!existing.empty){
+      alert("That username already exists.");
+      return;
+    }
+
+    await addDoc(collection(db,"users"),{
+      username: username,
+      usernameKey: usernameKey,
+      passwordHash: await hashPassword(password),
+      createdAt: serverTimestamp(),
+      createdBy: currentUser
+    });
+
+    hideCreateUserBox();
+    alert("User created successfully.");
+
+  }catch(error){
+    console.error("Create user error:",error);
+    alert("Could not create user.\n\n" + error.message);
+  }
+};
+
+window.performPasswordReset = async () => {
+
+  if(!adminMenuUnlocked){
+    alert("Admin access required.");
+    return;
+  }
+
+  const username = document.getElementById("resetUsername").value.trim();
+  const password = document.getElementById("resetUserPassword").value;
+  const confirm = document.getElementById("resetUserPasswordConfirm").value;
+  const usernameKey = normalizeUsername(username);
+
+  if(!username || !password || !confirm){
+    alert("Please complete all fields.");
+    return;
+  }
+
+  if(password !== confirm){
+    alert("Passwords do not match.");
+    return;
+  }
+
+  try{
+
+    if(usernameKey === "admin"){
+      /* Resetting Admin creates an explicit Admin credential. */
+      const existingAdmin = await getDocs(
+        query(
+          collection(db,"users"),
+          where("usernameKey","==","admin")
+        )
+      );
+
+      if(existingAdmin.empty){
+        await addDoc(collection(db,"users"),{
+          username: "Admin",
+          usernameKey: "admin",
+          passwordHash: await hashPassword(password),
+          createdAt: serverTimestamp(),
+          createdBy: currentUser
+        });
+      }else{
+        await updateDoc(
+          doc(db,"users",existingAdmin.docs[0].id),
+          {
+            passwordHash: await hashPassword(password),
+            updatedAt: serverTimestamp(),
+            updatedBy: currentUser
+          }
+        );
+      }
+
+      hideResetPasswordBox();
+      alert("Admin password reset successfully.");
+      return;
+    }
+
+    const existing = await getDocs(
+      query(
+        collection(db,"users"),
+        where("usernameKey","==",usernameKey)
+      )
+    );
+
+    if(existing.empty){
+      alert("Username not found.");
+      return;
+    }
+
+    await updateDoc(
+      doc(db,"users",existing.docs[0].id),
+      {
+        passwordHash: await hashPassword(password),
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser
+      }
+    );
+
+    hideResetPasswordBox();
+    alert("Password reset successfully.");
+
+  }catch(error){
+    console.error("Reset password error:",error);
+    alert("Could not reset password.\n\n" + error.message);
+  }
+};
+
+
+/* =========================================================
    CLOSE FLIGHT
-   PASSWORD FIRST
+   NO SEPARATE PASSWORD
    ========================================================= */
 
 window.goToCloseFlight = async () => {
 
-  if(!getCurrentUser()){
-
-    alert("Please enter user name");
+  if(!adminMenuUnlocked){
+    alert("Admin access required.");
     return;
-
   }
-
-  closeFlightPasswordUnlocked = false;
-
-  document
-    .getElementById("closeFlightPassword")
-    .value = "";
-
-  document
-    .getElementById("passwordOverlay")
-    .classList.add("active");
-
-  setTimeout(() => {
-
-    document
-      .getElementById("closeFlightPassword")
-      .focus();
-
-  },100);
-
-};
-
-
-window.submitCloseFlightPassword = async () => {
-
-  const password =
-    document
-      .getElementById("closeFlightPassword")
-      .value;
-
-  if(password !== CLOSE_FLIGHT_PASSWORD){
-
-    alert("Incorrect password.");
-
-    document
-      .getElementById("closeFlightPassword")
-      .value = "";
-
-    document
-      .getElementById("closeFlightPassword")
-      .focus();
-
-    return;
-
-  }
-
-  closeFlightPasswordUnlocked = true;
-
-  document
-    .getElementById("passwordOverlay")
-    .classList.remove("active");
 
   switchScreen("closeFlight");
-
   await loadCloseFlightData();
-
-};
-
-
-window.cancelCloseFlightPassword = () => {
-
-  document
-    .getElementById("passwordOverlay")
-    .classList.remove("active");
-
-  document
-    .getElementById("closeFlightPassword")
-    .value = "";
-
 };
 
 
@@ -5269,14 +5673,9 @@ async function loadCloseFlightData(){
 
 window.confirmCloseFlight = async () => {
 
-  if(!closeFlightPasswordUnlocked){
-
-    alert(
-      "Password required."
-    );
-
+  if(!adminMenuUnlocked){
+    alert("Admin access required.");
     return;
-
   }
 
   try{
@@ -5662,7 +6061,7 @@ async function closeEntireFlight(){
       deletePromises
     );
 
-    closeFlightPasswordUnlocked = false;
+    adminMenuUnlocked = false;
 
     // Flight closed successfully.
     // The report has already been downloaded before deletion.
@@ -5930,27 +6329,31 @@ function vibrate(){
 
 
 /* =========================================================
-   ENTER KEY FOR PASSWORD
+   LOGIN ENTER KEY
    ========================================================= */
 
 document
-  .getElementById(
-    "closeFlightPassword"
-  )
-  .addEventListener(
-    "keydown",
-    event => {
-
-      if(event.key === "Enter"){
-
-        event.preventDefault();
-
-        submitCloseFlightPassword();
-
-      }
-
+  .getElementById("loginPassword")
+  .addEventListener("keydown",event => {
+    if(event.key === "Enter"){
+      event.preventDefault();
+      loginToApp();
     }
-  );
+  });
+
+
+/* =========================================================
+   ADMIN PASSWORD ENTER KEY
+   ========================================================= */
+
+document
+  .getElementById("adminMenuPassword")
+  .addEventListener("keydown",event => {
+    if(event.key === "Enter"){
+      event.preventDefault();
+      submitAdminMenuPassword();
+    }
+  });
 
 
 /* =========================================================
