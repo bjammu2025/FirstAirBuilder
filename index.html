@@ -439,43 +439,6 @@ th{
   color:#ffca28;
 }
 
-#management label{
-  display:block;
-  width:95%;
-  max-width:900px;
-  margin:6px auto;
-  padding:10px;
-  background:#252525;
-  border-radius:10px;
-  text-align:left;
-  font-size:1.1rem;
-  box-sizing:border-box;
-}
-
-#management label input{
-  width:auto;
-  margin-right:10px;
-  transform:scale(1.2);
-}
-
-.userCard{
-  background:#181818;
-  border:1px solid #555;
-  border-radius:12px;
-  padding:12px;
-  margin:10px 0;
-  text-align:left;
-}
-
-.userCardTitle{
-  font-size:1.35rem;
-  font-weight:bold;
-  margin-bottom:5px;
-}
-
-.userEnabled{color:#00e676}
-.userDisabled{color:#ff5252}
-
 @media(max-width:600px){
 
   input,select,button{
@@ -524,40 +487,48 @@ th{
      HOME
      ========================================================= -->
 
-<div id="login" class="screen visible">
-  <h2>First Air Builder</h2>
-  <div class="version">Version 15.00</div>
-  <div class="infoBox">
-    <div class="infoTitle">LOGIN</div>
-    <input id="loginUsername" type="text" placeholder="Username"
-           autocomplete="username" autocapitalize="none">
-    <input id="loginPassword" type="password" placeholder="Password"
-           autocomplete="current-password">
-    <button class="confirmButton" onclick="loginUser()">LOGIN</button>
-    <div id="loginStatus" class="cameraStatus"></div>
-    <div class="manualHint">
-      First setup uses the internal Firebase identifier
-      <b>admin@firstairbuilder.local</b>. Users will only enter usernames.
-    </div>
-  </div>
-</div>
+<div id="home" class="screen visible">
 
-<div id="home" class="screen">
   <h2>First Air Builder</h2>
-  <div class="version">Version 15.00</div>
-  <div class="infoBox">
-    <div class="infoTitle">SIGNED IN</div>
-    <div id="loggedInUser"></div>
-    <div id="loggedInRole" class="manualHint"></div>
+
+  <div class="version">
+    Version 12.09
   </div>
-  <button id="allocateHomeButton" onclick="goToAllocate()">ALLOCATE</button>
-  <button id="offloadHomeButton" onclick="goToOffload()">OFFLOAD</button>
-  <button id="closeULDHomeButton" class="closeULDButton" onclick="goToCloseULD()">CLOSE ULD</button>
-  <button id="liveViewHomeButton" onclick="goToLiveView()">LIVE VIEW</button>
-  <button id="exportHomeButton" onclick="exportToCSV()">EXPORT CLOSED ULDs</button>
-  <button id="closeFlightHomeButton" class="closeFlightButton" onclick="goToCloseFlight()">CLOSE FLIGHT</button>
-  <button id="managementHomeButton" class="createButton hidden" onclick="goToManagement()">MANAGEMENT</button>
-  <button class="backButton" onclick="logoutUser()">LOG OUT</button>
+
+  <input
+    type="text"
+    id="userName"
+    placeholder="Enter User Name"
+    autocomplete="off">
+
+  <button onclick="goToAllocate()">
+    ALLOCATE
+  </button>
+
+  <button onclick="goToOffload()">
+    OFFLOAD
+  </button>
+
+  <button
+    class="closeULDButton"
+    onclick="goToCloseULD()">
+    CLOSE ULD
+  </button>
+
+  <button onclick="goToLiveView()">
+    LIVE VIEW
+  </button>
+
+  <button onclick="exportToCSV()">
+    EXPORT CLOSED ULDs
+  </button>
+
+  <button
+    class="closeFlightButton"
+    onclick="goToCloseFlight()">
+    CLOSE FLIGHT
+  </button>
+
 </div>
 
 
@@ -992,47 +963,6 @@ th{
 
 
 <!-- =========================================================
-     MANAGEMENT
-     ========================================================= -->
-
-<div id="management" class="screen">
-  <h3>Management</h3>
-
-  <div class="infoBox">
-    <div class="infoTitle">CREATE USER PROFILE</div>
-    <input id="newUsername" type="text" placeholder="Username" autocomplete="off" autocapitalize="none">
-    <input id="newUserPassword" type="password" placeholder="Password (used when creating Firebase account)" autocomplete="new-password">
-    <select id="newUserRole">
-      <option value="user">USER</option>
-      <option value="admin">ADMIN</option>
-    </select>
-
-    <div class="manualHint">Permissions for USER accounts:</div>
-    <label><input type="checkbox" id="permAllocate"> ALLOCATE</label>
-    <label><input type="checkbox" id="permOffload"> OFFLOAD</label>
-    <label><input type="checkbox" id="permCloseULD"> CLOSE ULD</label>
-    <label><input type="checkbox" id="permLiveView"> LIVE VIEW</label>
-    <label><input type="checkbox" id="permExport"> EXPORT CLOSED ULDs</label>
-    <label><input type="checkbox" id="permCloseFlight"> CLOSE FLIGHT</label>
-
-    <button class="createButton" onclick="createManagedUser()">CREATE USER PROFILE</button>
-    <div id="managementStatus" class="cameraStatus"></div>
-  </div>
-
-  <div class="infoBox">
-    <div class="infoTitle">USERS</div>
-    <div class="manualHint">
-      On the Spark/free plan, the Firebase Authentication account is created
-      in Authentication → Users. Passwords are never stored in Firestore.
-    </div>
-    <div id="userManagementList">Loading...</div>
-  </div>
-
-  <button class="backButton" onclick="goHome()">⬅ BACK</button>
-</div>
-
-
-<!-- =========================================================
      HIDDEN ZEBRA INPUT
      ========================================================= -->
 
@@ -1295,14 +1225,14 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "15.00";
+const CODE_VERSION = "12.09";
 
 
 /* =========================================================
    CLOSE FLIGHT PASSWORD
    ========================================================= */
 
-const CLOSE_FLIGHT_PASSWORD = "";
+const CLOSE_FLIGHT_PASSWORD = "2021";
 
 
 /* =========================================================
@@ -1351,15 +1281,6 @@ import {
 from
 "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
-}
-from
-"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
 
 const firebaseConfig = {
 
@@ -1389,14 +1310,6 @@ const app =
 
 const db =
   getFirestore(app);
-
-const auth =
-  getAuth(app);
-
-let currentAccount = null;
-let currentPermissions = {};
-let currentRole = "";
-let authReady = false;
 
 
 /* =========================================================
@@ -1444,264 +1357,6 @@ let pendingAWB = "";
 let pendingAWBSource = "";
 let pendingAWBResolve = null;
 
-
-
-/* =========================================================
-   V15 AUTHENTICATION / USER PROFILES
-   ========================================================= */
-
-const USERNAME_EMAIL_DOMAIN = "@firstairbuilder.local";
-
-function internalAuthEmail(username){
-  return username.trim().toLowerCase() + USERNAME_EMAIL_DOMAIN;
-}
-
-function setLoginStatus(message,type=""){
-  const el = document.getElementById("loginStatus");
-  if(el){
-    el.innerText = message;
-    el.className = "cameraStatus " + type;
-  }
-}
-
-function setManagementStatus(message,type=""){
-  const el = document.getElementById("managementStatus");
-  if(el){
-    el.innerText = message;
-    el.className = "cameraStatus " + type;
-  }
-}
-
-async function loadCurrentUserProfile(user){
-  const snap = await getDocs(
-    query(collection(db,"users"),where("uid","==",user.uid))
-  );
-
-  if(snap.empty){
-    await signOut(auth);
-    setLoginStatus("No First Air Builder user profile exists for this account.","error");
-    return false;
-  }
-
-  const data = snap.docs[0].data();
-
-  if(data.active === false){
-    await signOut(auth);
-    setLoginStatus("This account is disabled.","error");
-    return false;
-  }
-
-  currentAccount = user;
-  currentUser = data.username || "";
-  currentRole = data.role || "user";
-  currentPermissions = data.permissions || {};
-
-  if(currentRole === "admin"){
-    currentPermissions = {
-      allocate:true, offload:true, closeULD:true, liveView:true,
-      export:true, closeFlight:true, management:true
-    };
-  }
-
-  document.getElementById("loggedInUser").innerText =
-    "Username: " + currentUser;
-  document.getElementById("loggedInRole").innerText =
-    "Role: " + currentRole.toUpperCase();
-
-  applyHomePermissions();
-  switchScreen("home");
-  return true;
-}
-
-function applyHomePermissions(){
-  const map = {
-    allocateHomeButton:"allocate",
-    offloadHomeButton:"offload",
-    closeULDHomeButton:"closeULD",
-    liveViewHomeButton:"liveView",
-    exportHomeButton:"export",
-    closeFlightHomeButton:"closeFlight",
-    managementHomeButton:"management"
-  };
-
-  Object.entries(map).forEach(([id,permission])=>{
-    const el = document.getElementById(id);
-    if(el) el.classList.toggle("hidden",!hasPermission(permission));
-  });
-}
-
-window.loginUser = async () => {
-  const username = document.getElementById("loginUsername").value.trim();
-  const password = document.getElementById("loginPassword").value;
-
-  if(!username || !password){
-    setLoginStatus("Enter username and password.","error");
-    return;
-  }
-
-  setLoginStatus("Logging in...","scanning");
-
-  try{
-    await signInWithEmailAndPassword(
-      auth,
-      internalAuthEmail(username),
-      password
-    );
-  }catch(error){
-    console.error("Firebase login error:", error);
-
-    let message = "Login failed.";
-
-    if(error && error.code){
-      message += " Firebase error: " + error.code;
-    }
-
-    if(error && error.message){
-      message += " — " + error.message;
-    }
-
-    setLoginStatus(message,"error");
-    document.getElementById("loginPassword").value = "";
-  }
-};
-
-window.logoutUser = async () => {
-  try{
-    await closeCamera();
-    stopBarcodeScanner();
-    if(typeof liveUnsubscribe === "function"){
-      liveUnsubscribe();
-      liveUnsubscribe = null;
-    }
-    await signOut(auth);
-  }catch(error){
-    console.error(error);
-  }
-};
-
-window.goToManagement = async () => {
-  if(!requirePermission("management")) return;
-  switchScreen("management");
-  await loadUserManagementList();
-};
-
-async function loadUserManagementList(){
-  const container = document.getElementById("userManagementList");
-  container.innerHTML = "Loading...";
-
-  try{
-    const snapshot = await getDocs(collection(db,"users"));
-    if(snapshot.empty){
-      container.innerHTML = "<div class='manualHint'>No user profiles found.</div>";
-      return;
-    }
-
-    let html = "";
-    snapshot.forEach(s=>{
-      const d=s.data();
-      const username=d.username || s.id;
-      const role=d.role || "user";
-      const active=d.active !== false;
-
-      html += `<div class="userCard">
-        <div class="userCardTitle">${escapeHTML(username)}</div>
-        <div>Role: ${escapeHTML(role.toUpperCase())}</div>
-        <div class="${active ? "userEnabled":"userDisabled"}">
-          ${active ? "ACTIVE":"DISABLED"}
-        </div>
-      </div>`;
-    });
-    container.innerHTML=html;
-  }catch(error){
-    console.error(error);
-    container.innerHTML="<div class='error'>"+escapeHTML(error.message)+"</div>";
-  }
-}
-
-window.createManagedUser = async () => {
-  if(currentRole !== "admin"){
-    alert("Admin access required.");
-    return;
-  }
-
-  const username=document.getElementById("newUsername").value.trim();
-  const password=document.getElementById("newUserPassword").value;
-  const role=document.getElementById("newUserRole").value;
-
-  if(!/^[A-Za-z0-9._-]{3,32}$/.test(username)){
-    setManagementStatus("Username must be 3-32 characters using letters, numbers, dot, underscore or dash.","error");
-    return;
-  }
-
-  if(password.length < 6){
-    setManagementStatus("Password must be at least 6 characters.","error");
-    return;
-  }
-
-  const existing=await getDocs(
-    query(collection(db,"users"),where("usernameLower","==",username.toLowerCase()))
-  );
-
-  if(!existing.empty){
-    setManagementStatus("That username already exists.","error");
-    return;
-  }
-
-  const permissions={
-    allocate:document.getElementById("permAllocate").checked,
-    offload:document.getElementById("permOffload").checked,
-    closeULD:document.getElementById("permCloseULD").checked,
-    liveView:document.getElementById("permLiveView").checked,
-    export:document.getElementById("permExport").checked,
-    closeFlight:document.getElementById("permCloseFlight").checked
-  };
-
-  if(role==="admin"){
-    Object.keys(permissions).forEach(k=>permissions[k]=true);
-    permissions.management=true;
-  }
-
-  await addDoc(collection(db,"users"),{
-    username,
-    usernameLower:username.toLowerCase(),
-    role,
-    active:true,
-    permissions,
-    createdAt:serverTimestamp(),
-    createdBy:currentUser
-  });
-
-  document.getElementById("newUsername").value="";
-  document.getElementById("newUserPassword").value="";
-
-  setManagementStatus(
-    "Profile created. Now create the matching Firebase Authentication account as " +
-    internalAuthEmail(username) +
-    " in Authentication → Users. The password you entered is NOT stored in Firestore.",
-    "success"
-  );
-
-  await loadUserManagementList();
-};
-
-onAuthStateChanged(auth,async user=>{
-  if(!user){
-    currentAccount=null;
-    currentUser="";
-    currentRole="";
-    currentPermissions={};
-    switchScreen("login");
-    return;
-  }
-
-  try{
-    await loadCurrentUserProfile(user);
-  }catch(error){
-    console.error(error);
-    await signOut(auth);
-    setLoginStatus("Could not load user profile.","error");
-  }
-});
 
 /* =========================================================
    SCREEN
@@ -1770,20 +1425,15 @@ window.goHome = async () => {
    ========================================================= */
 
 function getCurrentUser(){
-  return currentUser || "";
-}
 
-function hasPermission(name){
-  if(currentRole === "admin") return true;
-  return currentPermissions[name] === true;
-}
+  currentUser =
+    document
+      .getElementById("userName")
+      .value
+      .trim();
 
-function requirePermission(name){
-  if(!hasPermission(name)){
-    alert("You do not have permission to use this function.");
-    return false;
-  }
-  return true;
+  return currentUser;
+
 }
 
 
@@ -1792,8 +1442,6 @@ function requirePermission(name){
    ========================================================= */
 
 window.goToAllocate = async () => {
-
-  if(!requirePermission("allocate")) return;
 
   if(!getCurrentUser()){
 
@@ -1811,8 +1459,6 @@ window.goToAllocate = async () => {
 
 window.goToOffload = async () => {
 
-  if(!requirePermission("offload")) return;
-
   if(!getCurrentUser()){
 
     alert("Please enter user name");
@@ -1828,8 +1474,6 @@ window.goToOffload = async () => {
 
 
 window.goToCloseULD = async () => {
-
-  if(!requirePermission("closeULD")) return;
 
   if(!getCurrentUser()){
 
@@ -1851,8 +1495,6 @@ window.goToCloseULD = async () => {
    ========================================================= */
 
 window.goToCloseFlight = async () => {
-
-  if(!requirePermission("closeFlight")) return;
 
   if(!getCurrentUser()){
 
@@ -1884,7 +1526,26 @@ window.goToCloseFlight = async () => {
 
 window.submitCloseFlightPassword = async () => {
 
-  if(!requirePermission("closeFlight")) return;
+  const password =
+    document
+      .getElementById("closeFlightPassword")
+      .value;
+
+  if(password !== CLOSE_FLIGHT_PASSWORD){
+
+    alert("Incorrect password.");
+
+    document
+      .getElementById("closeFlightPassword")
+      .value = "";
+
+    document
+      .getElementById("closeFlightPassword")
+      .focus();
+
+    return;
+
+  }
 
   closeFlightPasswordUnlocked = true;
 
@@ -5162,8 +4823,6 @@ window.goToLiveView = () => {
 
 window.exportToCSV = async () => {
 
-  if(!requirePermission("export")) return;
-
   try{
 
     const uldSnapshot =
@@ -5652,13 +5311,6 @@ window.confirmCloseFlight = async () => {
     if(!confirmed)
       return;
 
-    const exported = await exportEntireFlightBeforeDelete();
-
-    if(!exported){
-      alert("Flight was NOT deleted because the export could not be completed.");
-      return;
-    }
-
     await closeEntireFlight();
 
   }catch(error){
@@ -5679,90 +5331,6 @@ window.confirmCloseFlight = async () => {
    CLOSE ENTIRE FLIGHT
    DELETE ULDs + SCANS
    ========================================================= */
-
-
-async function exportEntireFlightBeforeDelete(){
-  try{
-    const uldSnapshot=await getDocs(collection(db,"ulds"));
-    const scanSnapshot=await getDocs(collection(db,"scans"));
-
-    if(uldSnapshot.empty && scanSnapshot.empty){
-      alert("There is no AWB/ULD data to export.");
-      return false;
-    }
-
-    const ulds=[];
-    uldSnapshot.forEach(s=>ulds.push({id:s.id,...s.data()}));
-
-    const scans=[];
-    scanSnapshot.forEach(s=>{
-      const d=s.data();
-      if(d.positionId==="[REMOVED]") return;
-      scans.push({id:s.id,...d});
-    });
-
-    const rows=[];
-
-    ulds.forEach(uld=>{
-      const uldId=uld.uldId || uld.id;
-      const matching=scans.filter(s=>s.uldId===uldId);
-
-      if(matching.length===0){
-        rows.push(["",uldId,uld.status||"",
-          Number(uld.weightLbs||0).toFixed(2),
-          Number(uld.weightKg||0).toFixed(2),"",""]);
-      }else{
-        matching.forEach(s=>{
-          let scannedAt="";
-          if(s.scannedAt){
-            if(typeof s.scannedAt.toDate==="function")
-              scannedAt=s.scannedAt.toDate().toLocaleString();
-            else if(s.scannedAt.seconds)
-              scannedAt=new Date(s.scannedAt.seconds*1000).toLocaleString();
-          }
-
-          rows.push([
-            s.awb || s.airwayBill || "",
-            uldId,
-            uld.status || "",
-            Number(uld.weightLbs||0).toFixed(2),
-            Number(uld.weightKg||0).toFixed(2),
-            s.scannedBy || "",
-            scannedAt
-          ]);
-        });
-      }
-    });
-
-    const headers=["AWB","ULD","ULD Status","Weight LBS","Weight KGS","Scanned By","Scanned At"];
-    const csv=[headers,...rows]
-      .map(row=>row.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(","))
-      .join("\r\n");
-
-    const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    const now=new Date();
-    const stamp=now.getFullYear()+
-      String(now.getMonth()+1).padStart(2,"0")+
-      String(now.getDate()).padStart(2,"0")+"_"+ 
-      String(now.getHours()).padStart(2,"0")+
-      String(now.getMinutes()).padStart(2,"0")+
-      String(now.getSeconds()).padStart(2,"0");
-
-    a.href=url;
-    a.download="First_Air_Flight_"+stamp+".csv";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),2000);
-    return true;
-  }catch(error){
-    console.error(error);
-    alert("Could not create the flight export.\n\n"+error.message);
-    return false;
-  }
-}
 
 async function closeEntireFlight(){
 
