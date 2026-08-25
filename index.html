@@ -1548,8 +1548,19 @@ window.loginUser = async () => {
       password
     );
   }catch(error){
-    console.error(error);
-    setLoginStatus("Invalid username or password.","error");
+    console.error("Firebase login error:", error);
+
+    let message = "Login failed.";
+
+    if(error && error.code){
+      message += " Firebase error: " + error.code;
+    }
+
+    if(error && error.message){
+      message += " — " + error.message;
+    }
+
+    setLoginStatus(message,"error");
     document.getElementById("loginPassword").value = "";
   }
 };
