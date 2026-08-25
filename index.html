@@ -504,7 +504,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.14
+    Version 12.13
   </div>
 
   <div class="infoBox">
@@ -542,7 +542,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.14
+    Version 12.13
   </div>
 
   <div class="infoBox">
@@ -1404,6 +1404,7 @@ th{
 
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 
 <script type="module">
@@ -1412,7 +1413,7 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.14";
+const CODE_VERSION = "12.17";
 
 
 /* =========================================================
@@ -5346,12 +5347,7 @@ window.exportToCSV = async () => {
           weight:
             Number(
               uld.weightLbs || 0
-            ).toFixed(2) +
-            " LBS / " +
-            Number(
-              uld.weightKg || 0
-            ).toFixed(2) +
-            " KGS"
+            ).toFixed(2)
 
         });
 
@@ -5387,17 +5383,8 @@ window.exportToCSV = async () => {
 
             weight:
               index === 0
-                ?
-                Number(
-                  uld.weightLbs || 0
-                ).toFixed(2) +
-                " LBS / " +
-                Number(
-                  uld.weightKg || 0
-                ).toFixed(2) +
-                " KGS"
-                :
-                ""
+                ? Number(uld.weightLbs || 0).toFixed(2)
+                : ""
 
           });
 
@@ -5406,53 +5393,7 @@ window.exportToCSV = async () => {
 
     }
 
-    let csv =
-      "\uFEFF" +
-      "Airway Bill,Scanned At,Scanned By,ULD ID,Weight\n";
-
-    rows.forEach(row => {
-
-      csv +=
-        `"${csvEscape(row.awb)}",` +
-        `"${csvEscape(row.scannedAt)}",` +
-        `"${csvEscape(row.scannedBy)}",` +
-        `"${csvEscape(row.uldId)}",` +
-        `"${csvEscape(row.weight)}"\n`;
-
-    });
-
-    const blob =
-      new Blob(
-        [csv],
-        {
-          type:
-            "text/csv;charset=utf-8;"
-        }
-      );
-
-    const url =
-      URL.createObjectURL(blob);
-
-    const link =
-      document.createElement("a");
-
-    link.href =
-      url;
-
-    link.download =
-      "FirstAirBuilder_Closed_ULDs.csv";
-
-    document
-      .body
-      .appendChild(link);
-
-    link.click();
-
-    document
-      .body
-      .removeChild(link);
-
-    URL.revokeObjectURL(url);
+    downloadClosedULDExcel(rows);
 
     // Export completed successfully.
     // No browser notification is shown.
@@ -5799,6 +5740,41 @@ function formatExportTimestamp(value){
 }
 
 
+
+function downloadClosedULDExcel(rows){
+
+  const data = [
+    ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (LBS)"]
+  ];
+
+  rows.forEach(row => {
+    data.push([
+      "", row.awb || "", "", "", "", "", "", "", "", "",
+      row.scannedAt || "", row.scannedBy || "", row.uldId || "", row.weight || ""
+    ]);
+  });
+
+  const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+  worksheet["!cols"] = [
+    { wch: 3 },
+    { wch: 18 },
+    { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
+    { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
+    { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 16 }
+  ];
+
+  const headerRow = 0;
+  for(let c = 0; c < 14; c++){
+    const cell = worksheet[XLSX.utils.encode_cell({r:headerRow,c})];
+    if(cell) cell.s = { font: { bold: true } };
+  }
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Closed ULDs");
+  XLSX.writeFile(workbook, "FirstAirBuilder_Closed_ULDs.xlsx");
+}
+
 async function exportEntireFlightData(
   scanSnapshot,
   uldSnapshot
@@ -5870,10 +5846,7 @@ async function exportEntireFlightData(
         scannedBy:"",
         uldId:uldId,
         weight:
-          Number(uld.weightLbs || 0).toFixed(2) +
-          " LBS / " +
-          Number(uld.weightKg || 0).toFixed(2) +
-          " KGS"
+          Number(uld.weightLbs || 0).toFixed(2)
 
       });
 
@@ -5908,10 +5881,7 @@ async function exportEntireFlightData(
 
         weight:
           index === 0
-            ? Number(uld.weightLbs || 0).toFixed(2) +
-              " LBS / " +
-              Number(uld.weightKg || 0).toFixed(2) +
-              " KGS"
+            ? Number(uld.weightLbs || 0).toFixed(2)
             : ""
 
       });
@@ -5920,52 +5890,7 @@ async function exportEntireFlightData(
 
   }
 
-  let csv =
-    "\uFEFF" +
-    "Airway Bill,Scanned At,Scanned By,ULD ID,Weight\n";
-
-  rows.forEach(row => {
-
-    csv +=
-      `"${csvEscape(row.awb)}",` +
-      `"${csvEscape(row.scannedAt)}",` +
-      `"${csvEscape(row.scannedBy)}",` +
-      `"${csvEscape(row.uldId)}",` +
-      `"${csvEscape(row.weight)}"\\n`;
-
-  });
-
-  const blob =
-    new Blob(
-      [csv],
-      {
-        type:
-          "text/csv;charset=utf-8;"
-      }
-    );
-
-  const url =
-    URL.createObjectURL(blob);
-
-  const link =
-    document.createElement("a");
-
-  link.href = url;
-
-  link.download =
-    "FirstAirBuilder_Closed_ULDs.csv";
-
-  document
-    .body
-    .appendChild(link);
-
-  link.click();
-
-  document
-    .body
-    .removeChild(link);
-
-  URL.revokeObjectURL(url);
+  downloadClosedULDExcel(rows);
 
   await new Promise(
     resolve => setTimeout(resolve,300)
