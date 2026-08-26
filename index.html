@@ -504,7 +504,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.17
+    Version 12.20
   </div>
 
   <div class="infoBox">
@@ -542,7 +542,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.17
+    Version 12.20
   </div>
 
   <div class="infoBox">
@@ -1413,7 +1413,7 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.17";
+const CODE_VERSION = "12.20";
 
 
 /* =========================================================
@@ -5345,10 +5345,19 @@ window.exportToCSV = async () => {
           uldId:uldId,
 
           weight:
-            Number(
+            Math.round(Number(
               uld.weightLbs || 0
-            ).toFixed(2)
+            ))
 
+        });
+
+        // Leave one completely blank row between ULDs.
+        rows.push({
+          awb:"",
+          scannedAt:"",
+          scannedBy:"",
+          uldId:"",
+          weight:""
         });
 
         continue;
@@ -5383,13 +5392,22 @@ window.exportToCSV = async () => {
 
             weight:
               index === 0
-                ? Number(uld.weightLbs || 0).toFixed(2)
+                ? Math.round(Number(uld.weightLbs || 0))
                 : ""
 
           });
 
         }
       );
+
+      // Leave one completely blank row between ULDs in the Excel report.
+      rows.push({
+        awb:"",
+        scannedAt:"",
+        scannedBy:"",
+        uldId:"",
+        weight:""
+      });
 
     }
 
@@ -5750,11 +5768,21 @@ function downloadClosedULDExcel(rows){
   rows.forEach(row => {
     data.push([
       "", row.awb || "", "", "", "", "", "", "", "", "",
-      row.scannedAt || "", row.scannedBy || "", row.uldId || "", row.weight || ""
+      row.scannedAt || "", row.scannedBy || "", row.uldId || "", (row.weight !== "" && row.weight != null ? Number(row.weight) : "")
     ]);
   });
 
   const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+    /* Keep Weight (LBS) as a real Excel number, not text. */
+    for(let r = 1; r < data.length; r++){
+      const cell = worksheet[XLSX.utils.encode_cell({r:r,c:13})];
+      if(cell && cell.v !== "" && cell.v != null){
+        cell.t = "n";
+        cell.v = Number(cell.v);
+        cell.z = "0";
+      }
+    }
 
   worksheet["!cols"] = [
     { wch: 3 },
@@ -5846,8 +5874,17 @@ async function exportEntireFlightData(
         scannedBy:"",
         uldId:uldId,
         weight:
-          Number(uld.weightLbs || 0).toFixed(2)
+          Math.round(Number(uld.weightLbs || 0))
 
+      });
+
+      // Leave one completely blank row between ULDs.
+      rows.push({
+        awb:"",
+        scannedAt:"",
+        scannedBy:"",
+        uldId:"",
+        weight:""
       });
 
       continue;
@@ -5881,11 +5918,20 @@ async function exportEntireFlightData(
 
         weight:
           index === 0
-            ? Number(uld.weightLbs || 0).toFixed(2)
+            ? Math.round(Number(uld.weightLbs || 0))
             : ""
 
       });
 
+    });
+
+    // Leave one completely blank row between ULDs in the Close Flight Excel report.
+    rows.push({
+      awb:"",
+      scannedAt:"",
+      scannedBy:"",
+      uldId:"",
+      weight:""
     });
 
   }
