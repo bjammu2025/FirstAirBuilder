@@ -504,7 +504,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.20
+    Version 12.25
   </div>
 
   <div class="infoBox">
@@ -542,7 +542,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.20
+    Version 12.25
   </div>
 
   <div class="infoBox">
@@ -614,6 +614,12 @@ th{
   </button>
 
   <button
+    class="closeULDButton"
+    onclick="openReopenULD()">
+    OPEN CLOSED ULD
+  </button>
+
+  <button
     class="backButton"
     onclick="goHome()">
     ⬅ BACK
@@ -657,7 +663,7 @@ th{
 
   <button
     class="backButton"
-    onclick="switchScreen('adminMenu')">
+    onclick="backToAdminMenuFromCreateUser()">
     ⬅ BACK
   </button>
 
@@ -716,6 +722,34 @@ th{
   <button
     class="backButton"
     onclick="backToAdminMenu()">
+    ⬅ BACK
+  </button>
+
+</div>
+
+<!-- =========================================================
+     REOPEN CLOSED ULD
+     ========================================================= -->
+
+<div id="reopenULD" class="screen">
+
+  <h3>Open Closed ULD</h3>
+
+  <div class="infoBox">
+    <div class="infoTitle">Select CLOSED ULD</div>
+
+    <select id="reopenULDSelect">
+      <option value="">Loading CLOSED ULDs...</option>
+    </select>
+
+    <div id="reopenULDInfo" class="manualHint"></div>
+  </div>
+
+  <button class="confirmButton" onclick="reopenSelectedULD()">
+    OPEN ULD
+  </button>
+
+  <button class="backButton" onclick="backToAdminMenuFromReopen()">
     ⬅ BACK
   </button>
 
@@ -1118,12 +1152,30 @@ th{
       <div
         id="weightKgDisplay"
         class="weightValue">
-        0.00 KG
+         0 KG
       </div>
 
     </div>
 
   </div>
+
+    <div class="infoTitle">
+      Cargo Type
+    </div>
+
+    <select id="cargoTypeSelect" multiple size="5">
+      <option value="Cooler">Cooler</option>
+      <option value="Frozen">Frozen</option>
+      <option value="Dry">Dry</option>
+      <option value="DG">DG</option>
+      <option value="Other">Other / Manual</option>
+    </select>
+
+    <div class="manualHint">
+      Select one or more cargo types. Use the manual field for any other type.
+    </div>
+
+    <input type="text" id="cargoTypeManual" placeholder="Manual cargo type (optional)" autocomplete="off">
 
   <button
     class="confirmButton"
@@ -1413,7 +1465,7 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.20";
+const CODE_VERSION = "12.25";
 
 
 /* =========================================================
@@ -1741,6 +1793,15 @@ window.openCreateUser = () => {
   ["newUsername","newUserPassword","newUserPasswordConfirm"].forEach(id => document.getElementById(id).value = "");
   switchScreen("createUser");
   document.getElementById("newUsername").focus();
+};
+
+window.backToAdminMenuFromCreateUser = () => {
+  ["newUsername","newUserPassword","newUserPasswordConfirm"].forEach(id => document.getElementById(id).value = "");
+  if(adminMenuUnlocked){
+    switchScreen("adminMenu");
+  }else{
+    goHome();
+  }
 };
 
 window.openResetUser = async () => {
@@ -4834,7 +4895,10 @@ window.startCloseULD = () => {
   document
     .getElementById("weightKgDisplay")
     .innerText =
-      "0.00 KG";
+      "0 KG";
+
+  document.getElementById("cargoTypeSelect").selectedIndex = -1;
+  document.getElementById("cargoTypeManual").value = "";
 
   switchScreen("closeULDWeight");
 
@@ -4869,12 +4933,12 @@ window.calculateKG = () => {
   }
 
   const kg =
-    lbs * 0.45359237;
+    Math.round(lbs * 0.45359237);
 
   document
     .getElementById("weightKgDisplay")
     .innerText =
-      kg.toFixed(2) + " KG";
+      kg + " KG";
 
 };
 
@@ -4906,14 +4970,34 @@ window.confirmCloseULD = async () => {
   }
 
   const kg =
-    lbs * 0.45359237;
+    Math.round(lbs * 0.45359237);
+
+  const selectedCargoTypes =
+    Array.from(document.getElementById("cargoTypeSelect").selectedOptions)
+      .map(option => option.value)
+      .filter(value => value !== "Other");
+
+  const manualCargo =
+    document.getElementById("cargoTypeManual").value.trim();
+
+  if(manualCargo){
+    selectedCargoTypes.push(manualCargo);
+  }
+
+  const cargoTypes = [...new Set(selectedCargoTypes)];
+
+  if(cargoTypes.length === 0){
+    alert("Please select at least one Cargo Type or enter a manual Cargo Type.");
+    return;
+  }
 
   const confirmed =
     await showConfirmation(
       "CONFIRM CLOSE ULD",
       `Close ULD ${selectedCloseULD}?\n\n` +
       `Weight: ${lbs.toFixed(2)} LBS\n` +
-      `Weight: ${kg.toFixed(2)} KGS`
+      `Weight: ${kg} KGS\n` +
+      `Cargo Type: ${cargoTypes.join(", ")}`
     );
 
   if(!confirmed)
@@ -4962,9 +5046,13 @@ window.confirmCloseULD = async () => {
               ),
 
             weightKg:
-              Number(
-                kg.toFixed(2)
-              ),
+              kg,
+
+            cargoTypes:
+              cargoTypes,
+
+            cargoType:
+              cargoTypes.join(", "),
 
             closedAt:
               serverTimestamp(),
@@ -4986,7 +5074,8 @@ window.confirmCloseULD = async () => {
       "ULD CLOSED",
       `ULD ${selectedCloseULD} is now CLOSED.\n\n` +
       `${lbs.toFixed(2)} LBS\n` +
-      `${kg.toFixed(2)} KGS`
+      `${kg} KGS\n` +
+      `Cargo Type: ${cargoTypes.join(", ")}`
     );
 
     selectedCloseULD = "";
@@ -5004,6 +5093,94 @@ window.confirmCloseULD = async () => {
 
   }
 
+};
+
+
+/* =========================================================
+   REOPEN CLOSED ULD
+   ========================================================= */
+
+window.openReopenULD = async () => {
+  if(!adminMenuUnlocked) return;
+  switchScreen("reopenULD");
+  await loadClosedULDsForReopen();
+};
+
+async function loadClosedULDsForReopen(){
+  const select = document.getElementById("reopenULDSelect");
+  const info = document.getElementById("reopenULDInfo");
+  select.innerHTML = `<option value="">Loading CLOSED ULDs...</option>`;
+  info.innerText = "";
+
+  try{
+    const snapshot = await getDocs(query(collection(db,"ulds"),where("status","==","CLOSED")));
+    if(snapshot.empty){
+      select.innerHTML = `<option value="">No CLOSED ULDs available</option>`;
+      return;
+    }
+    const ulds = [];
+    snapshot.forEach(docSnap => {
+      const d = docSnap.data();
+      ulds.push({
+        id:docSnap.id,
+        uldId:d.uldId || docSnap.id,
+        weightLbs:Number(d.weightLbs || 0),
+        weightKg:Number(d.weightKg || 0),
+        cargoType:d.cargoType || (Array.isArray(d.cargoTypes) ? d.cargoTypes.join(", ") : "")
+      });
+    });
+    ulds.sort((a,b) => a.uldId.localeCompare(b.uldId));
+    select.innerHTML = `<option value="">Select a CLOSED ULD</option>`;
+    ulds.forEach(uld => {
+      const option = document.createElement("option");
+      option.value = uld.id;
+      option.textContent = uld.uldId;
+      option.dataset.info = `${uld.weightLbs.toFixed(2)} LBS / ${Math.round(uld.weightKg)} KGS${uld.cargoType ? " / " + uld.cargoType : ""}`;
+      select.appendChild(option);
+    });
+    select.onchange = () => {
+      const option = select.options[select.selectedIndex];
+      info.innerText = option?.dataset?.info || "";
+    };
+  }catch(error){
+    console.error("Load closed ULDs error:",error);
+    select.innerHTML = `<option value="">Error loading CLOSED ULDs</option>`;
+    alert("Could not load CLOSED ULDs.\n\n" + error.message);
+  }
+}
+
+window.reopenSelectedULD = async () => {
+  if(!adminMenuUnlocked) return;
+  const select = document.getElementById("reopenULDSelect");
+  const docId = select.value;
+  if(!docId){
+    alert("Please select a CLOSED ULD.");
+    return;
+  }
+  const uldName = select.options[select.selectedIndex].textContent.trim();
+  const confirmed = await showConfirmation(
+    "OPEN CLOSED ULD",
+    `Open ULD ${uldName}?\n\n` +
+    `The ULD will return to OPEN status and can be used for Allocate, Offload, and Close ULD.`
+  );
+  if(!confirmed) return;
+  try{
+    await updateDoc(doc(db,"ulds",docId),{
+      status:"OPEN",
+      reopenedAt:serverTimestamp(),
+      reopenedBy:currentUser
+    });
+    await showVerification(true,uldName,"ULD OPENED",`ULD ${uldName} is now OPEN.`);
+    await loadClosedULDsForReopen();
+  }catch(error){
+    console.error("Reopen ULD error:",error);
+    alert("Could not open ULD.\n\n" + error.message);
+  }
+};
+
+window.backToAdminMenuFromReopen = () => {
+  if(adminMenuUnlocked) switchScreen("adminMenu");
+  else goHome();
 };
 
 
@@ -5133,9 +5310,9 @@ window.goToLiveView = () => {
                   ).toFixed(2)}
                   LBS
                   /
-                  ${Number(
+                  ${Math.round(Number(
                     uld.weightKg || 0
-                  ).toFixed(2)}
+                  ))}
                   KGS
 
                 </div>`;
