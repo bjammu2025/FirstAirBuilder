@@ -12,6 +12,11 @@
            user-scalable=no">
 
 <title>First Air Builder</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#121212">
+<meta name="application-name" content="First Air Builder">
 
 <style>
 
@@ -242,6 +247,20 @@ h3{
 
 .hidden{
   display:none!important;
+}
+
+/* Zebra / Android fullscreen support */
+html,body{
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+input,select,textarea{
+  -webkit-user-select:text;
+  user-select:text;
+}
+body{
+  overscroll-behavior:none;
 }
 
 table{
@@ -504,7 +523,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.25
+    Version 12.26
   </div>
 
   <div class="infoBox">
@@ -542,7 +561,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.25
+    Version 12.26
   </div>
 
   <div class="infoBox">
@@ -577,7 +596,7 @@ th{
 
   <button
     class="backButton"
-    onclick="logoutUser()">
+    onclick="confirmLogout()">
     LOG OUT
   </button>
 
@@ -1163,12 +1182,11 @@ th{
       Cargo Type
     </div>
 
-    <select id="cargoTypeSelect" multiple size="5">
+    <select id="cargoTypeSelect" multiple size="4">
       <option value="Cooler">Cooler</option>
       <option value="Frozen">Frozen</option>
       <option value="Dry">Dry</option>
       <option value="DG">DG</option>
-      <option value="Other">Other / Manual</option>
     </select>
 
     <div class="manualHint">
@@ -1185,7 +1203,7 @@ th{
 
   <button
     class="backButton"
-    onclick="switchScreen('closeULDStart');loadOpenULDsForClose()">
+    onclick="backFromCloseULDWeight()">
     ⬅ BACK
   </button>
 
@@ -1465,7 +1483,39 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.25";
+const CODE_VERSION = "12.26";
+
+/* =========================================================
+   ZEBRA / ANDROID FULLSCREEN
+   ========================================================= */
+
+async function requestAppFullscreen(){
+  try{
+    if(document.fullscreenElement) return true;
+
+    const root = document.documentElement;
+
+    if(root.requestFullscreen){
+      await root.requestFullscreen({navigationUI:"hide"});
+      return true;
+    }
+
+    if(root.webkitRequestFullscreen){
+      root.webkitRequestFullscreen();
+      return true;
+    }
+  }catch(error){
+    console.debug("Fullscreen request not available:", error);
+  }
+
+  return false;
+}
+
+document.addEventListener("click", () => {
+  if(!document.fullscreenElement){
+    requestAppFullscreen();
+  }
+}, {once:true});
 
 
 /* =========================================================
@@ -1748,6 +1798,17 @@ window.loginUser = async () => {
     console.error("Login error:",error);
     setLoginStatus("Login failed. " + error.message,"error");
   }
+};
+
+window.confirmLogout = async () => {
+  const confirmed = await showConfirmation(
+    "LOG OUT",
+    "Are you sure you want to log out?"
+  );
+
+  if(!confirmed) return;
+
+  await logoutUser();
 };
 
 window.logoutUser = async () => {
@@ -4862,6 +4923,17 @@ async function loadOpenULDsForClose(){
    START CLOSE ULD
    ========================================================= */
 
+window.backFromCloseULDWeight = async () => {
+  selectedCloseULD = "";
+  document.getElementById("weightLbs").value = "";
+  document.getElementById("weightKgDisplay").innerText = "0 KG";
+  document.getElementById("cargoTypeSelect").selectedIndex = -1;
+  document.getElementById("cargoTypeManual").value = "";
+
+  switchScreen("closeULDStart");
+  await loadOpenULDsForClose();
+};
+
 window.startCloseULD = () => {
 
   const select =
@@ -4974,8 +5046,7 @@ window.confirmCloseULD = async () => {
 
   const selectedCargoTypes =
     Array.from(document.getElementById("cargoTypeSelect").selectedOptions)
-      .map(option => option.value)
-      .filter(value => value !== "Other");
+      .map(option => option.value);
 
   const manualCargo =
     document.getElementById("cargoTypeManual").value.trim();
@@ -6493,6 +6564,8 @@ window.addEventListener(
   }
 );
 
+
+tryStartFullscreen();
 </script>
 
 </body>
