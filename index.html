@@ -1585,6 +1585,79 @@ label *,
   display:none !important;
 }
 
+
+/* =========================================================
+   12.51 - LIVE VIEW READABILITY FIX
+   Keep the app's grey background and black/navy buttons,
+   but make all Live View text readable.
+   ========================================================= */
+
+#liveView,
+#liveView *{
+  color:#111827;
+}
+
+#liveView .livePosition{
+  background:#E2E5E9 !important;
+  border:1px solid #6B7280 !important;
+  color:#111827 !important;
+}
+
+#liveView .livePositionTitle{
+  color:#0B1F3A !important;
+  font-weight:700 !important;
+}
+
+#liveView .liveULD{
+  background:#F3F4F6 !important;
+  border:2px solid #6B7280 !important;
+  color:#111827 !important;
+}
+
+#liveView .liveULD.open{
+  border-color:#B8860B !important;
+}
+
+#liveView .liveULD.closed{
+  border-color:#2E7D32 !important;
+}
+
+#liveView .liveULDTitle,
+#liveView .liveULDWeight{
+  color:#111827 !important;
+}
+
+#liveView .openStatus{
+  color:#8A6500 !important;
+  font-weight:700 !important;
+}
+
+#liveView .closedStatus{
+  color:#1B6E2F !important;
+  font-weight:700 !important;
+}
+
+#liveView table{
+  background:#FFFFFF !important;
+  color:#111827 !important;
+}
+
+#liveView th{
+  background:#1E4E89 !important;
+  color:#FFFFFF !important;
+}
+
+#liveView td{
+  background:#FFFFFF !important;
+  color:#111827 !important;
+  border-color:#9CA3AF !important;
+}
+
+#liveView .backButton{
+  background:#0B1F3A !important;
+  color:#FFFFFF !important;
+}
+
 </style>
 </head>
 
@@ -1601,7 +1674,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.50
+    Version 12.52
   </div>
 
   <div class="infoBox">
@@ -2614,7 +2687,7 @@ label *,
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.50";
+const CODE_VERSION = "12.52";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
@@ -7816,7 +7889,9 @@ window.openDeleteULDAdmin = async () => {
 
     ulds.sort(
       (a,b) =>
-        a.uldId.localeCompare(b.uldId)
+        a.uldId.localeCompare(
+          b.uldId
+        )
     );
 
     select.innerHTML =
@@ -7943,48 +8018,74 @@ window.deleteSelectedULDAdmin = async () => {
   try{
 
     /*
-       First find every AWB record belonging to this ULD.
-       The current app stores both fields, so both are checked.
+       Find all scan records for this ULD.
+
+       Current scanning records contain:
+         positionId: currentULD
+         uldId:      currentULD
+
+       We check both fields. If one query fails because of a
+       Firestore/index issue, the other is still attempted.
     */
     const scanIds =
       new Set();
 
-    const q1 =
-      query(
-        collection(db,"scans"),
-        where(
-          "uldId",
-          "==",
-          uldId
-        )
+    try{
+
+      const snap =
+        await getDocs(
+          query(
+            collection(db,"scans"),
+            where(
+              "uldId",
+              "==",
+              uldId
+            )
+          )
+        );
+
+      snap.forEach(
+        d => scanIds.add(d.id)
       );
 
-    const q2 =
-      query(
-        collection(db,"scans"),
-        where(
-          "positionId",
-          "==",
-          uldId
-        )
+    }catch(error){
+
+      console.warn(
+        "uldId scan lookup failed:",
+        error
       );
 
-    const snap1 =
-      await getDocs(q1);
+    }
 
-    const snap2 =
-      await getDocs(q2);
+    try{
 
-    snap1.forEach(
-      d => scanIds.add(d.id)
-    );
+      const snap =
+        await getDocs(
+          query(
+            collection(db,"scans"),
+            where(
+              "positionId",
+              "==",
+              uldId
+            )
+          )
+        );
 
-    snap2.forEach(
-      d => scanIds.add(d.id)
-    );
+      snap.forEach(
+        d => scanIds.add(d.id)
+      );
+
+    }catch(error){
+
+      console.warn(
+        "positionId scan lookup failed:",
+        error
+      );
+
+    }
 
     /*
-       Delete the AWB records first.
+       Delete associated AWBs.
     */
     for(
       const scanId
@@ -8002,9 +8103,9 @@ window.deleteSelectedULDAdmin = async () => {
     }
 
     /*
-       Delete the exact ULD document selected in the dropdown.
-       This is important because the ULD document ID may not be
-       the same as the displayed ULD number.
+       Most important part:
+       delete the EXACT ULD document selected by Admin.
+       We do not query for the ULD again.
     */
     await deleteDoc(
       doc(
@@ -8014,14 +8115,15 @@ window.deleteSelectedULDAdmin = async () => {
       )
     );
 
+    /*
+       Clear the selection before reloading.
+    */
+    select.value = "";
+
     alert(
       `ULD ${uldId} deleted successfully.`
     );
 
-    /*
-       Reload the Delete ULD list so the deleted ULD disappears
-       immediately.
-    */
     await openDeleteULDAdmin();
 
   }catch(error){
