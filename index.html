@@ -1054,6 +1054,326 @@ body > .container,
   background:transparent !important;
 }
 
+
+/* =========================================================
+   12.35 ACCESSIBLE FLAT COLOR SYSTEM
+   High contrast on Zebra + desktop
+   No gradients / no background photos
+   ========================================================= */
+
+:root{
+  --app-grey:#B6BBC2;
+  --surface:#D9DDE2;
+  --surface-light:#EEF0F2;
+  --navy:#0B1F3A;
+  --navy-active:#163A63;
+  --text:#111827;
+  --muted:#374151;
+  --border:#6B7280;
+  --white:#FFFFFF;
+  --success:#166534;
+  --success-bg:#DCFCE7;
+  --danger:#B91C1C;
+  --danger-bg:#FEE2E2;
+  --warning:#92400E;
+  --warning-bg:#FEF3C7;
+  --info:#1E40AF;
+  --info-bg:#DBEAFE;
+}
+
+html,
+body,
+body > .container,
+.screen{
+  background:var(--app-grey) !important;
+  background-image:none !important;
+  color:var(--text) !important;
+}
+
+/* Main panels */
+.infoBox,
+.weightBox,
+.manualBox,
+.statusBox,
+.card,
+.panel,
+.loginBox{
+  background:var(--surface) !important;
+  color:var(--text) !important;
+  border-color:var(--border) !important;
+  box-shadow:none !important;
+}
+
+/* All text must have a dark readable default */
+body,
+.screen,
+.screen *,
+.container,
+.container *,
+.infoBox *,
+.weightBox *,
+.modal *,
+.overlay *{
+  color:var(--text);
+  text-shadow:none !important;
+}
+
+/* Headings */
+h1,h2,h3,h4,h5,h6,
+.screenTitle,
+.infoTitle{
+  color:var(--navy) !important;
+}
+
+/* Small username */
+#homeUserLabel{
+  color:#1F2937 !important;
+  font-size:16px !important;
+  font-weight:500 !important;
+  background:transparent !important;
+}
+
+/* Buttons: flat navy with strong contrast */
+button,
+button:visited,
+input[type="button"],
+input[type="submit"],
+input[type="reset"]{
+  background:var(--navy) !important;
+  background-image:none !important;
+  color:var(--white) !important;
+  border:1px solid var(--navy) !important;
+  box-shadow:none !important;
+  text-shadow:none !important;
+}
+
+button:hover,
+button:focus,
+button:active{
+  background:var(--navy-active) !important;
+  color:var(--white) !important;
+}
+
+button:disabled{
+  background:#4B5563 !important;
+  color:#F9FAFB !important;
+  opacity:1 !important;
+}
+
+button *,
+button span,
+button strong,
+button b{
+  color:var(--white) !important;
+}
+
+/* Form controls */
+input,
+select,
+textarea{
+  background:var(--white) !important;
+  color:var(--text) !important;
+  border:1px solid var(--border) !important;
+  box-shadow:none !important;
+  text-shadow:none !important;
+}
+
+input::placeholder,
+textarea::placeholder{
+  color:#4B5563 !important;
+  opacity:1 !important;
+}
+
+option{
+  background:var(--white) !important;
+  color:var(--text) !important;
+}
+
+/* Tables */
+table{
+  background:var(--white) !important;
+  color:var(--text) !important;
+  border-color:var(--border) !important;
+}
+
+thead,
+th{
+  background:var(--navy) !important;
+  color:var(--white) !important;
+  border-color:var(--navy) !important;
+}
+
+th *{
+  color:var(--white) !important;
+}
+
+tbody,
+tbody tr,
+td{
+  background:var(--white) !important;
+  color:var(--text) !important;
+  border-color:#9CA3AF !important;
+}
+
+/* Zebra-friendly alternating rows */
+tbody tr:nth-child(even) td{
+  background:#F3F4F6 !important;
+}
+
+/* Links */
+a{
+  color:#1E3A8A !important;
+}
+
+/* Status messages */
+.success,
+.statusSuccess,
+.cameraStatus.success,
+.verificationSuccess{
+  color:var(--success) !important;
+  background:var(--success-bg) !important;
+  border-color:#86EFAC !important;
+}
+
+.error,
+.statusError,
+.cameraStatus.error{
+  color:var(--danger) !important;
+  background:var(--danger-bg) !important;
+  border-color:#FCA5A5 !important;
+}
+
+.warning,
+.statusWarning{
+  color:var(--warning) !important;
+  background:var(--warning-bg) !important;
+  border-color:#FCD34D !important;
+}
+
+.info,
+.statusInfo{
+  color:var(--info) !important;
+  background:var(--info-bg) !important;
+  border-color:#93C5FD !important;
+}
+
+/* Confirmation / verification overlays:
+   dark translucent backdrop + light readable dialog */
+.confirmOverlay,
+.verificationOverlay,
+.modalOverlay,
+#confirmationOverlay,
+#verificationOverlay{
+  background:rgba(17,24,39,.72) !important;
+  color:var(--white) !important;
+}
+
+.confirmOverlay *,
+.verificationOverlay *,
+.modalOverlay *,
+#confirmationOverlay *,
+#verificationOverlay *{
+  text-shadow:none !important;
+}
+
+.confirmBox,
+.verificationBox,
+.modalBox,
+.confirmModal,
+.verificationModal{
+  background:#F3F4F6 !important;
+  color:var(--text) !important;
+  border:2px solid var(--navy) !important;
+  box-shadow:none !important;
+}
+
+.confirmBox *,
+.verificationBox *,
+.modalBox *,
+.confirmModal *,
+.verificationModal *{
+  color:var(--text) !important;
+}
+
+.confirmBox h1,
+.confirmBox h2,
+.confirmBox h3,
+.confirmBox h4,
+.verificationBox h1,
+.verificationBox h2,
+.verificationBox h3,
+.verificationBox h4,
+.modalBox h1,
+.modalBox h2,
+.modalBox h3,
+.modalBox h4{
+  color:var(--navy) !important;
+}
+
+.confirmBox button,
+.verificationBox button,
+.modalBox button,
+.confirmModal button,
+.verificationModal button{
+  background:var(--navy) !important;
+  color:var(--white) !important;
+}
+
+.confirmBox button *,
+.verificationBox button *,
+.modalBox button *,
+.confirmModal button *,
+.verificationModal button *{
+  color:var(--white) !important;
+}
+
+/* Scanned AWB confirmation number: very high contrast */
+.verificationAWB,
+.awbConfirmNumber{
+  color:var(--navy) !important;
+  background:#FFFFFF !important;
+  border-color:var(--navy) !important;
+  text-shadow:none !important;
+}
+
+/* Camera area */
+.cameraOuter,
+.scanBox{
+  border-color:#22C55E !important;
+}
+
+.cameraStatus{
+  color:var(--text) !important;
+  background:var(--surface-light) !important;
+  border-color:var(--border) !important;
+}
+
+/* Focus visibility */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible{
+  outline:3px solid #2563EB !important;
+  outline-offset:2px;
+}
+
+/* Prevent inherited transparent/white text from becoming unreadable */
+label,
+label *,
+.infoTitle *,
+.manualHint,
+.version{
+  color:var(--text) !important;
+}
+
+/* Landscape warning */
+@media (max-width:900px) and (pointer:coarse) and (orientation:landscape){
+  body::before{
+    background:var(--app-grey) !important;
+    color:var(--navy) !important;
+  }
+}
+
 </style>
 </head>
 
@@ -1070,7 +1390,7 @@ body > .container,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.34
+    Version 12.35
   </div>
 
   <div class="infoBox">
@@ -2020,7 +2340,7 @@ body > .container,
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.34";
+const CODE_VERSION = "12.35";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
