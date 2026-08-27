@@ -260,7 +260,35 @@ input,select,textarea{
   user-select:text;
 }
 body{
-  overscroll-behavior:none;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior-y:auto;
+  overscroll-behavior-x:none;
+  touch-action:pan-y;
+}
+
+/* Portrait-only layout */
+@media (orientation:landscape){
+  body::before{
+    content:"Please rotate the Zebra to portrait mode.";
+    position:fixed;
+    inset:0;
+    z-index:999999;
+    background:#121212;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:30px;
+    box-sizing:border-box;
+    font-size:2rem;
+    font-weight:bold;
+  }
+
+  .container{
+    visibility:hidden;
+  }
 }
 
 table{
@@ -523,7 +551,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.26
+    Version 12.27
   </div>
 
   <div class="infoBox">
@@ -561,7 +589,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.26
+    Version 12.27
   </div>
 
   <div class="infoBox">
@@ -1483,11 +1511,23 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.26";
+const CODE_VERSION = "12.27";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
    ========================================================= */
+
+async function lockPortraitOrientation(){
+  try{
+    if(screen.orientation && screen.orientation.lock){
+      await screen.orientation.lock("portrait");
+      return true;
+    }
+  }catch(error){
+    console.debug("Portrait orientation lock not available:", error);
+  }
+  return false;
+}
 
 async function requestAppFullscreen(){
   try{
@@ -6566,6 +6606,7 @@ window.addEventListener(
 
 
 tryStartFullscreen();
+lockPortraitOrientation();
 </script>
 
 </body>
