@@ -1674,7 +1674,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.52
+    Version 12.53
   </div>
 
   <div class="infoBox">
@@ -2687,7 +2687,7 @@ label *,
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.52";
+const CODE_VERSION = "12.53";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
@@ -7905,6 +7905,11 @@ window.openDeleteULDAdmin = async () => {
             "option"
           );
 
+        /*
+           IMPORTANT:
+           The option value is the actual Firestore
+           document ID, not the displayed ULD number.
+        */
         option.value =
           uld.docId;
 
@@ -7983,6 +7988,11 @@ window.deleteSelectedULDAdmin = async () => {
 
   }
 
+  const docId =
+    String(
+      select.value
+    ).trim();
+
   const uldId =
     String(
       selected.dataset.uldId ||
@@ -7994,7 +8004,7 @@ window.deleteSelectedULDAdmin = async () => {
         .trim()
     ).trim();
 
-  if(!uldId){
+  if(!docId || !uldId){
 
     alert(
       "The selected ULD could not be identified."
@@ -8008,89 +8018,127 @@ window.deleteSelectedULDAdmin = async () => {
     await showConfirmation(
       "DELETE ULD",
       `Are you sure you want to permanently delete ULD ${uldId}?\n\n` +
-      `All AWBs associated with this ULD will also be deleted.\n\n` +
+      `All AWBs associated with this ULD will also be removed.\n\n` +
       `This action cannot be undone.`
     );
 
   if(!confirmed)
     return;
 
+  /*
+     IMPORTANT:
+     Delete the ULD document FIRST.
+
+     Previous versions tried to query/delete all AWBs before
+     deleting the ULD. If an AWB query/delete was blocked,
+     the ULD itself never got deleted.
+
+     The ULD document is the primary record, so remove it first.
+  */
   try{
 
-    /*
-       Find all scan records for this ULD.
+    await deleteDoc(
+      doc(
+        db,
+        "ulds",
+        docId
+      )
+    );
 
-       Current scanning records contain:
-         positionId: currentULD
-         uldId:      currentULD
+  }catch(error){
 
-       We check both fields. If one query fails because of a
-       Firestore/index issue, the other is still attempted.
-    */
-    const scanIds =
-      new Set();
+    console.error(
+      "Delete ULD document error:",
+      error
+    );
+
+    alert(
+      `ULD ${uldId} could not be deleted.\n\n` +
+      `Firestore error:\n` +
+      error.message
+    );
+
+    return;
+
+  }
+
+  /*
+     Now clean up associated AWBs.
+
+     If scan deletion is not permitted by the current
+     Firestore rules, the ULD has already been successfully
+     removed. We report the cleanup warning instead of
+     making the user think the ULD deletion failed.
+  */
+  let scanCleanupFailed = false;
+
+  const scanIds =
+    new Set();
+
+  try{
+
+    const snap =
+      await getDocs(
+        query(
+          collection(db,"scans"),
+          where(
+            "uldId",
+            "==",
+            uldId
+          )
+        )
+      );
+
+    snap.forEach(
+      d => scanIds.add(d.id)
+    );
+
+  }catch(error){
+
+    console.warn(
+      "uldId cleanup lookup failed:",
+      error
+    );
+
+    scanCleanupFailed = true;
+
+  }
+
+  try{
+
+    const snap =
+      await getDocs(
+        query(
+          collection(db,"scans"),
+          where(
+            "positionId",
+            "==",
+            uldId
+          )
+        )
+      );
+
+    snap.forEach(
+      d => scanIds.add(d.id)
+    );
+
+  }catch(error){
+
+    console.warn(
+      "positionId cleanup lookup failed:",
+      error
+    );
+
+    scanCleanupFailed = true;
+
+  }
+
+  for(
+    const scanId
+    of scanIds
+  ){
 
     try{
-
-      const snap =
-        await getDocs(
-          query(
-            collection(db,"scans"),
-            where(
-              "uldId",
-              "==",
-              uldId
-            )
-          )
-        );
-
-      snap.forEach(
-        d => scanIds.add(d.id)
-      );
-
-    }catch(error){
-
-      console.warn(
-        "uldId scan lookup failed:",
-        error
-      );
-
-    }
-
-    try{
-
-      const snap =
-        await getDocs(
-          query(
-            collection(db,"scans"),
-            where(
-              "positionId",
-              "==",
-              uldId
-            )
-          )
-        );
-
-      snap.forEach(
-        d => scanIds.add(d.id)
-      );
-
-    }catch(error){
-
-      console.warn(
-        "positionId scan lookup failed:",
-        error
-      );
-
-    }
-
-    /*
-       Delete associated AWBs.
-    */
-    for(
-      const scanId
-      of scanIds
-    ){
 
       await deleteDoc(
         doc(
@@ -8100,45 +8148,42 @@ window.deleteSelectedULDAdmin = async () => {
         )
       );
 
+    }catch(error){
+
+      console.warn(
+        "AWB cleanup failed:",
+        scanId,
+        error
+      );
+
+      scanCleanupFailed = true;
+
     }
 
-    /*
-       Most important part:
-       delete the EXACT ULD document selected by Admin.
-       We do not query for the ULD again.
-    */
-    await deleteDoc(
-      doc(
-        db,
-        "ulds",
-        select.value
-      )
+  }
+
+  /*
+     Clear the selected value and refresh the list.
+  */
+  select.value = "";
+
+  if(scanCleanupFailed){
+
+    alert(
+      `ULD ${uldId} was deleted successfully.\n\n` +
+      `Some associated AWB records could not be removed. ` +
+      `The ULD itself is already deleted.`
     );
 
-    /*
-       Clear the selection before reloading.
-    */
-    select.value = "";
+  }else{
 
     alert(
       `ULD ${uldId} deleted successfully.`
     );
 
-    await openDeleteULDAdmin();
-
-  }catch(error){
-
-    console.error(
-      "Delete ULD error:",
-      error
-    );
-
-    alert(
-      "ULD could not be deleted.\n\n" +
-      error.message
-    );
-
   }
+
+  await openDeleteULDAdmin();
 
 };
 
