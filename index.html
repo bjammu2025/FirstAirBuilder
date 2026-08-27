@@ -1626,6 +1626,17 @@ label *,
 #liveView .liveULDWeight{
   color:#111827 !important;
 }
+#liveView th,
+#liveView td{
+  vertical-align:middle;
+}
+
+#liveView th:nth-child(5),
+#liveView th:nth-child(6),
+#liveView td:nth-child(5),
+#liveView td:nth-child(6){
+  white-space:nowrap;
+}
 
 #liveView .openStatus{
   color:#8A6500 !important;
@@ -1674,7 +1685,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.53
+    Version 12.54
   </div>
 
   <div class="infoBox">
@@ -1728,6 +1739,12 @@ label *,
     class="createButton"
     onclick="showCreateULD()">
     + CREATE NEW ULD
+  </button>
+
+    <button
+    class="manualButton"
+    onclick="openUpdateULDLocation()">
+    UPDATE ULD LOCATION
   </button>
 
     <div
@@ -1803,6 +1820,12 @@ label *,
     class="closeULDButton"
     onclick="openReopenULD()">
     OPEN CLOSED ULD
+  </button>
+
+    <button
+    class="manualButton"
+    onclick="openAmendULD()">
+    AMEND ULD
   </button>
 
     <button
@@ -2002,6 +2025,46 @@ label *,
 </div>
 
 <!-- =========================================================
+     AMEND ULD - ADMIN
+     ========================================================= -->
+
+<div id="amendULD" class="screen">
+
+  <h3>Amend ULD</h3>
+
+  <div class="infoBox">
+
+    <div class="infoTitle">
+      Select ULD
+    </div>
+
+    <select id="amendULDSelect">
+      <option value="">Loading ULDs...</option>
+    </select>
+
+    <input
+      type="text"
+      id="amendULDNewName"
+      placeholder="Enter New ULD Name"
+      autocomplete="off">
+
+  </div>
+
+  <button
+    class="confirmButton"
+    onclick="amendSelectedULD()">
+    SAVE ULD NAME
+  </button>
+
+  <button
+    class="backButton"
+    onclick="backToAdminMenuFromAmendULD()">
+    ⬅ BACK
+  </button>
+
+</div>
+
+<!-- =========================================================
      ADMIN MENU PASSWORD
      ========================================================= -->
 
@@ -2040,6 +2103,61 @@ label *,
   </div>
 
 </div>
+
+<!-- =========================================================
+     UPDATE ULD LOCATION
+     ========================================================= -->
+
+<div id="updateULDLocation" class="screen">
+
+  <h3>Update ULD Location</h3>
+
+  <div class="infoBox">
+
+    <div class="infoTitle">
+      Select CLOSED ULD
+    </div>
+
+    <select id="updateLocationULDSelect">
+      <option value="">Loading CLOSED ULDs...</option>
+    </select>
+
+    <div class="infoTitle">
+      Location
+    </div>
+
+    <select id="uldLocationType" onchange="toggleULDLocationInput()">
+      <option value="">Select Location</option>
+      <option value="TRAILER">Trailer Number</option>
+      <option value="CALMAIR">CalmAir</option>
+      <option value="CARGOJET">Cargojet</option>
+    </select>
+
+    <input
+      type="text"
+      id="uldTrailerNumber"
+      placeholder="Enter Trailer Number"
+      autocomplete="off"
+      class="hidden">
+
+    <div id="currentULDLocationInfo" class="manualHint"></div>
+
+  </div>
+
+  <button
+    class="confirmButton"
+    onclick="saveULDLocation()">
+    UPDATE LOCATION
+  </button>
+
+  <button
+    class="backButton"
+    onclick="backFromUpdateULDLocation()">
+    ⬅ BACK
+  </button>
+
+</div>
+
 
 <!-- =========================================================
      ALLOCATE START
@@ -2391,6 +2509,8 @@ label *,
       <option value="Frozen">Frozen</option>
       <option value="Dry">Dry</option>
       <option value="DG">DG</option>
+      <option value="Plank">Plank</option>
+      <option value="Belly">Belly</option>
     </select>
 
     <div class="manualHint">
@@ -2795,7 +2915,8 @@ import {
   query,
   where,
   getDocs,
-  deleteDoc
+  deleteDoc,
+  writeBatch
 
 }
 from
@@ -3606,7 +3727,9 @@ window.createNewULD = async () => {
 
         closedAt:null,
 
-        closedBy:""
+        closedBy:"",
+
+        uldLocation:""
 
       }
     );
@@ -6485,6 +6608,832 @@ window.backToAdminMenuFromReopen = () => {
 
 
 /* =========================================================
+   AMEND ULD - ADMIN
+   Change the ULD name without losing AWB associations.
+   ========================================================= */
+
+window.openAmendULD = async () => {
+
+  if(!adminMenuUnlocked)
+    return;
+
+  switchScreen("amendULD");
+  await loadULDsForAmend();
+
+};
+
+async function loadULDsForAmend(){
+
+  const select =
+    document.getElementById("amendULDSelect");
+
+  const newName =
+    document.getElementById("amendULDNewName");
+
+  if(!select)
+    return;
+
+  select.innerHTML =
+    `<option value="">Loading ULDs...</option>`;
+
+  if(newName)
+    newName.value = "";
+
+  try{
+
+    const snapshot =
+      await getDocs(
+        collection(db,"ulds")
+      );
+
+    const ulds = [];
+
+    snapshot.forEach(docSnap => {
+
+      const d =
+        docSnap.data();
+
+      const uldId =
+        String(
+          d.uldId ||
+          d.positionId ||
+          d.uld ||
+          d.ULD ||
+          docSnap.id ||
+          ""
+        ).trim();
+
+      if(uldId){
+
+        ulds.push({
+          docId:docSnap.id,
+          uldId:uldId,
+          status:String(
+            d.status || "OPEN"
+          ).toUpperCase()
+        });
+
+      }
+
+    });
+
+    ulds.sort(
+      (a,b) =>
+        a.uldId.localeCompare(
+          b.uldId
+        )
+    );
+
+    select.innerHTML =
+      `<option value="">Select ULD</option>`;
+
+    ulds.forEach(uld => {
+
+      const option =
+        document.createElement("option");
+
+      option.value =
+        uld.docId;
+
+      option.dataset.uldId =
+        uld.uldId;
+
+      option.textContent =
+        `${uld.uldId} (${uld.status})`;
+
+      select.appendChild(option);
+
+    });
+
+    if(!ulds.length){
+
+      select.innerHTML =
+        `<option value="">No ULDs available</option>`;
+
+    }
+
+  }catch(error){
+
+    console.error(
+      "Load Amend ULD error:",
+      error
+    );
+
+    select.innerHTML =
+      `<option value="">Unable to load ULDs</option>`;
+
+    alert(
+      "Could not load ULDs.\n\n" +
+      error.message
+    );
+
+  }
+
+}
+
+
+window.amendSelectedULD = async () => {
+
+  if(!adminMenuUnlocked)
+    return;
+
+  const select =
+    document.getElementById(
+      "amendULDSelect"
+    );
+
+  const input =
+    document.getElementById(
+      "amendULDNewName"
+    );
+
+  if(!select || !input){
+
+    alert(
+      "Amend ULD screen is unavailable."
+    );
+
+    return;
+
+  }
+
+  const selected =
+    select.options[
+      select.selectedIndex
+    ];
+
+  const docId =
+    String(
+      select.value || ""
+    ).trim();
+
+  const oldULD =
+    String(
+      selected?.dataset?.uldId || ""
+    ).trim();
+
+  const newULD =
+    input.value
+      .trim()
+      .toUpperCase();
+
+  if(!docId || !oldULD){
+
+    alert(
+      "Please select a ULD."
+    );
+
+    return;
+
+  }
+
+  if(!newULD){
+
+    alert(
+      "Please enter the new ULD name."
+    );
+
+    input.focus();
+    return;
+
+  }
+
+  if(newULD === oldULD){
+
+    alert(
+      "The new ULD name is the same as the current name."
+    );
+
+    return;
+
+  }
+
+  try{
+
+    const duplicateQuery =
+      query(
+        collection(db,"ulds"),
+        where("uldId","==",newULD)
+      );
+
+    const duplicateSnapshot =
+      await getDocs(
+        duplicateQuery
+      );
+
+    if(!duplicateSnapshot.empty){
+
+      alert(
+        `ULD ${newULD} already exists.\n\n` +
+        `Please choose a different ULD name.`
+      );
+
+      input.select();
+      return;
+
+    }
+
+    const confirmed =
+      await showConfirmation(
+        "AMEND ULD",
+        `Change ULD ${oldULD} to ${newULD}?\n\n` +
+        `All AWBs currently allocated to ${oldULD} will remain allocated to this ULD.`
+      );
+
+    if(!confirmed)
+      return;
+
+    /*
+       Keep the Firestore document ID unchanged.
+       Only the ULD name and the scan references are amended.
+    */
+    await updateDoc(
+      doc(
+        db,
+        "ulds",
+        docId
+      ),
+      {
+        uldId:newULD,
+        amendedAt:serverTimestamp(),
+        amendedBy:currentUser
+      }
+    );
+
+    /*
+       Update every AWB association that points to the old ULD.
+       The AWB code, scan time and scanned-by values are not changed.
+    */
+    const scanDocs = new Map();
+
+    const byULD =
+      await getDocs(
+        query(
+          collection(db,"scans"),
+          where("uldId","==",oldULD)
+        )
+      );
+
+    byULD.forEach(
+      docSnap => scanDocs.set(
+        docSnap.id,
+        docSnap.data()
+      )
+    );
+
+    /*
+       Also handle older records that use positionId as the ULD reference.
+    */
+    const byPosition =
+      await getDocs(
+        query(
+          collection(db,"scans"),
+          where("positionId","==",oldULD)
+        )
+      );
+
+    byPosition.forEach(
+      docSnap => scanDocs.set(
+        docSnap.id,
+        docSnap.data()
+      )
+    );
+
+    for(
+      const [scanId,scanData]
+      of scanDocs
+    ){
+
+      const updateFields = {};
+
+      if(scanData.uldId === oldULD)
+        updateFields.uldId = newULD;
+
+      if(scanData.positionId === oldULD)
+        updateFields.positionId = newULD;
+
+      if(Object.keys(updateFields).length){
+
+        await updateDoc(
+          doc(
+            db,
+            "scans",
+            scanId
+          ),
+          updateFields
+        );
+
+      }
+
+    }
+
+    input.value = "";
+    select.value = "";
+
+    await showVerification(
+      true,
+      newULD,
+      "ULD AMENDED",
+      `ULD ${oldULD} has been changed to ${newULD}.\n\n` +
+      `All allocated AWBs remain associated with the amended ULD.`
+    );
+
+    await loadULDsForAmend();
+
+  }catch(error){
+
+    console.error(
+      "Amend ULD error:",
+      error
+    );
+
+    alert(
+      "Could not amend ULD.\n\n" +
+      error.message
+    );
+
+  }
+
+};
+
+
+window.backToAdminMenuFromAmendULD = () => {
+
+  const input =
+    document.getElementById(
+      "amendULDNewName"
+    );
+
+  if(input)
+    input.value = "";
+
+  if(adminMenuUnlocked)
+    switchScreen("adminMenu");
+  else
+    goHome();
+
+};
+
+
+/* =========================================================
+   UPDATE ULD LOCATION
+   CLOSED ULDs ONLY
+   ========================================================= */
+
+window.openUpdateULDLocation = async () => {
+
+  if(!getCurrentUser()){
+
+    alert(
+      "Please enter user name"
+    );
+
+    return;
+
+  }
+
+  switchScreen(
+    "updateULDLocation"
+  );
+
+  const typeSelect =
+    document.getElementById(
+      "uldLocationType"
+    );
+
+  const trailerInput =
+    document.getElementById(
+      "uldTrailerNumber"
+    );
+
+  if(typeSelect)
+    typeSelect.value = "";
+
+  if(trailerInput){
+
+    trailerInput.value = "";
+    trailerInput.classList.add("hidden");
+
+  }
+
+  const info =
+    document.getElementById(
+      "currentULDLocationInfo"
+    );
+
+  if(info)
+    info.innerText = "";
+
+  await loadClosedULDsForLocation();
+
+};
+
+
+async function loadClosedULDsForLocation(){
+
+  const select =
+    document.getElementById(
+      "updateLocationULDSelect"
+    );
+
+  if(!select)
+    return;
+
+  select.innerHTML =
+    `<option value="">Loading CLOSED ULDs...</option>`;
+
+  try{
+
+    const snapshot =
+      await getDocs(
+        query(
+          collection(db,"ulds"),
+          where("status","==","CLOSED")
+        )
+      );
+
+    const ulds = [];
+
+    snapshot.forEach(
+      docSnap => {
+
+        const d =
+          docSnap.data();
+
+        const uldId =
+          String(
+            d.uldId ||
+            docSnap.id
+          ).trim();
+
+        if(uldId){
+
+          ulds.push({
+            docId:docSnap.id,
+            uldId:uldId,
+            location:
+              d.uldLocation || ""
+          });
+
+        }
+
+      }
+    );
+
+    ulds.sort(
+      (a,b) =>
+        a.uldId.localeCompare(
+          b.uldId
+        )
+    );
+
+    select.innerHTML =
+      `<option value="">Select a CLOSED ULD</option>`;
+
+    ulds.forEach(uld => {
+
+      const option =
+        document.createElement("option");
+
+      option.value =
+        uld.docId;
+
+      option.dataset.location =
+        uld.location;
+
+      option.textContent =
+        uld.uldId;
+
+      select.appendChild(
+        option
+      );
+
+    });
+
+    if(!ulds.length){
+
+      select.innerHTML =
+        `<option value="">No CLOSED ULDs available</option>`;
+
+    }
+
+    select.onchange = () => {
+
+      const selected =
+        select.options[
+          select.selectedIndex
+        ];
+
+      const info =
+        document.getElementById(
+          "currentULDLocationInfo"
+        );
+
+      if(info){
+
+        const location =
+          selected?.dataset?.location || "";
+
+        info.innerText =
+          location
+            ? `Current Location: ${location}`
+            : "Current Location: Not Set";
+
+      }
+
+    };
+
+  }catch(error){
+
+    console.error(
+      "Load ULD locations error:",
+      error
+    );
+
+    select.innerHTML =
+      `<option value="">Unable to load CLOSED ULDs</option>`;
+
+    alert(
+      "Could not load CLOSED ULDs.\n\n" +
+      error.message
+    );
+
+  }
+
+}
+
+
+window.toggleULDLocationInput = () => {
+
+  const type =
+    document.getElementById(
+      "uldLocationType"
+    ).value;
+
+  const trailerInput =
+    document.getElementById(
+      "uldTrailerNumber"
+    );
+
+  if(!trailerInput)
+    return;
+
+  if(type === "TRAILER"){
+
+    trailerInput.classList.remove(
+      "hidden"
+    );
+
+    trailerInput.focus();
+
+  }else{
+
+    trailerInput.value = "";
+
+    trailerInput.classList.add(
+      "hidden"
+    );
+
+  }
+
+};
+
+
+window.saveULDLocation = async () => {
+
+  const select =
+    document.getElementById(
+      "updateLocationULDSelect"
+    );
+
+  const typeSelect =
+    document.getElementById(
+      "uldLocationType"
+    );
+
+  const trailerInput =
+    document.getElementById(
+      "uldTrailerNumber"
+    );
+
+  if(!select || !typeSelect){
+
+    alert(
+      "Update ULD Location screen is unavailable."
+    );
+
+    return;
+
+  }
+
+  const docId =
+    String(
+      select.value || ""
+    ).trim();
+
+  const selected =
+    select.options[
+      select.selectedIndex
+    ];
+
+  const uldName =
+    String(
+      selected?.textContent || ""
+    ).trim();
+
+  const type =
+    typeSelect.value;
+
+  if(!docId || !uldName){
+
+    alert(
+      "Please select a CLOSED ULD."
+    );
+
+    return;
+
+  }
+
+  let location = "";
+
+  if(type === "TRAILER"){
+
+    const trailer =
+      String(
+        trailerInput?.value || ""
+      ).trim().toUpperCase();
+
+    if(!trailer){
+
+      alert(
+        "Please enter a Trailer Number."
+      );
+
+      trailerInput?.focus();
+      return;
+
+    }
+
+    location =
+      `Trailer ${trailer}`;
+
+  }else if(type === "CALMAIR"){
+
+    location = "CalmAir";
+
+  }else if(type === "CARGOJET"){
+
+    location = "Cargojet";
+
+  }else{
+
+    alert(
+      "Please select a ULD location."
+    );
+
+    return;
+
+  }
+
+  const confirmed =
+    await showConfirmation(
+      "UPDATE ULD LOCATION",
+      `Update ULD ${uldName} location to:\n\n${location}?`
+    );
+
+  if(!confirmed)
+    return;
+
+  try{
+
+    /*
+       Re-read the ULD list and verify the selected document is
+       still CLOSED. This avoids changing a ULD that was reopened
+       while this screen was open.
+    */
+    const closedSnapshot =
+      await getDocs(
+        query(
+          collection(db,"ulds"),
+          where("status","==","CLOSED")
+        )
+      );
+
+    let selectedClosedULD = false;
+
+    closedSnapshot.forEach(docSnap => {
+      if(docSnap.id === docId)
+        selectedClosedULD = true;
+    });
+
+    if(!selectedClosedULD){
+
+      alert(
+        `ULD ${uldName} is no longer CLOSED or could not be found.`
+      );
+
+      await loadClosedULDsForLocation();
+      return;
+
+    }
+
+    await updateDoc(
+      doc(
+        db,
+        "ulds",
+        docId
+      ),
+      {
+        uldLocation:location,
+        locationUpdatedAt:serverTimestamp(),
+        locationUpdatedBy:currentUser
+      }
+    );
+
+    await showVerification(
+      true,
+      uldName,
+      "LOCATION UPDATED",
+      `ULD ${uldName} location is now:\n${location}`
+    );
+
+    await loadClosedULDsForLocation();
+
+    select.value = "";
+    typeSelect.value = "";
+
+    if(trailerInput){
+
+      trailerInput.value = "";
+      trailerInput.classList.add(
+        "hidden"
+      );
+
+    }
+
+    const info =
+      document.getElementById(
+        "currentULDLocationInfo"
+      );
+
+    if(info)
+      info.innerText = "";
+
+  }catch(error){
+
+    console.error(
+      "Update ULD location error:",
+      error
+    );
+
+    alert(
+      "Could not update ULD location.\n\n" +
+      error.message
+    );
+
+  }
+
+};
+
+
+window.backFromUpdateULDLocation = () => {
+
+  const typeSelect =
+    document.getElementById(
+      "uldLocationType"
+    );
+
+  const trailerInput =
+    document.getElementById(
+      "uldTrailerNumber"
+    );
+
+  const select =
+    document.getElementById(
+      "updateLocationULDSelect"
+    );
+
+  if(typeSelect)
+    typeSelect.value = "";
+
+  if(trailerInput){
+
+    trailerInput.value = "";
+    trailerInput.classList.add(
+      "hidden"
+    );
+
+  }
+
+  if(select)
+    select.value = "";
+
+  switchScreen("home");
+
+};
+
+
+/* =========================================================
    LIVE VIEW
    ========================================================= */
 
@@ -6630,6 +7579,8 @@ window.goToLiveView = () => {
                     <th>AWB</th>
                     <th>Scanned At</th>
                     <th>Scanned By</th>
+                    <th>ULD Description</th>
+                    <th>ULD Location</th>
 
                   </tr>
 
@@ -6642,7 +7593,7 @@ window.goToLiveView = () => {
               html +=
                 `<tr>
 
-                  <td colspan="4">
+                  <td colspan="6">
                     No active AWBs
                   </td>
 
@@ -6683,6 +7634,21 @@ window.goToLiveView = () => {
                       <td>
                         ${escapeHTML(
                           d.scannedBy || ""
+                        )}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          uld.cargoType ||
+                          uld.description ||
+                          uld.uldDesc ||
+                          ""
+                        )}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          uld.uldLocation || ""
                         )}
                       </td>
 
@@ -6829,7 +7795,10 @@ window.exportToCSV = async () => {
             uld.cargoType ||
             (Array.isArray(uld.cargoTypes)
               ? uld.cargoTypes.join(", ")
-              : "")
+              : ""),
+
+          uldLocation:
+            uld.uldLocation || ""
 
         });
 
@@ -6840,7 +7809,8 @@ window.exportToCSV = async () => {
           scannedBy:"",
           uldId:"",
           weight:"",
-          cargoType:""
+          cargoType:"",
+          uldLocation:""
         });
 
         continue;
@@ -6883,6 +7853,11 @@ window.exportToCSV = async () => {
                    (Array.isArray(uld.cargoTypes)
                      ? uld.cargoTypes.join(", ")
                      : ""))
+                : "",
+
+            uldLocation:
+              index === 0
+                ? (uld.uldLocation || "")
                 : ""
 
           });
@@ -7253,7 +8228,7 @@ function formatExportTimestamp(value){
 function downloadClosedULDExcel(rows){
 
   const data = [
-    ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (LBS)", "Cargo Type"]
+    ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (LBS)", "Cargo Type", "ULD Location"]
   ];
 
   rows.forEach(row => {
@@ -7261,7 +8236,8 @@ function downloadClosedULDExcel(rows){
       "", row.awb || "", "", "", "", "", "", "", "", "",
       row.scannedAt || "", row.scannedBy || "", row.uldId || "",
       (row.weight !== "" && row.weight != null ? Number(row.weight) : ""),
-      row.cargoType || ""
+      row.cargoType || "",
+      row.uldLocation || ""
     ]);
   });
 
@@ -7282,11 +8258,11 @@ function downloadClosedULDExcel(rows){
     { wch: 18 },
     { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
     { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
-    { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 20 }
+    { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 20 }, { wch: 20 }
   ];
 
   const headerRow = 0;
-  for(let c = 0; c < 15; c++){
+  for(let c = 0; c < 16; c++){
     const cell = worksheet[XLSX.utils.encode_cell({r:headerRow,c})];
     if(cell) cell.s = { font: { bold: true } };
   }
@@ -7372,7 +8348,10 @@ async function exportEntireFlightData(
             uld.cargoType ||
             (Array.isArray(uld.cargoTypes)
               ? uld.cargoTypes.join(", ")
-              : "")
+              : ""),
+
+          uldLocation:
+            uld.uldLocation || ""
 
       });
 
@@ -7425,6 +8404,11 @@ async function exportEntireFlightData(
                    (Array.isArray(uld.cargoTypes)
                      ? uld.cargoTypes.join(", ")
                      : ""))
+                : "",
+
+            uldLocation:
+              index === 0
+                ? (uld.uldLocation || "")
                 : ""
 
       });
@@ -7437,7 +8421,9 @@ async function exportEntireFlightData(
       scannedAt:"",
       scannedBy:"",
       uldId:"",
-      weight:""
+      weight:"",
+      cargoType:"",
+      uldLocation:""
     });
 
   }
@@ -8255,6 +9241,12 @@ function handleZebraBackButton(){
 
     deleteULDAdmin:
       "backToAdminMenuFromDeleteULD",
+
+    amendULD:
+      "backToAdminMenuFromAmendULD",
+
+    updateULDLocation:
+      "backFromUpdateULDLocation",
 
     createUser:
       "backToAdminMenuFromCreateUser",
