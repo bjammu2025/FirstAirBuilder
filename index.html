@@ -817,6 +817,116 @@ button span{
   }
 }
 
+
+/* =========================================================
+   12.31 NAVY / SOFT-GRAY + CALM AIR ATR 72 BACKGROUND
+   Flat colors only - no gradients
+   ========================================================= */
+
+html{
+  background:#E3E7EC !important;
+}
+
+body{
+  background:#E3E7EC !important;
+  color:#111827 !important;
+  position:relative;
+}
+
+/* Calm Air official ATR 72 freighter image as a subtle background.
+   A solid translucent overlay keeps the app readable. */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background-image:
+    linear-gradient(rgba(227,231,236,.78),rgba(227,231,236,.78)),
+    url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg");
+  background-size:cover;
+  background-position:center center;
+  background-repeat:no-repeat;
+  pointer-events:none;
+}
+
+/* Slightly darker mobile background for better Zebra readability */
+@media (max-width:900px) and (pointer:coarse){
+  body::before{
+    background-image:
+      linear-gradient(rgba(227,231,236,.86),rgba(227,231,236,.86)),
+      url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg");
+    background-position:center center;
+  }
+}
+
+/* Keep all functional surfaces clean and readable */
+.screen,
+.container,
+.card,
+.panel,
+.infoBox,
+.weightBox,
+.modal,
+.overlay,
+.loginBox,
+.menuBox,
+table,
+tbody,
+thead,
+tr,
+td,
+th{
+  background:#ffffff !important;
+  color:#111827 !important;
+}
+
+/* Flat navy buttons */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"]{
+  background:#0B1F3A !important;
+  background-image:none !important;
+  color:#ffffff !important;
+  border-color:#0B1F3A !important;
+  box-shadow:none !important;
+}
+
+button:hover,
+button:active,
+button:focus{
+  background:#163A63 !important;
+  background-image:none !important;
+  color:#ffffff !important;
+  box-shadow:none !important;
+}
+
+/* Inputs */
+input,
+select,
+textarea{
+  background:#ffffff !important;
+  color:#111827 !important;
+  border-color:#9CA3AF !important;
+}
+
+/* Keep headings navy */
+h1,h2,h3,h4,h5,h6,
+.infoTitle,
+.screenTitle{
+  color:#0B1F3A !important;
+}
+
+th{
+  background:#0B1F3A !important;
+  color:#ffffff !important;
+}
+
+button *,
+button span{
+  color:#ffffff !important;
+}
+
 </style>
 </head>
 
@@ -833,7 +943,7 @@ button span{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.30
+    Version 12.31
   </div>
 
   <div class="infoBox">
@@ -871,7 +981,7 @@ button span{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.30
+    Version 12.31
   </div>
 
   <div class="infoBox">
@@ -1793,7 +1903,7 @@ button span{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.30";
+const CODE_VERSION = "12.31";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
