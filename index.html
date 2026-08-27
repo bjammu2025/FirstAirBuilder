@@ -269,23 +269,7 @@ body{
 
 /* Zebra/mobile portrait-only layout. Desktop is unaffected. */
 @media (max-width:900px) and (pointer:coarse) and (orientation:landscape){
-  body::before{
-    content:"Please rotate the Zebra to portrait mode.";
-    position:fixed;
-    inset:0;
-    z-index:999999;
-    background:#121212;
-    color:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    padding:30px;
-    box-sizing:border-box;
-    font-size:2rem;
-    font-weight:bold;
-  }
-
+  
   .container{
     visibility:hidden;
   }
@@ -645,11 +629,7 @@ button span{
 
 /* Zebra/mobile landscape warning remains black text on white */
 @media (max-width:900px) and (pointer:coarse) and (orientation:landscape){
-  body::before{
-    background:#ffffff !important;
-    color:#000000 !important;
   }
-}
 
 
 /* =========================================================
@@ -811,11 +791,7 @@ button span{
 
 /* Zebra/mobile landscape warning */
 @media (max-width:900px) and (pointer:coarse) and (orientation:landscape){
-  body::before{
-    background:#ffffff !important;
-    color:#0B1F3A !important;
   }
-}
 
 
 /* =========================================================
@@ -835,29 +811,10 @@ body{
 
 /* Calm Air official ATR 72 freighter image as a subtle background.
    A solid translucent overlay keeps the app readable. */
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:-1;
-  background-image:
-    linear-gradient(rgba(227,231,236,.78),rgba(227,231,236,.78)),
-    url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg");
-  background-size:cover;
-  background-position:center center;
-  background-repeat:no-repeat;
-  pointer-events:none;
-}
 
 /* Slightly darker mobile background for better Zebra readability */
 @media (max-width:900px) and (pointer:coarse){
-  body::before{
-    background-image:
-      linear-gradient(rgba(227,231,236,.86),rgba(227,231,236,.86)),
-      url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg");
-    background-position:center center;
   }
-}
 
 /* Keep all functional surfaces clean and readable */
 .screen,
@@ -940,18 +897,6 @@ body{
   overflow-x:hidden;
 }
 
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:0;
-  pointer-events:none;
-  background-image:url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg");
-  background-size:cover;
-  background-position:center center;
-  background-repeat:no-repeat;
-  opacity:.24;
-}
 
 body > .container{
   position:relative;
@@ -965,7 +910,7 @@ body > .container{
   width:100%;
   box-sizing:border-box;
   text-align:left;
-  font-size:12px;
+  font-size:16px;
   font-weight:400;
   color:#374151 !important;
   margin:2px 0 12px 2px;
@@ -990,43 +935,74 @@ body > .container{
 }
 
 
-/* 12.32 BACKGROUND */
-html, body{
-  background:#A7ADB5 !important;
+
+
+
+/* 12.33 SOLID DARK GREY BACKGROUND */
+html,
+body{
+  background:#B6BBC2 !important;
+  color:#111827 !important;
 }
 
 body{
-  position:relative !important;
-  min-height:100vh !important;
-  background-color:#A7ADB5 !important;
+  min-height:100vh;
+  overflow-x:hidden;
 }
 
+/* No background image */
 body::before{
-  content:"" !important;
-  position:fixed !important;
-  inset:0 !important;
-  z-index:0 !important;
-  pointer-events:none !important;
-  background-color:#A7ADB5 !important;
-  background-image:url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg") !important;
-  background-size:cover !important;
-  background-position:center center !important;
-  background-repeat:no-repeat !important;
-  opacity:.28 !important;
+  display:none !important;
+  content:none !important;
 }
 
+/* Keep app surfaces clean and readable */
 body > .container{
-  position:relative !important;
-  z-index:1 !important;
-  background:rgba(167,173,181,.82) !important;
+  background:#B6BBC2 !important;
 }
 
 
-/* Let the aircraft remain visible around/behind the app while keeping controls readable */
-#home,
-#adminMenu,
-#login{
-  background:rgba(255,255,255,.78) !important;
+/* 12.33 SCREEN FIT */
+#home{
+  box-sizing:border-box;
+}
+
+#home button{
+  margin-top:8px !important;
+  margin-bottom:8px !important;
+}
+
+@media (min-width:901px){
+  #home{
+    max-height:calc(100vh - 20px);
+    overflow-y:auto;
+  }
+}
+
+@media (max-width:900px) and (pointer:coarse){
+  #home{
+    min-height:calc(100vh - 10px);
+    box-sizing:border-box;
+  }
+
+  #home h2,
+  #home .version{
+    margin-top:4px !important;
+    margin-bottom:4px !important;
+  }
+
+  #home button{
+    margin-top:6px !important;
+    margin-bottom:6px !important;
+    min-height:48px;
+  }
+}
+
+/* Keep normal vertical scrolling throughout the app */
+html,
+body{
+  overflow-y:auto !important;
+  touch-action:pan-y;
 }
 
 </style>
@@ -1045,7 +1021,7 @@ body > .container{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.32
+    Version 12.33
   </div>
 
   <div class="infoBox">
@@ -1995,7 +1971,7 @@ body > .container{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.32";
+const CODE_VERSION = "12.33";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
