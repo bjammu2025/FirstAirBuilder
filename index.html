@@ -1402,6 +1402,32 @@ label *,
   margin:6px 0 !important;
 }
 
+
+/* 12.40 ADMIN MENU - EXACTLY THREE SECTIONS */
+.adminSection{
+  background:#D9DDE2 !important;
+  border:1px solid #6B7280 !important;
+  border-radius:10px;
+  padding:10px 12px !important;
+  margin:0 0 12px 0 !important;
+  box-sizing:border-box;
+}
+
+.adminSectionTitle{
+  color:#0B1F3A !important;
+  font-size:15px !important;
+  font-weight:700 !important;
+  text-align:left !important;
+  margin:0 0 7px 2px !important;
+  padding:0 !important;
+  letter-spacing:.3px;
+}
+
+.adminSection button{
+  width:100% !important;
+  margin:5px 0 !important;
+}
+
 </style>
 </head>
 
@@ -1418,7 +1444,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.39
+    Version 12.41
   </div>
 
   <div class="infoBox">
@@ -1503,11 +1529,8 @@ label *,
     <button onclick="exportToCSV()">
     EXPORT CLOSED ULDs
   </button>
-    <button onclick="exportToCSV()">
-    EXPORT CLOSED ULDs
-  </button>
 
-  <button
+    <button
     class="closeFlightButton"
     onclick="goToCloseFlight()">
     CLOSE FLIGHT
@@ -1519,33 +1542,12 @@ label *,
       ULD MANAGEMENT
     </div>
 
-    <button onclick="exportToCSV()">
-    EXPORT CLOSED ULDs
-  </button>
-
-  <button
-    class="closeFlightButton"
-    onclick="goToCloseFlight()">
-    CLOSE FLIGHT
-  </button>
-
-  <button
-    class="createButton"
-    onclick="openCreateUser()">
-    CREATE USERNAME &amp; PASSWORD
-  </button>
-
-  <button
-    class="manualButton"
-    onclick="openResetUser()">
-    RESET PASSWORD
-  </button>
-
-  <button
+    <button
     class="closeULDButton"
     onclick="openReopenULD()">
     OPEN CLOSED ULD
   </button>
+
     <button
     class="closeFlightButton"
     onclick="openDeleteULDAdmin()">
@@ -1558,38 +1560,13 @@ label *,
       USER MANAGEMENT
     </div>
 
-    <button onclick="exportToCSV()">
-    EXPORT CLOSED ULDs
-  </button>
-
-  <button
-    class="closeFlightButton"
-    onclick="goToCloseFlight()">
-    CLOSE FLIGHT
-  </button>
-
-  <button
-    class="createButton"
-    onclick="openCreateUser()">
-    CREATE USERNAME &amp; PASSWORD
-  </button>
-    <button onclick="exportToCSV()">
-    EXPORT CLOSED ULDs
-  </button>
-
-  <button
-    class="closeFlightButton"
-    onclick="goToCloseFlight()">
-    CLOSE FLIGHT
-  </button>
-
-  <button
+    <button
     class="createButton"
     onclick="openCreateUser()">
     CREATE USERNAME &amp; PASSWORD
   </button>
 
-  <button
+    <button
     class="manualButton"
     onclick="openResetUser()">
     RESET PASSWORD
@@ -1603,6 +1580,7 @@ label *,
   </button>
 
 </div>
+
 <!-- =========================================================
      CREATE USER
      ========================================================= -->
@@ -2476,7 +2454,7 @@ label *,
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.39";
+const CODE_VERSION = "12.41";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
@@ -7739,6 +7717,148 @@ window.deleteSelectedULDAdmin = async () => {
 window.backToAdminMenuFromDeleteULD = () => {
   switchScreen("adminMenu");
 };
+
+
+
+
+/* Keep the PWA on the app while hardware/browser BACK is handled by the
+   corresponding screen BACK action. */
+window.addEventListener("load", () => {
+
+  try{
+    history.pushState(
+      { firstAirBuilder:true },
+      "",
+      location.href
+    );
+  }catch(error){
+    console.warn("History setup failed:", error);
+  }
+
+});
+
+
+
+/* =========================================================
+   12.41 - ZEBRA HARDWARE BACK BUTTON
+   Make Android/Zebra back behave exactly like the visible
+   BACK button for the current screen.
+   ========================================================= */
+
+function handleZebraBackButton(){
+
+  const activeScreen =
+    document.querySelector(".screen.visible");
+
+  if(!activeScreen)
+    return;
+
+  const screenId =
+    activeScreen.id;
+
+  const backHandlers = {
+
+    allocateScan:
+      "backToAllocateStart",
+
+    offloadScan:
+      "backToOffloadStart",
+
+    closeULDWeight:
+      "backToCloseULDStart",
+
+    closeULDStart:
+      "goHome",
+
+    liveView:
+      "goHome",
+
+    adminMenu:
+      "goHome",
+
+    reopenULD:
+      "backToAdminMenuFromReopen",
+
+    deleteULDAdmin:
+      "backToAdminMenuFromDeleteULD",
+
+    createUser:
+      "backToAdminMenuFromCreateUser",
+
+    resetPassword:
+      "backToAdminMenuFromResetPassword",
+
+    closeFlight:
+      "backToAdminMenuFromCloseFlight",
+
+    exportClosedULD:
+      "backToAdminMenuFromExport"
+
+  };
+
+  const handler =
+    backHandlers[screenId];
+
+  if(
+    handler &&
+    typeof window[handler] === "function"
+  ){
+    window[handler]();
+    return;
+  }
+
+  /* If this screen has a visible BACK button,
+     use that exact button as the fallback. */
+  const backButton =
+    activeScreen.querySelector(
+      ".backButton"
+    );
+
+  if(backButton){
+    backButton.click();
+    return;
+  }
+
+  /* Home screen: do nothing rather than leaving
+     the PWA/browser. */
+  if(screenId === "home")
+    return;
+
+}
+
+/* Android / Zebra hardware back */
+document.addEventListener(
+  "backbutton",
+  event => {
+
+    if(event)
+      event.preventDefault();
+
+    handleZebraBackButton();
+
+  },
+  false
+);
+
+/* Chrome Android fallback */
+window.addEventListener(
+  "popstate",
+  event => {
+
+    try{
+      history.pushState(
+        { firstAirBuilder:true },
+        "",
+        location.href
+      );
+    }catch(error){
+      console.warn("History restore failed:", error);
+    }
+
+    handleZebraBackButton();
+
+  }
+);
 
 
 </script>
