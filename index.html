@@ -1483,6 +1483,82 @@ label *,
   margin:5px 0 !important;
 }
 
+
+/* =========================================================
+   12.46 HOME LAYOUT FIX
+   Desktop + Zebra: one button per row.
+   Exactly one LOG OUT button.
+   ========================================================= */
+
+#home .homeSection{
+  display:block !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  clear:both !important;
+}
+
+#home .homeSectionTitle{
+  display:block !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+
+#home .homeSection button{
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  box-sizing:border-box !important;
+  float:none !important;
+  clear:both !important;
+  margin:6px 0 !important;
+}
+
+#home .homeNavigationSection{
+  display:block !important;
+}
+
+#home .homeLogoutSection{
+  display:block !important;
+  margin-bottom:0 !important;
+  padding-top:10px !important;
+}
+
+#home .homeLogoutSection .backButton{
+  display:block !important;
+}
+
+/* Do not allow any hidden/old Home controls to create extra buttons. */
+#home button + button{
+  /* intentionally no special positioning */
+}
+
+
+/* =========================================================
+   12.47 HOME - FINAL DUPLICATE LOG OUT FIX
+   ========================================================= */
+
+#home .homeSection{
+  display:block !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  clear:both !important;
+}
+
+#home .homeSection button{
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  float:none !important;
+  clear:both !important;
+  box-sizing:border-box !important;
+  margin:6px 0 !important;
+}
+
+#home .homeNavigationSection,
+#home .homeLogoutSection{
+  display:block !important;
+}
+
 </style>
 </head>
 
@@ -1499,7 +1575,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.45
+    Version 12.47
   </div>
 
   <div class="infoBox">
@@ -1560,12 +1636,6 @@ label *,
     onclick="openAdminMenu()">
     ADMIN MENU
   </button>
-
-  <button
-    class="backButton"
-    onclick="confirmLogout()">
-    LOG OUT
-  </button>
   </div>
 
   <div class="homeSection homeLogoutSection">
@@ -1577,10 +1647,6 @@ label *,
   </div>
 
 </div>
-
-<!-- =========================================================
-     ADMIN MENU
-     ========================================================= -->
 
 <div id="adminMenu" class="screen">
 
@@ -2519,7 +2585,7 @@ label *,
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.45";
+const CODE_VERSION = "12.47";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
