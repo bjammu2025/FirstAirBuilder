@@ -38,8 +38,6 @@ body{
 }
 
 .container{
-  position:relative;
-  z-index:1;
   width:100%;
   min-height:100vh;
   padding:10px;
@@ -830,7 +828,7 @@ html{
 }
 
 body{
-  background:#B8BEC6 !important;
+  background:#E3E7EC !important;
   color:#111827 !important;
   position:relative;
 }
@@ -841,9 +839,9 @@ body::before{
   content:"";
   position:fixed;
   inset:0;
-  z-index:0;
+  z-index:-1;
   background-image:
-    linear-gradient(rgba(184,190,198,.72),rgba(184,190,198,.72)),
+    linear-gradient(rgba(227,231,236,.78),rgba(227,231,236,.78)),
     url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg");
   background-size:cover;
   background-position:center center;
@@ -855,7 +853,7 @@ body::before{
 @media (max-width:900px) and (pointer:coarse){
   body::before{
     background-image:
-      linear-gradient(rgba(184,190,198,.82),rgba(184,190,198,.82)),
+      linear-gradient(rgba(227,231,236,.86),rgba(227,231,236,.86)),
       url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg");
     background-position:center center;
   }
@@ -930,25 +928,105 @@ button span{
 }
 
 
-/* Compact logged-in user label */
-#loggedInUserLabel{
+/* 12.32: darker grey + Calm Air ATR background */
+html, body{
+  background:#AEB4BC !important;
+  color:#111827 !important;
+}
+
+body{
+  position:relative;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background-image:url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg");
+  background-size:cover;
+  background-position:center center;
+  background-repeat:no-repeat;
+  opacity:.24;
+}
+
+body > .container{
+  position:relative;
+  z-index:1;
+  background:rgba(174,180,188,.84) !important;
+}
+
+/* 12.32: compact username on home screen */
+#homeUserLabel{
   display:block;
+  width:100%;
+  box-sizing:border-box;
   text-align:left;
   font-size:12px;
   font-weight:400;
-  color:#4B5563 !important;
-  margin:4px 0 10px 2px;
+  color:#374151 !important;
+  margin:2px 0 12px 2px;
   padding:0;
 }
 
 
-/* Home screen: remove large app/login status heading */
-#home .appTitle,
-#home .loggedInAs,
-#home .loginStatus,
-#home .headerTitle,
-#home .subtitle{
-  display:none !important;
+/* 12.32 HOME USER */
+#homeUserLabel{
+  display:block !important;
+  width:100%;
+  text-align:left;
+  font-size:12px !important;
+  line-height:16px;
+  font-weight:400 !important;
+  color:#374151 !important;
+  margin:0 0 14px 2px !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+
+/* 12.32 BACKGROUND */
+html, body{
+  background:#A7ADB5 !important;
+}
+
+body{
+  position:relative !important;
+  min-height:100vh !important;
+  background-color:#A7ADB5 !important;
+}
+
+body::before{
+  content:"" !important;
+  position:fixed !important;
+  inset:0 !important;
+  z-index:0 !important;
+  pointer-events:none !important;
+  background-color:#A7ADB5 !important;
+  background-image:url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg") !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+  opacity:.28 !important;
+}
+
+body > .container{
+  position:relative !important;
+  z-index:1 !important;
+  background:rgba(167,173,181,.82) !important;
+}
+
+
+/* Let the aircraft remain visible around/behind the app while keeping controls readable */
+#home,
+#adminMenu,
+#login{
+  background:rgba(255,255,255,.78) !important;
 }
 
 </style>
@@ -1002,19 +1080,7 @@ button span{
 
 <div id="home" class="screen">
 
-  <div id="loggedInUserLabel"></div>
-
-<h2>First Air Builder</h2>
-
-  <div class="version">
-    Version 12.32
-  </div>
-
-  <div class="infoBox">
-    <div class="infoTitle">
-      Logged in as: <span id="loggedInUser"></span>
-    </div>
-  </div>
+  <div id="homeUserLabel"></div>
 
   <button onclick="goToAllocate()">
     ALLOCATE
@@ -1931,20 +1997,6 @@ button span{
 
 const CODE_VERSION = "12.32";
 
-function updateLoggedInUserLabel(){
-  const el = document.getElementById("loggedInUserLabel");
-  if(!el) return;
-
-  const username =
-    typeof currentUser === "string"
-      ? currentUser
-      : "";
-updateLoggedInUserLabel();
-
-  el.innerText = username;
-}
-
-
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
    ========================================================= */
@@ -2272,7 +2324,7 @@ window.loginUser = async () => {
     }
 
     currentUser = username;
-    document.getElementById("loggedInUser").innerText = currentUser;
+    document.getElementById("homeUserLabel").innerText = currentUser;
     document.getElementById("loginUsername").value = "";
     document.getElementById("loginPassword").value = "";
     setLoginStatus("");
@@ -2298,6 +2350,8 @@ window.logoutUser = async () => {
   await closeCamera();
   stopBarcodeScanner();
   currentUser = "";
+  const homeUserLabel = document.getElementById("homeUserLabel");
+  if(homeUserLabel) homeUserLabel.innerText = "";
   currentULD = "";
   positionId = "";
   adminMenuUnlocked = false;
