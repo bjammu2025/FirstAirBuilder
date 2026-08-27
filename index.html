@@ -1461,6 +1461,28 @@ label *,
   margin-bottom:0 !important;
 }
 
+
+/* =========================================================
+   12.44 HOME PAGE
+   Live View + Admin Menu together with no header.
+   Logout section has no header.
+   ========================================================= */
+
+.homeNavigationSection{
+  padding-top:10px !important;
+}
+
+.homeLogoutSection{
+  margin-bottom:0 !important;
+  padding-top:10px !important;
+}
+
+.homeNavigationSection button,
+.homeLogoutSection button{
+  width:100% !important;
+  margin:5px 0 !important;
+}
+
 </style>
 </head>
 
@@ -1477,7 +1499,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.43
+    Version 12.45
   </div>
 
   <div class="infoBox">
@@ -1529,15 +1551,10 @@ label *,
   </button>
   </div>
 
-  <div class="homeSection">
-    <div class="homeSectionTitle">LIVE VIEW</div>
+  <div class="homeSection homeNavigationSection">
     <button onclick="goToLiveView()">
     LIVE VIEW
   </button>
-  </div>
-
-  <div class="homeSection">
-    <div class="homeSectionTitle">ADMIN MENU</div>
     <button
     class="closeFlightButton"
     onclick="openAdminMenu()">
@@ -1552,7 +1569,6 @@ label *,
   </div>
 
   <div class="homeSection homeLogoutSection">
-    <div class="homeSectionTitle">LOG OUT</div>
     <button
     class="backButton"
     onclick="confirmLogout()">
@@ -2503,7 +2519,7 @@ label *,
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.43";
+const CODE_VERSION = "12.45";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
@@ -7673,15 +7689,20 @@ window.openDeleteULDAdmin = async () => {
 
     snapshot.forEach(docSnap => {
 
-      const d =
-        docSnap.data();
+      const d = docSnap.data();
 
-      const uldId =
-        String(
-          d.uldId ||
-          docSnap.id ||
-          ""
-        ).trim();
+      /*
+         Keep the document ID as the value. The displayed ULD name
+         is taken from every common field used by the app.
+      */
+      const uldId = String(
+        d.uldId ||
+        d.positionId ||
+        d.uld ||
+        d.ULD ||
+        docSnap.id ||
+        ""
+      ).trim();
 
       if(uldId){
 
@@ -7700,9 +7721,7 @@ window.openDeleteULDAdmin = async () => {
 
     ulds.sort(
       (a,b) =>
-        a.uldId.localeCompare(
-          b.uldId
-        )
+        a.uldId.localeCompare(b.uldId)
     );
 
     select.innerHTML =
@@ -7716,11 +7735,11 @@ window.openDeleteULDAdmin = async () => {
       option.value =
         uld.docId;
 
-      option.textContent =
-        `${uld.uldId} (${uld.status})`;
-
       option.dataset.uldId =
         uld.uldId;
+
+      option.textContent =
+        `${uld.uldId} (${uld.status})`;
 
       select.appendChild(option);
 
@@ -7736,18 +7755,15 @@ window.openDeleteULDAdmin = async () => {
   }catch(error){
 
     console.error(
-      "Load Delete ULD error:",
+      "Delete ULD load error:",
       error
     );
 
     select.innerHTML =
-      `<option value="">Error loading ULDs</option>`;
+      `<option value="">Unable to load ULDs</option>`;
 
-    await showVerification(
-      false,
-      "",
-      "LOAD ERROR",
-      "Could not load the ULD list.\n\n" +
+    alert(
+      "Could not load ULDs.\n\n" +
       error.message
     );
 
@@ -7759,9 +7775,7 @@ window.openDeleteULDAdmin = async () => {
 window.deleteSelectedULDAdmin = async () => {
 
   const select =
-    document.getElementById(
-      "deleteULDSelect"
-    );
+    document.getElementById("deleteULDSelect");
 
   if(!select){
 
@@ -7774,9 +7788,7 @@ window.deleteSelectedULDAdmin = async () => {
   }
 
   const selected =
-    select.options[
-      select.selectedIndex
-    ];
+    select.options[select.selectedIndex];
 
   if(
     !selected ||
@@ -7799,6 +7811,16 @@ window.deleteSelectedULDAdmin = async () => {
         .trim()
     ).trim();
 
+  if(!uldId){
+
+    alert(
+      "The selected ULD could not be identified."
+    );
+
+    return;
+
+  }
+
   const confirmed =
     await showConfirmation(
       "DELETE ULD",
@@ -7812,46 +7834,63 @@ window.deleteSelectedULDAdmin = async () => {
 
   try{
 
-    /* Find AWBs using either ULD field used by the app. */
-    const scansByUld =
-      await getDocs(
-        query(
-          collection(db,"scans"),
-          where(
-            "uldId",
-            "==",
-            uldId
-          )
-        )
-      );
-
-    const scansByPosition =
-      await getDocs(
-        query(
-          collection(db,"scans"),
-          where(
-            "positionId",
-            "==",
-            uldId
-          )
-        )
-      );
-
+    /*
+       Delete all scan records associated with this ULD.
+       Different versions of First Air Builder used either
+       uldId or positionId, so check both.
+    */
     const scanIds =
       new Set();
 
-    scansByUld.forEach(
-      d => scanIds.add(d.id)
-    );
+    const scanQueries = [
+      ["uldId", uldId],
+      ["positionId", uldId]
+    ];
 
-    scansByPosition.forEach(
-      d => scanIds.add(d.id)
-    );
+    for(
+      const [field,value]
+      of scanQueries
+    ){
+
+      try{
+
+        const snap =
+          await getDocs(
+            query(
+              collection(db,"scans"),
+              where(
+                field,
+                "==",
+                value
+              )
+            )
+          );
+
+        snap.forEach(
+          d =>
+            scanIds.add(d.id)
+        );
+
+      }catch(queryError){
+
+        /*
+           If an older Firestore index/schema does not support
+           one query, continue with the other identifier.
+        */
+        console.warn(
+          `Delete ULD ${field} query skipped:`,
+          queryError
+        );
+
+      }
+
+    }
 
     const deletePromises = [];
 
     scanIds.forEach(
-      scanId =>
+      scanId => {
+
         deletePromises.push(
           deleteDoc(
             doc(
@@ -7860,60 +7899,58 @@ window.deleteSelectedULDAdmin = async () => {
               scanId
             )
           )
-        )
+        );
+
+      }
     );
 
-    /* Delete all ULD documents with this ULD ID. */
-    const uldDocs =
-      await getDocs(
-        query(
-          collection(db,"ulds"),
-          where(
-            "uldId",
-            "==",
-            uldId
-          )
+    /*
+       Delete the exact ULD document selected by the Admin.
+       This avoids relying on a possibly different ULD field name.
+    */
+    deletePromises.push(
+      deleteDoc(
+        doc(
+          db,
+          "ulds",
+          select.value
         )
-      );
-
-    if(uldDocs.empty){
-
-      deletePromises.push(
-        deleteDoc(
-          doc(
-            db,
-            "ulds",
-            select.value
-          )
-        )
-      );
-
-    }else{
-
-      uldDocs.forEach(
-        d =>
-          deletePromises.push(
-            deleteDoc(
-              doc(
-                db,
-                "ulds",
-                d.id
-              )
-            )
-          )
-      );
-
-    }
+      )
+    );
 
     await Promise.all(
       deletePromises
     );
 
-    await showVerification(
-      true,
-      uldId,
-      "ULD DELETED",
-      `ULD ${uldId} and its associated AWBs were deleted successfully.`
+    /*
+       Verify the ULD document is gone before reporting success.
+    */
+    const verifyULD =
+      await getDocs(
+        query(
+          collection(db,"ulds"),
+          where(
+            "__name__",
+            "==",
+            doc(
+              db,
+              "ulds",
+              select.value
+            )
+          )
+        )
+      );
+
+    if(!verifyULD.empty){
+
+      throw new Error(
+        "Firestore did not confirm deletion of the selected ULD."
+      );
+
+    }
+
+    alert(
+      `ULD ${uldId} deleted successfully.`
     );
 
     await openDeleteULDAdmin();
@@ -7925,11 +7962,8 @@ window.deleteSelectedULDAdmin = async () => {
       error
     );
 
-    await showVerification(
-      false,
-      uldId,
-      "DELETE ERROR",
-      "The ULD could not be deleted.\n\n" +
+    alert(
+      "Could not delete ULD.\n\n" +
       error.message
     );
 
