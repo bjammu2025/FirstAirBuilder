@@ -1005,6 +1005,55 @@ body{
   touch-action:pan-y;
 }
 
+
+/* =========================================================
+   12.34 - FULL GREY APP BACKGROUND
+   No white app background
+   ========================================================= */
+
+html,
+body,
+body > .container,
+.screen{
+  background:#B6BBC2 !important;
+  background-color:#B6BBC2 !important;
+}
+
+/* Remove the white home/login panels from the visible app background */
+#home,
+#login,
+#adminMenu,
+#allocate,
+#offload,
+#closeULDStart,
+#closeULDWeight,
+#closeFlight,
+#liveView,
+#adminUsers,
+#adminMenuScreen{
+  background:#B6BBC2 !important;
+  background-color:#B6BBC2 !important;
+}
+
+/* Keep individual information/input areas readable */
+.infoBox,
+.weightBox{
+  background:#D0D4D9 !important;
+  color:#111827 !important;
+}
+
+/* The whole screen should remain filled edge-to-edge */
+.container{
+  min-height:100vh !important;
+  box-sizing:border-box !important;
+}
+
+/* Keep the small username visible against grey */
+#homeUserLabel{
+  color:#1F2937 !important;
+  background:transparent !important;
+}
+
 </style>
 </head>
 
@@ -1021,7 +1070,7 @@ body{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.33
+    Version 12.34
   </div>
 
   <div class="infoBox">
@@ -1971,7 +2020,7 @@ body{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.33";
+const CODE_VERSION = "12.34";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
