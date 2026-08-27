@@ -1685,7 +1685,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.56
+    Version 12.55
   </div>
 
   <div class="infoBox">
@@ -1835,8 +1835,8 @@ label *,
 
     <button
     class="closeFlightButton"
-    onclick="openConvertPOAWB()">
-    CONVERT PO'S TO AWB'S
+    onclick="openDeletePOs()">
+    DELETE ULD POs
   </button>
 
     <button
@@ -2515,7 +2515,7 @@ label *,
       Cargo Type
     </div>
 
-    <select id="cargoTypeSelect" multiple size="6">
+    <select id="cargoTypeSelect" multiple size="4">
       <option value="Cooler">Cooler</option>
       <option value="Frozen">Frozen</option>
       <option value="Dry">Dry</option>
@@ -2592,32 +2592,15 @@ label *,
 <!-- =========================================================
      DELETE ULD POs - ADMIN
      ========================================================= -->
-<div id="convertPOAWB" class="screen">
-  <h3>Convert PO's To AWB's</h3>
-
+<div id="deletePOs" class="screen">
+  <h3>Delete ULD POs</h3>
   <div class="infoBox">
-    <div class="infoTitle">Select CLOSED ULD With PO's</div>
-    <select id="convertPOULDSelect" onchange="loadPOsForConversion()">
-      <option value="">Loading CLOSED ULDs with PO's...</option>
-    </select>
-
-    <div id="convertPOList" class="manualHint"></div>
-
-    <input
-      type="text"
-      id="convertPOAWBInput"
-      inputmode="numeric"
-      pattern="[0-9]*"
-      maxlength="8"
-      autocomplete="off"
-      placeholder="Enter 8-digit AWB">
-
-    <button class="confirmButton" onclick="saveConvertedPOAWB()">
-      SAVE AWB
-    </button>
+    <div class="infoTitle">Select ULD</div>
+    <select id="deletePOsULDSelect"><option value="">Loading ULDs...</option></select>
+    <div id="deletePOsInfo" class="manualHint"></div>
   </div>
-
-  <button class="backButton" onclick="backToAdminMenuFromConvertPO()">⬅ BACK</button>
+  <button class="closeFlightButton" onclick="deleteAllPOsForULD()">DELETE ALL POs</button>
+  <button class="backButton" onclick="backToAdminMenuFromDeletePOs()">⬅ BACK</button>
 </div>
 
 <!-- =========================================================
@@ -7547,145 +7530,29 @@ window.backFromYFBPOUpdate=()=>{const box=document.getElementById("poInputs");if
 /* =========================================================
    DELETE ALL ULD POs - ADMIN
    ========================================================= */
-/* =========================================================
-   CONVERT PO'S TO AWB'S - ADMIN
-   CLOSED ULDs WITH PO'S ONLY
-   PO RECORDS REMAIN ON THE ULD
-   ========================================================= */
-window.openConvertPOAWB=async()=>{
-  if(!adminMenuUnlocked)return;
-  switchScreen("convertPOAWB");
-  const select=document.getElementById("convertPOULDSelect");
-  const list=document.getElementById("convertPOList");
-  const input=document.getElementById("convertPOAWBInput");
-  if(select)select.innerHTML=`<option value="">Loading CLOSED ULDs with PO's...</option>`;
-  if(list)list.innerHTML="";
-  if(input)input.value="";
-  await loadPOULDsForConversion();
-};
+window.openDeletePOs=async()=>{if(!adminMenuUnlocked)return;switchScreen("deletePOs");await loadULDsForDeletePOs();};
 
-function getULDPOArray(data){
-  let pos=[];
-  if(Array.isArray(data.purchaseOrders))pos=data.purchaseOrders;
-  else if(Array.isArray(data.pos))pos=data.pos;
-  else if(Array.isArray(data.POs))pos=data.POs;
-  else if(Array.isArray(data.poNumbers))pos=data.poNumbers;
-  else if(typeof data.purchaseOrders==="string")pos=data.purchaseOrders.split(/[\\n,]+/);
-  else if(typeof data.pos==="string")pos=data.pos.split(/[\\n,]+/);
-  else if(typeof data.POs==="string")pos=data.POs.split(/[\\n,]+/);
-  else if(typeof data.poNumbers==="string")pos=data.poNumbers.split(/[\\n,]+/);
-  return [...new Set(pos.map(v=>String(v).trim()).filter(Boolean))];
+async function loadULDsForDeletePOs(){
+  const select=document.getElementById("deletePOsULDSelect"),info=document.getElementById("deletePOsInfo"); if(!select)return;
+  select.innerHTML=`<option value="">Loading ULDs...</option>`; if(info)info.innerText="";
+  try{
+    const snapshot=await getDocs(collection(db,"ulds")); const ulds=[];
+    snapshot.forEach(d=>{const x=d.data();const id=String(x.uldId||d.id).trim();if(id)ulds.push({docId:d.id,uldId:id,status:String(x.status||"OPEN").toUpperCase(),count:Array.isArray(x.purchaseOrders)?x.purchaseOrders.length:0});});
+    ulds.sort((a,b)=>a.uldId.localeCompare(b.uldId)); select.innerHTML=`<option value="">Select ULD</option>`;
+    ulds.forEach(u=>{const o=document.createElement("option");o.value=u.docId;o.dataset.uldId=u.uldId;o.dataset.count=u.count;o.textContent=`${u.uldId} (${u.status})`;select.appendChild(o);});
+    select.onchange=()=>{const o=select.options[select.selectedIndex];if(info)info.innerText=o?.dataset?.count?`POs on this ULD: ${o.dataset.count}`:"No POs entered on this ULD.";};
+  }catch(error){console.error(error);alert("Could not load ULDs.\n\n"+error.message);}
 }
 
-async function loadPOULDsForConversion(){
-  const select=document.getElementById("convertPOULDSelect");
-  if(!select)return;
-  try{
-    const snapshot=await getDocs(query(collection(db,"ulds"),where("status","==","CLOSED")));
-    const ulds=[];
-    snapshot.forEach(docSnap=>{
-      const d=docSnap.data();
-      const pos=getULDPOArray(d);
-      if(pos.length){
-        ulds.push({docId:docSnap.id,uldId:String(d.uldId||docSnap.id),pos});
-      }
-    });
-    ulds.sort((a,b)=>a.uldId.localeCompare(b.uldId));
-    select.innerHTML=`<option value="">Select a CLOSED ULD</option>`;
-    ulds.forEach(u=>{
-      const o=document.createElement("option");
-      o.value=u.docId;
-      o.textContent=`${u.uldId} (${u.pos.length} PO${u.pos.length===1?"":"s"})`;
-      o.dataset.uldId=u.uldId;
-      o.dataset.pos=JSON.stringify(u.pos);
-      select.appendChild(o);
-    });
-    if(!ulds.length)select.innerHTML=`<option value="">No CLOSED ULDs with PO's</option>`;
-  }catch(error){
-    console.error("Load PO ULDs error:",error);
-    select.innerHTML=`<option value="">Unable to load ULDs</option>`;
-    alert("Could not load CLOSED ULDs with PO's.\\n\\n"+error.message);
-  }
-}
-
-window.loadPOsForConversion=()=>{
-  const select=document.getElementById("convertPOULDSelect");
-  const list=document.getElementById("convertPOList");
-  const input=document.getElementById("convertPOAWBInput");
-  if(!select||!list)return;
-  const option=select.options[select.selectedIndex];
-  if(!select.value||!option){list.innerHTML="";if(input)input.value="";return;}
-  let pos=[];
-  try{pos=JSON.parse(option.dataset.pos||"[]");}catch(e){pos=[];}
-  list.innerHTML=
-    `<div class="infoTitle">PO'S ON ${escapeHTML(option.dataset.uldId||"")}</div>`+
-    `<table><thead><tr><th>#</th><th>PO</th></tr></thead><tbody>`+
-    pos.map((po,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(po)}</td></tr>`).join("")+\
-    `</tbody></table><p><strong>Total PO's: ${pos.length}</strong></p>`;
-  if(input)input.focus();
+window.deleteAllPOsForULD=async()=>{
+  const select=document.getElementById("deletePOsULDSelect"),option=select?.options[select.selectedIndex],docId=select?.value,uldId=String(option?.dataset?.uldId||"").trim(),count=Number(option?.dataset?.count||0);
+  if(!docId||!uldId){alert("Please select a ULD.");return;} if(count===0){alert(`ULD ${uldId} has no POs to delete.`);return;}
+  const confirmed=await showConfirmation("DELETE ALL POs",`Delete all ${count} PO(s) from ULD ${uldId}?\n\nThe ULD, AWBs, weight, cargo type, location and closed/open status will NOT be changed.`);
+  if(!confirmed)return;
+  try{await updateDoc(doc(db,"ulds",docId),{purchaseOrders:[]});await showVerification(true,uldId,"POs DELETED",`All POs have been removed from ULD ${uldId}.`);await loadULDsForDeletePOs();}catch(error){console.error(error);alert("Could not delete POs.\n\n"+error.message);}
 };
 
-window.saveConvertedPOAWB=async()=>{
-  if(!adminMenuUnlocked)return;
-  const select=document.getElementById("convertPOULDSelect");
-  const input=document.getElementById("convertPOAWBInput");
-  if(!select||!select.value){alert("Please select a CLOSED ULD with PO's.");return;}
-  const awb=normalizeAWB(input?.value||"");
-  if(!awb){alert("Please enter a valid 8-digit AWB.");return;}
-  const option=select.options[select.selectedIndex];
-  const uldId=String(option?.dataset?.uldId||"").trim();
-  const docId=String(select.value||"").trim();
-  if(!uldId||!docId){alert("The selected ULD could not be identified.");return;}
-  try{
-    // Confirm the selected record is still CLOSED before saving.
-    const uldRef=doc(db,"ulds",docId);
-    const uldSnap=await getDoc(uldRef);
-    if(!uldSnap.exists()||String(uldSnap.data().status||"").toUpperCase()!=="CLOSED"){
-      alert("This ULD is no longer CLOSED. Please refresh the list.");
-      await loadPOULDsForConversion();
-      return;
-    }
-
-    const duplicateSnapshot=await getDocs(query(collection(db,"scans"),where("code","==",awb)));
-    let duplicate=null;
-    duplicateSnapshot.forEach(docSnap=>{
-      const d=docSnap.data();
-      if(d.positionId&&d.positionId!=="[REMOVED]")duplicate=d;
-    });
-    if(duplicate){
-      alert(`AWB ${awb} is already allocated to ULD ${duplicate.uldId||duplicate.positionId}.`);
-      return;
-    }
-
-    // Add the AWB to the CLOSED ULD without changing its status,
-    // weight, cargo type, location, or PO list.
-    await addDoc(collection(db,"scans"),{
-      code:awb,
-      positionId:uldId,
-      uldId:uldId,
-      scannedAt:serverTimestamp(),
-      scannedBy:currentUser,
-      convertedFromPO:true,
-      convertedAt:serverTimestamp(),
-      convertedBy:currentUser
-    });
-
-    await showVerification(true,awb,"AWB SAVED",
-      `AWB ${awb} was added to CLOSED ULD ${uldId}.\\n\\n`+
-      `The PO's remain visible in Live View.`);
-
-    input.value="";
-    input.focus();
-  }catch(error){
-    console.error("Convert PO to AWB error:",error);
-    alert("Could not save AWB.\\n\\n"+error.message);
-  }
-};
-
-window.backToAdminMenuFromConvertPO=()=>{
-  if(adminMenuUnlocked)switchScreen("adminMenu");
-  else goHome();
-};
+window.backToAdminMenuFromDeletePOs=()=>{if(adminMenuUnlocked)switchScreen("adminMenu");else goHome();};
 
 
 /* =========================================================
