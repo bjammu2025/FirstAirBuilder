@@ -267,8 +267,8 @@ body{
   touch-action:pan-y;
 }
 
-/* Portrait-only layout */
-@media (orientation:landscape){
+/* Zebra/mobile portrait-only layout. Desktop is unaffected. */
+@media (max-width:900px) and (pointer:coarse) and (orientation:landscape){
   body::before{
     content:"Please rotate the Zebra to portrait mode.";
     position:fixed;
@@ -551,7 +551,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.27
+    Version 12.28
   </div>
 
   <div class="infoBox">
@@ -589,7 +589,7 @@ th{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.27
+    Version 12.28
   </div>
 
   <div class="infoBox">
@@ -1511,13 +1511,20 @@ th{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.27";
+const CODE_VERSION = "12.28";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
    ========================================================= */
 
+function isZebraMobileMode(){
+  return window.matchMedia("(max-width:900px) and (pointer:coarse)").matches
+    && navigator.maxTouchPoints > 0;
+}
+
 async function lockPortraitOrientation(){
+  if(!isZebraMobileMode()) return false;
+
   try{
     if(screen.orientation && screen.orientation.lock){
       await screen.orientation.lock("portrait");
@@ -1530,6 +1537,8 @@ async function lockPortraitOrientation(){
 }
 
 async function requestAppFullscreen(){
+  if(!isZebraMobileMode()) return false;
+
   try{
     if(document.fullscreenElement) return true;
 
@@ -1551,11 +1560,13 @@ async function requestAppFullscreen(){
   return false;
 }
 
-document.addEventListener("click", () => {
-  if(!document.fullscreenElement){
-    requestAppFullscreen();
-  }
-}, {once:true});
+if(isZebraMobileMode()){
+  document.addEventListener("click", () => {
+    if(!document.fullscreenElement){
+      requestAppFullscreen();
+    }
+  }, {once:true});
+}
 
 
 /* =========================================================
@@ -5635,7 +5646,12 @@ window.exportToCSV = async () => {
           weight:
             Math.round(Number(
               uld.weightLbs || 0
-            ))
+            )),
+          cargoType:
+            uld.cargoType ||
+            (Array.isArray(uld.cargoTypes)
+              ? uld.cargoTypes.join(", ")
+              : "")
 
         });
 
@@ -5645,7 +5661,8 @@ window.exportToCSV = async () => {
           scannedAt:"",
           scannedBy:"",
           uldId:"",
-          weight:""
+          weight:"",
+          cargoType:""
         });
 
         continue;
@@ -5681,6 +5698,13 @@ window.exportToCSV = async () => {
             weight:
               index === 0
                 ? Math.round(Number(uld.weightLbs || 0))
+                : "",
+            cargoType:
+              index === 0
+                ? (uld.cargoType ||
+                   (Array.isArray(uld.cargoTypes)
+                     ? uld.cargoTypes.join(", ")
+                     : ""))
                 : ""
 
           });
@@ -5694,7 +5718,8 @@ window.exportToCSV = async () => {
         scannedAt:"",
         scannedBy:"",
         uldId:"",
-        weight:""
+        weight:"",
+        cargoType:""
       });
 
     }
@@ -6050,13 +6075,15 @@ function formatExportTimestamp(value){
 function downloadClosedULDExcel(rows){
 
   const data = [
-    ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (LBS)"]
+    ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (LBS)", "Cargo Type"]
   ];
 
   rows.forEach(row => {
     data.push([
       "", row.awb || "", "", "", "", "", "", "", "", "",
-      row.scannedAt || "", row.scannedBy || "", row.uldId || "", (row.weight !== "" && row.weight != null ? Number(row.weight) : "")
+      row.scannedAt || "", row.scannedBy || "", row.uldId || "",
+      (row.weight !== "" && row.weight != null ? Number(row.weight) : ""),
+      row.cargoType || ""
     ]);
   });
 
@@ -6077,11 +6104,11 @@ function downloadClosedULDExcel(rows){
     { wch: 18 },
     { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
     { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
-    { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 16 }
+    { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 20 }
   ];
 
   const headerRow = 0;
-  for(let c = 0; c < 14; c++){
+  for(let c = 0; c < 15; c++){
     const cell = worksheet[XLSX.utils.encode_cell({r:headerRow,c})];
     if(cell) cell.s = { font: { bold: true } };
   }
@@ -6162,7 +6189,12 @@ async function exportEntireFlightData(
         scannedBy:"",
         uldId:uldId,
         weight:
-          Math.round(Number(uld.weightLbs || 0))
+          Math.round(Number(uld.weightLbs || 0)),
+          cargoType:
+            uld.cargoType ||
+            (Array.isArray(uld.cargoTypes)
+              ? uld.cargoTypes.join(", ")
+              : "")
 
       });
 
@@ -6172,7 +6204,8 @@ async function exportEntireFlightData(
         scannedAt:"",
         scannedBy:"",
         uldId:"",
-        weight:""
+        weight:"",
+        cargoType:""
       });
 
       continue;
@@ -6207,7 +6240,14 @@ async function exportEntireFlightData(
         weight:
           index === 0
             ? Math.round(Number(uld.weightLbs || 0))
-            : ""
+            : "",
+            cargoType:
+              index === 0
+                ? (uld.cargoType ||
+                   (Array.isArray(uld.cargoTypes)
+                     ? uld.cargoTypes.join(", ")
+                     : ""))
+                : ""
 
       });
 
@@ -6605,8 +6645,10 @@ window.addEventListener(
 );
 
 
-tryStartFullscreen();
-lockPortraitOrientation();
+if(isZebraMobileMode()){
+  tryStartFullscreen();
+  lockPortraitOrientation();
+}
 </script>
 
 </body>
