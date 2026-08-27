@@ -1428,6 +1428,39 @@ label *,
   margin:5px 0 !important;
 }
 
+
+/* =========================================================
+   12.43 HOME PAGE - FOUR SECTIONS
+   ========================================================= */
+
+.homeSection{
+  background:#D9DDE2 !important;
+  border:1px solid #6B7280 !important;
+  border-radius:10px;
+  padding:10px 12px !important;
+  margin:0 0 12px 0 !important;
+  box-sizing:border-box;
+}
+
+.homeSectionTitle{
+  color:#0B1F3A !important;
+  font-size:15px !important;
+  font-weight:700 !important;
+  text-align:left !important;
+  margin:0 0 7px 2px !important;
+  padding:0 !important;
+  letter-spacing:.3px;
+}
+
+.homeSection button{
+  width:100% !important;
+  margin:5px 0 !important;
+}
+
+.homeLogoutSection{
+  margin-bottom:0 !important;
+}
+
 </style>
 </head>
 
@@ -1444,7 +1477,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.41
+    Version 12.43
   </div>
 
   <div class="infoBox">
@@ -1481,25 +1514,31 @@ label *,
 
   <div id="homeUserLabel"></div>
 
-  <button onclick="goToAllocate()">
+  <div class="homeSection">
+    <div class="homeSectionTitle">ULD OPERATIONS</div>
+    <button onclick="goToAllocate()">
     ALLOCATE
   </button>
-
-  <button onclick="goToOffload()">
+    <button onclick="goToOffload()">
     OFFLOAD
   </button>
-
-  <button
+    <button
     class="closeULDButton"
     onclick="goToCloseULD()">
     CLOSE ULD
   </button>
+  </div>
 
-  <button onclick="goToLiveView()">
+  <div class="homeSection">
+    <div class="homeSectionTitle">LIVE VIEW</div>
+    <button onclick="goToLiveView()">
     LIVE VIEW
   </button>
+  </div>
 
-  <button
+  <div class="homeSection">
+    <div class="homeSectionTitle">ADMIN MENU</div>
+    <button
     class="closeFlightButton"
     onclick="openAdminMenu()">
     ADMIN MENU
@@ -1510,6 +1549,16 @@ label *,
     onclick="confirmLogout()">
     LOG OUT
   </button>
+  </div>
+
+  <div class="homeSection homeLogoutSection">
+    <div class="homeSectionTitle">LOG OUT</div>
+    <button
+    class="backButton"
+    onclick="confirmLogout()">
+    LOG OUT
+  </button>
+  </div>
 
 </div>
 
@@ -2454,7 +2503,7 @@ label *,
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.41";
+const CODE_VERSION = "12.43";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
@@ -7604,115 +7653,290 @@ window.openDeleteULDAdmin = async () => {
 
   switchScreen("deleteULDAdmin");
 
-  const select = document.getElementById("deleteULDSelect");
+  const select =
+    document.getElementById("deleteULDSelect");
+
+  if(!select)
+    return;
 
   select.innerHTML =
     `<option value="">Loading ULDs...</option>`;
 
   try{
 
-    const snapshot = await getDocs(collection(db,"ulds"));
+    const snapshot =
+      await getDocs(
+        collection(db,"ulds")
+      );
+
     const ulds = [];
 
     snapshot.forEach(docSnap => {
 
-      const d = docSnap.data();
+      const d =
+        docSnap.data();
 
-      ulds.push({
-        id:docSnap.id,
-        uldId:d.uldId || docSnap.id,
-        status:d.status || "OPEN"
-      });
+      const uldId =
+        String(
+          d.uldId ||
+          docSnap.id ||
+          ""
+        ).trim();
+
+      if(uldId){
+
+        ulds.push({
+          docId:docSnap.id,
+          uldId:uldId,
+          status:String(
+            d.status ||
+            "OPEN"
+          ).toUpperCase()
+        });
+
+      }
 
     });
 
-    ulds.sort((a,b) => a.uldId.localeCompare(b.uldId));
+    ulds.sort(
+      (a,b) =>
+        a.uldId.localeCompare(
+          b.uldId
+        )
+    );
 
     select.innerHTML =
       `<option value="">Select ULD</option>`;
 
     ulds.forEach(uld => {
 
-      const option = document.createElement("option");
+      const option =
+        document.createElement("option");
 
-      option.value = uld.id;
-      option.textContent = `${uld.uldId} (${uld.status})`;
-      option.dataset.uldId = uld.uldId;
+      option.value =
+        uld.docId;
+
+      option.textContent =
+        `${uld.uldId} (${uld.status})`;
+
+      option.dataset.uldId =
+        uld.uldId;
 
       select.appendChild(option);
 
     });
 
-    if(!ulds.length)
+    if(!ulds.length){
+
       select.innerHTML =
         `<option value="">No ULDs available</option>`;
 
+    }
+
   }catch(error){
 
-    console.error(error);
+    console.error(
+      "Load Delete ULD error:",
+      error
+    );
 
     select.innerHTML =
       `<option value="">Error loading ULDs</option>`;
 
-    alert("Could not load ULDs.\n\n" + error.message);
-
-  }
-
-};
-
-window.deleteSelectedULDAdmin = async () => {
-
-  const select = document.getElementById("deleteULDSelect");
-  const selected = select.options[select.selectedIndex];
-
-  if(!selected || !select.value){
-    alert("Please select a ULD.");
-    return;
-  }
-
-  const uldId =
-    selected.dataset.uldId ||
-    selected.textContent.split(" (")[0];
-
-  const confirmed = confirm(
-    `DELETE ULD ${uldId}?\n\n` +
-    `This will permanently delete the ULD and all AWBs allocated to it.\n\n` +
-    `This action cannot be undone.`
-  );
-
-  if(!confirmed) return;
-
-  try{
-
-    const scansSnapshot = await getDocs(
-      query(
-        collection(db,"scans"),
-        where("uldId","==",uldId)
-      )
-    );
-
-    for(const scanDoc of scansSnapshot.docs){
-      await deleteDoc(doc(db,"scans",scanDoc.id));
-    }
-
-    await deleteDoc(doc(db,"ulds",select.value));
-
-    alert(`ULD ${uldId} was deleted successfully.`);
-
-    await openDeleteULDAdmin();
-
-  }catch(error){
-
-    console.error(error);
-
-    alert(
-      "Could not delete ULD.\n\n" +
+    await showVerification(
+      false,
+      "",
+      "LOAD ERROR",
+      "Could not load the ULD list.\n\n" +
       error.message
     );
 
   }
 
 };
+
+
+window.deleteSelectedULDAdmin = async () => {
+
+  const select =
+    document.getElementById(
+      "deleteULDSelect"
+    );
+
+  if(!select){
+
+    alert(
+      "Delete ULD screen is unavailable."
+    );
+
+    return;
+
+  }
+
+  const selected =
+    select.options[
+      select.selectedIndex
+    ];
+
+  if(
+    !selected ||
+    !select.value
+  ){
+
+    alert(
+      "Please select a ULD."
+    );
+
+    return;
+
+  }
+
+  const uldId =
+    String(
+      selected.dataset.uldId ||
+      selected.textContent
+        .replace(/\s*\([^)]*\)\s*$/,"")
+        .trim()
+    ).trim();
+
+  const confirmed =
+    await showConfirmation(
+      "DELETE ULD",
+      `Are you sure you want to permanently delete ULD ${uldId}?\n\n` +
+      `All AWBs associated with this ULD will also be deleted.\n\n` +
+      `This action cannot be undone.`
+    );
+
+  if(!confirmed)
+    return;
+
+  try{
+
+    /* Find AWBs using either ULD field used by the app. */
+    const scansByUld =
+      await getDocs(
+        query(
+          collection(db,"scans"),
+          where(
+            "uldId",
+            "==",
+            uldId
+          )
+        )
+      );
+
+    const scansByPosition =
+      await getDocs(
+        query(
+          collection(db,"scans"),
+          where(
+            "positionId",
+            "==",
+            uldId
+          )
+        )
+      );
+
+    const scanIds =
+      new Set();
+
+    scansByUld.forEach(
+      d => scanIds.add(d.id)
+    );
+
+    scansByPosition.forEach(
+      d => scanIds.add(d.id)
+    );
+
+    const deletePromises = [];
+
+    scanIds.forEach(
+      scanId =>
+        deletePromises.push(
+          deleteDoc(
+            doc(
+              db,
+              "scans",
+              scanId
+            )
+          )
+        )
+    );
+
+    /* Delete all ULD documents with this ULD ID. */
+    const uldDocs =
+      await getDocs(
+        query(
+          collection(db,"ulds"),
+          where(
+            "uldId",
+            "==",
+            uldId
+          )
+        )
+      );
+
+    if(uldDocs.empty){
+
+      deletePromises.push(
+        deleteDoc(
+          doc(
+            db,
+            "ulds",
+            select.value
+          )
+        )
+      );
+
+    }else{
+
+      uldDocs.forEach(
+        d =>
+          deletePromises.push(
+            deleteDoc(
+              doc(
+                db,
+                "ulds",
+                d.id
+              )
+            )
+          )
+      );
+
+    }
+
+    await Promise.all(
+      deletePromises
+    );
+
+    await showVerification(
+      true,
+      uldId,
+      "ULD DELETED",
+      `ULD ${uldId} and its associated AWBs were deleted successfully.`
+    );
+
+    await openDeleteULDAdmin();
+
+  }catch(error){
+
+    console.error(
+      "Delete ULD error:",
+      error
+    );
+
+    await showVerification(
+      false,
+      uldId,
+      "DELETE ERROR",
+      "The ULD could not be deleted.\n\n" +
+      error.message
+    );
+
+  }
+
+};
+
 
 window.backToAdminMenuFromDeleteULD = () => {
   switchScreen("adminMenu");
