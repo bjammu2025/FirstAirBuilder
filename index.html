@@ -1685,7 +1685,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.54
+    Version 12.55
   </div>
 
   <div class="infoBox">
@@ -1745,6 +1745,11 @@ label *,
     class="manualButton"
     onclick="openUpdateULDLocation()">
     UPDATE ULD LOCATION
+  </button>
+    <button
+    class="manualButton"
+    onclick="openYFBPOUpdate()">
+    YFB PO UPDATE
   </button>
 
     <div
@@ -1826,6 +1831,12 @@ label *,
     class="manualButton"
     onclick="openAmendULD()">
     AMEND ULD
+  </button>
+
+    <button
+    class="closeFlightButton"
+    onclick="openDeletePOs()">
+    DELETE ULD POs
   </button>
 
     <button
@@ -2561,6 +2572,36 @@ label *,
 
 </div>
 
+
+<!-- =========================================================
+     YFB PO UPDATE
+     ========================================================= -->
+<div id="yfbPOUpdate" class="screen">
+  <h3>YFB PO Update</h3>
+  <div class="infoBox">
+    <div class="infoTitle">Select OPEN ULD</div>
+    <select id="yfbPOULDSelect"><option value="">Loading OPEN ULDs...</option></select>
+    <div class="infoTitle">Purchase Orders</div>
+    <div id="poInputs"></div>
+    <button class="manualButton" onclick="addPOInput()">+ ADD PO</button>
+  </div>
+  <button class="confirmButton" onclick="saveYFBPOs()">SAVE POs</button>
+  <button class="backButton" onclick="backFromYFBPOUpdate()">⬅ BACK</button>
+</div>
+
+<!-- =========================================================
+     DELETE ULD POs - ADMIN
+     ========================================================= -->
+<div id="deletePOs" class="screen">
+  <h3>Delete ULD POs</h3>
+  <div class="infoBox">
+    <div class="infoTitle">Select ULD</div>
+    <select id="deletePOsULDSelect"><option value="">Loading ULDs...</option></select>
+    <div id="deletePOsInfo" class="manualHint"></div>
+  </div>
+  <button class="closeFlightButton" onclick="deleteAllPOsForULD()">DELETE ALL POs</button>
+  <button class="backButton" onclick="backToAdminMenuFromDeletePOs()">⬅ BACK</button>
+</div>
 
 <!-- =========================================================
      LIVE VIEW
@@ -6286,46 +6327,49 @@ window.backFromCloseULDWeight = async () => {
   await loadOpenULDsForClose();
 };
 
-window.startCloseULD = () => {
+window.startCloseULD = async () => {
 
-  const select =
-    document.getElementById(
-      "closeULDSelect"
-    );
-
-  const uld =
-    select.value.trim();
+  const select = document.getElementById("closeULDSelect");
+  const uld = select.value.trim();
 
   if(!uld){
-
-    alert(
-      "Please select an OPEN ULD."
-    );
-
+    alert("Please select an OPEN ULD.");
     return;
-
   }
 
   selectedCloseULD = uld;
-
-  document
-    .getElementById("closeULDName")
-    .innerText = uld;
-
-  document
-    .getElementById("weightLbs")
-    .value = "";
-
-  document
-    .getElementById("weightKgDisplay")
-    .innerText =
-      "0 KG";
-
+  document.getElementById("closeULDName").innerText = uld;
+  document.getElementById("weightLbs").value = "";
+  document.getElementById("weightKgDisplay").innerText = "0 KG";
   document.getElementById("cargoTypeSelect").selectedIndex = -1;
   document.getElementById("cargoTypeManual").value = "";
 
-  switchScreen("closeULDWeight");
+  try{
+    const snapshot = await getDocs(query(collection(db,"ulds"),where("uldId","==",uld),where("status","==","OPEN")));
+    if(!snapshot.empty){
+      const data = snapshot.docs[0].data();
+      const oldLbs = Number(data.weightLbs || 0);
+      const oldKg = Number(data.weightKg || 0);
+      const oldCargo = Array.isArray(data.cargoTypes) ? data.cargoTypes.filter(Boolean) : (data.cargoType ? String(data.cargoType).split(",").map(v=>v.trim()).filter(Boolean) : []);
 
+      if(oldLbs > 0){
+        document.getElementById("weightLbs").value = oldLbs;
+        document.getElementById("weightKgDisplay").innerText = Math.round(oldKg || oldLbs * 0.45359237) + " KG";
+      }
+
+      const standardTypes = ["Cooler","Frozen","Dry","DG","Plank","Belly"];
+      oldCargo.forEach(type => {
+        const option = Array.from(document.getElementById("cargoTypeSelect").options).find(o => o.value.toUpperCase() === String(type).toUpperCase());
+        if(option) option.selected = true;
+      });
+      const customTypes = oldCargo.filter(type => !standardTypes.some(x => x.toUpperCase() === String(type).toUpperCase()));
+      if(customTypes.length) document.getElementById("cargoTypeManual").value = customTypes.join(", ");
+    }
+  }catch(error){
+    console.error("Load existing ULD close data error:",error);
+  }
+
+  switchScreen("closeULDWeight");
 };
 
 
@@ -7434,6 +7478,84 @@ window.backFromUpdateULDLocation = () => {
 
 
 /* =========================================================
+   YFB PO UPDATE
+   ========================================================= */
+window.openYFBPOUpdate = async () => {
+  if(!getCurrentUser()){ alert("Please enter user name"); return; }
+  switchScreen("yfbPOUpdate");
+  await loadOpenULDsForPOUpdate();
+};
+
+async function loadOpenULDsForPOUpdate(){
+  const select=document.getElementById("yfbPOULDSelect");
+  const box=document.getElementById("poInputs");
+  if(!select||!box) return;
+  select.innerHTML=`<option value="">Loading OPEN ULDs...</option>`; box.innerHTML="";
+  try{
+    const snapshot=await getDocs(query(collection(db,"ulds"),where("status","==","OPEN")));
+    if(snapshot.empty){ select.innerHTML=`<option value="">No OPEN ULDs available</option>`; return; }
+    const ulds=[]; snapshot.forEach(d=>{const x=d.data(); const id=String(x.uldId||d.id).trim(); if(id) ulds.push({id,docId:d.id});});
+    ulds.sort((a,b)=>a.id.localeCompare(b.id));
+    select.innerHTML=`<option value="">Select an OPEN ULD</option>`;
+    ulds.forEach(u=>{const o=document.createElement("option");o.value=u.id;o.textContent=u.id;o.dataset.docId=u.docId;select.appendChild(o);});
+    addPOInput();
+  }catch(error){ console.error(error); alert("Could not load OPEN ULDs.\n\n"+error.message); }
+}
+
+window.addPOInput=()=>{
+  const box=document.getElementById("poInputs"); if(!box)return;
+  const row=document.createElement("div"); row.style.display="flex"; row.style.gap="8px"; row.style.alignItems="center";
+  const input=document.createElement("input"); input.type="text"; input.className="poInput"; input.placeholder="Enter PO"; input.autocomplete="off"; input.style.flex="1";
+  const remove=document.createElement("button"); remove.type="button"; remove.innerText="✕"; remove.style.width="70px"; remove.onclick=()=>row.remove();
+  row.appendChild(input);row.appendChild(remove);box.appendChild(row);input.focus();
+};
+
+window.saveYFBPOs=async()=>{
+  const select=document.getElementById("yfbPOULDSelect");
+  if(!select||!select.value){alert("Please select an OPEN ULD.");return;}
+  const pos=Array.from(document.querySelectorAll("#poInputs .poInput")).map(i=>i.value.trim().toUpperCase()).filter(Boolean);
+  if(!pos.length){alert("Please enter at least one PO.");return;}
+  const uniqueNew=[...new Set(pos)];
+  try{
+    const snapshot=await getDocs(query(collection(db,"ulds"),where("uldId","==",select.value),where("status","==","OPEN")));
+    if(snapshot.empty){alert("ULD was not found or is not OPEN.");await loadOpenULDsForPOUpdate();return;}
+    await Promise.all(snapshot.docs.map(d=>{const data=d.data();const existing=Array.isArray(data.purchaseOrders)?data.purchaseOrders.map(v=>String(v).trim().toUpperCase()).filter(Boolean):[];return updateDoc(doc(db,"ulds",d.id),{purchaseOrders:[...new Set([...existing,...uniqueNew])]});}));
+    await showVerification(true,select.value,"POs UPDATED",`${uniqueNew.length} PO(s) were added to ULD ${select.value}.`);
+    await loadOpenULDsForPOUpdate();
+  }catch(error){console.error(error);alert("Could not save POs.\n\n"+error.message);}
+};
+
+window.backFromYFBPOUpdate=()=>{const box=document.getElementById("poInputs");if(box)box.innerHTML="";switchScreen("home");};
+
+/* =========================================================
+   DELETE ALL ULD POs - ADMIN
+   ========================================================= */
+window.openDeletePOs=async()=>{if(!adminMenuUnlocked)return;switchScreen("deletePOs");await loadULDsForDeletePOs();};
+
+async function loadULDsForDeletePOs(){
+  const select=document.getElementById("deletePOsULDSelect"),info=document.getElementById("deletePOsInfo"); if(!select)return;
+  select.innerHTML=`<option value="">Loading ULDs...</option>`; if(info)info.innerText="";
+  try{
+    const snapshot=await getDocs(collection(db,"ulds")); const ulds=[];
+    snapshot.forEach(d=>{const x=d.data();const id=String(x.uldId||d.id).trim();if(id)ulds.push({docId:d.id,uldId:id,status:String(x.status||"OPEN").toUpperCase(),count:Array.isArray(x.purchaseOrders)?x.purchaseOrders.length:0});});
+    ulds.sort((a,b)=>a.uldId.localeCompare(b.uldId)); select.innerHTML=`<option value="">Select ULD</option>`;
+    ulds.forEach(u=>{const o=document.createElement("option");o.value=u.docId;o.dataset.uldId=u.uldId;o.dataset.count=u.count;o.textContent=`${u.uldId} (${u.status})`;select.appendChild(o);});
+    select.onchange=()=>{const o=select.options[select.selectedIndex];if(info)info.innerText=o?.dataset?.count?`POs on this ULD: ${o.dataset.count}`:"No POs entered on this ULD.";};
+  }catch(error){console.error(error);alert("Could not load ULDs.\n\n"+error.message);}
+}
+
+window.deleteAllPOsForULD=async()=>{
+  const select=document.getElementById("deletePOsULDSelect"),option=select?.options[select.selectedIndex],docId=select?.value,uldId=String(option?.dataset?.uldId||"").trim(),count=Number(option?.dataset?.count||0);
+  if(!docId||!uldId){alert("Please select a ULD.");return;} if(count===0){alert(`ULD ${uldId} has no POs to delete.`);return;}
+  const confirmed=await showConfirmation("DELETE ALL POs",`Delete all ${count} PO(s) from ULD ${uldId}?\n\nThe ULD, AWBs, weight, cargo type, location and closed/open status will NOT be changed.`);
+  if(!confirmed)return;
+  try{await updateDoc(doc(db,"ulds",docId),{purchaseOrders:[]});await showVerification(true,uldId,"POs DELETED",`All POs have been removed from ULD ${uldId}.`);await loadULDsForDeletePOs();}catch(error){console.error(error);alert("Could not delete POs.\n\n"+error.message);}
+};
+
+window.backToAdminMenuFromDeletePOs=()=>{if(adminMenuUnlocked)switchScreen("adminMenu");else goHome();};
+
+
+/* =========================================================
    LIVE VIEW
    ========================================================= */
 
@@ -7537,7 +7659,13 @@ window.goToLiveView = () => {
               }
             );
 
-            html +=
+                        const purchaseOrders = Array.isArray(uld.purchaseOrders)
+              ? [...new Set(uld.purchaseOrders.map(v => String(v).trim()).filter(Boolean))]
+              : [];
+            const poText = purchaseOrders.join(", ");
+            const poCount = purchaseOrders.length;
+
+html +=
               `<div class="liveULD ${isClosed ? "closed" : "open"}">
 
                 <div class="liveULDTitle">
@@ -7581,6 +7709,8 @@ window.goToLiveView = () => {
                     <th>Scanned By</th>
                     <th>ULD Description</th>
                     <th>ULD Location</th>
+                    <th>POs</th>
+                    <th>Total POs</th>
 
                   </tr>
 
@@ -7596,6 +7726,8 @@ window.goToLiveView = () => {
                   <td colspan="6">
                     No active AWBs
                   </td>
+                  <td>${escapeHTML(poText)}</td>
+                  <td>${poCount}</td>
 
                 </tr>`;
 
@@ -7650,6 +7782,14 @@ window.goToLiveView = () => {
                         ${escapeHTML(
                           uld.uldLocation || ""
                         )}
+                      </td>
+
+                      <td>
+                        ${index === 0 ? escapeHTML(poText) : ""}
+                      </td>
+
+                      <td>
+                        ${index === 0 ? poCount : ""}
                       </td>
 
                     </tr>`;
@@ -9244,6 +9384,10 @@ function handleZebraBackButton(){
 
     amendULD:
       "backToAdminMenuFromAmendULD",
+    yfbPOUpdate:
+      "backFromYFBPOUpdate",
+    deletePOs:
+      "backToAdminMenuFromDeletePOs",
 
     updateULDLocation:
       "backFromUpdateULDLocation",
