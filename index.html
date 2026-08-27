@@ -1559,6 +1559,18 @@ label *,
   display:block !important;
 }
 
+
+/* 12.48 - CREATE NEW ULD IN FIRST HOME SECTION */
+#home .homeSection:first-of-type button{
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  float:none !important;
+  clear:both !important;
+  box-sizing:border-box !important;
+  margin:6px 0 !important;
+}
+
 </style>
 </head>
 
@@ -1575,7 +1587,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.47
+    Version 12.48
   </div>
 
   <div class="infoBox">
@@ -1624,6 +1636,11 @@ label *,
     class="closeULDButton"
     onclick="goToCloseULD()">
     CLOSE ULD
+  </button>
+    <button
+    class="createButton"
+    onclick="showCreateULD()">
+    + CREATE NEW ULD
   </button>
   </div>
 
@@ -2585,7 +2602,7 @@ label *,
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.47";
+const CODE_VERSION = "12.48";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
