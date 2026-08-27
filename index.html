@@ -38,6 +38,8 @@ body{
 }
 
 .container{
+  position:relative;
+  z-index:1;
   width:100%;
   min-height:100vh;
   padding:10px;
@@ -828,7 +830,7 @@ html{
 }
 
 body{
-  background:#E3E7EC !important;
+  background:#B8BEC6 !important;
   color:#111827 !important;
   position:relative;
 }
@@ -839,9 +841,9 @@ body::before{
   content:"";
   position:fixed;
   inset:0;
-  z-index:-1;
+  z-index:0;
   background-image:
-    linear-gradient(rgba(227,231,236,.78),rgba(227,231,236,.78)),
+    linear-gradient(rgba(184,190,198,.72),rgba(184,190,198,.72)),
     url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg");
   background-size:cover;
   background-position:center center;
@@ -853,7 +855,7 @@ body::before{
 @media (max-width:900px) and (pointer:coarse){
   body::before{
     background-image:
-      linear-gradient(rgba(227,231,236,.86),rgba(227,231,236,.86)),
+      linear-gradient(rgba(184,190,198,.82),rgba(184,190,198,.82)),
       url("https://www.calmair.com/uploads/aircraft-atr72-cargo.jpg");
     background-position:center center;
   }
@@ -927,6 +929,28 @@ button span{
   color:#ffffff !important;
 }
 
+
+/* Compact logged-in user label */
+#loggedInUserLabel{
+  display:block;
+  text-align:left;
+  font-size:12px;
+  font-weight:400;
+  color:#4B5563 !important;
+  margin:4px 0 10px 2px;
+  padding:0;
+}
+
+
+/* Home screen: remove large app/login status heading */
+#home .appTitle,
+#home .loggedInAs,
+#home .loginStatus,
+#home .headerTitle,
+#home .subtitle{
+  display:none !important;
+}
+
 </style>
 </head>
 
@@ -943,7 +967,7 @@ button span{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.31
+    Version 12.32
   </div>
 
   <div class="infoBox">
@@ -978,10 +1002,12 @@ button span{
 
 <div id="home" class="screen">
 
-  <h2>First Air Builder</h2>
+  <div id="loggedInUserLabel"></div>
+
+<h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.31
+    Version 12.32
   </div>
 
   <div class="infoBox">
@@ -1903,7 +1929,21 @@ button span{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.31";
+const CODE_VERSION = "12.32";
+
+function updateLoggedInUserLabel(){
+  const el = document.getElementById("loggedInUserLabel");
+  if(!el) return;
+
+  const username =
+    typeof currentUser === "string"
+      ? currentUser
+      : "";
+updateLoggedInUserLabel();
+
+  el.innerText = username;
+}
+
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
