@@ -1374,6 +1374,34 @@ label *,
   }
 }
 
+
+/* =========================================================
+   12.39 ADMIN MODE - THREE SECTIONS
+   ========================================================= */
+
+.adminSection{
+  background:#D9DDE2 !important;
+  border:1px solid #6B7280 !important;
+  border-radius:10px;
+  padding:12px;
+  margin:0 0 14px 0;
+  box-sizing:border-box;
+}
+
+.adminSectionTitle{
+  color:#0B1F3A !important;
+  font-size:15px;
+  font-weight:700;
+  text-align:left;
+  margin:0 0 9px 2px;
+  letter-spacing:.3px;
+}
+
+.adminSection button{
+  width:100%;
+  margin:6px 0 !important;
+}
+
 </style>
 </head>
 
@@ -1390,7 +1418,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.35
+    Version 12.39
   </div>
 
   <div class="infoBox">
@@ -1467,7 +1495,31 @@ label *,
 
   <h3>Admin Menu</h3>
 
-  <button onclick="exportToCSV()">
+  <div class="adminSection">
+    <div class="adminSectionTitle">
+      ULD / FLIGHT
+    </div>
+
+    <button onclick="exportToCSV()">
+    EXPORT CLOSED ULDs
+  </button>
+    <button onclick="exportToCSV()">
+    EXPORT CLOSED ULDs
+  </button>
+
+  <button
+    class="closeFlightButton"
+    onclick="goToCloseFlight()">
+    CLOSE FLIGHT
+  </button>
+  </div>
+
+  <div class="adminSection">
+    <div class="adminSectionTitle">
+      ULD MANAGEMENT
+    </div>
+
+    <button onclick="exportToCSV()">
     EXPORT CLOSED ULDs
   </button>
 
@@ -1494,6 +1546,55 @@ label *,
     onclick="openReopenULD()">
     OPEN CLOSED ULD
   </button>
+    <button
+    class="closeFlightButton"
+    onclick="openDeleteULDAdmin()">
+    DELETE ULD
+  </button>
+  </div>
+
+  <div class="adminSection">
+    <div class="adminSectionTitle">
+      USER MANAGEMENT
+    </div>
+
+    <button onclick="exportToCSV()">
+    EXPORT CLOSED ULDs
+  </button>
+
+  <button
+    class="closeFlightButton"
+    onclick="goToCloseFlight()">
+    CLOSE FLIGHT
+  </button>
+
+  <button
+    class="createButton"
+    onclick="openCreateUser()">
+    CREATE USERNAME &amp; PASSWORD
+  </button>
+    <button onclick="exportToCSV()">
+    EXPORT CLOSED ULDs
+  </button>
+
+  <button
+    class="closeFlightButton"
+    onclick="goToCloseFlight()">
+    CLOSE FLIGHT
+  </button>
+
+  <button
+    class="createButton"
+    onclick="openCreateUser()">
+    CREATE USERNAME &amp; PASSWORD
+  </button>
+
+  <button
+    class="manualButton"
+    onclick="openResetUser()">
+    RESET PASSWORD
+  </button>
+  </div>
 
   <button
     class="backButton"
@@ -1502,7 +1603,6 @@ label *,
   </button>
 
 </div>
-
 <!-- =========================================================
      CREATE USER
      ========================================================= -->
@@ -1631,6 +1731,41 @@ label *,
 
 </div>
 
+
+<!-- =========================================================
+     DELETE ULD - ADMIN
+     ========================================================= -->
+
+<div id="deleteULDAdmin" class="screen">
+
+  <h3>Delete ULD</h3>
+
+  <div class="infoBox">
+
+    <div class="infoTitle">
+      Select ULD
+    </div>
+
+    <select id="deleteULDSelect">
+      <option value="">Loading ULDs...</option>
+    </select>
+
+  </div>
+
+  <button
+    class="closeFlightButton"
+    onclick="deleteSelectedULDAdmin()">
+    DELETE ULD
+  </button>
+
+  <button
+    class="backButton"
+    onclick="backToAdminMenuFromDeleteULD()">
+    ⬅ BACK
+  </button>
+
+</div>
+
 <!-- =========================================================
      ADMIN MENU PASSWORD
      ========================================================= -->
@@ -1691,6 +1826,11 @@ label *,
       </option>
     </select>
 
+    <button
+      onclick="startAllocate()">
+      NEXT
+    </button>
+
   </div>
 
   <button
@@ -1720,10 +1860,6 @@ label *,
     </button>
 
   </div>
-
-  <button onclick="startAllocate()">
-    NEXT
-  </button>
 
   <button
     class="backButton"
@@ -1853,13 +1989,13 @@ label *,
 
     </select>
 
+    <button onclick="startOffload()">
+      START
+    </button>
+
+
   </div>
-
-  <button onclick="startOffload()">
-    START
-  </button>
-
-  <button
+<button
     class="backButton"
     onclick="goHome()">
     ⬅ BACK
@@ -2340,7 +2476,7 @@ label *,
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.35";
+const CODE_VERSION = "12.39";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
@@ -7480,6 +7616,131 @@ if(isZebraMobileMode()){
   tryStartFullscreen();
   lockPortraitOrientation();
 }
+
+
+/* =========================================================
+   DELETE ULD - ADMIN
+   ========================================================= */
+
+window.openDeleteULDAdmin = async () => {
+
+  switchScreen("deleteULDAdmin");
+
+  const select = document.getElementById("deleteULDSelect");
+
+  select.innerHTML =
+    `<option value="">Loading ULDs...</option>`;
+
+  try{
+
+    const snapshot = await getDocs(collection(db,"ulds"));
+    const ulds = [];
+
+    snapshot.forEach(docSnap => {
+
+      const d = docSnap.data();
+
+      ulds.push({
+        id:docSnap.id,
+        uldId:d.uldId || docSnap.id,
+        status:d.status || "OPEN"
+      });
+
+    });
+
+    ulds.sort((a,b) => a.uldId.localeCompare(b.uldId));
+
+    select.innerHTML =
+      `<option value="">Select ULD</option>`;
+
+    ulds.forEach(uld => {
+
+      const option = document.createElement("option");
+
+      option.value = uld.id;
+      option.textContent = `${uld.uldId} (${uld.status})`;
+      option.dataset.uldId = uld.uldId;
+
+      select.appendChild(option);
+
+    });
+
+    if(!ulds.length)
+      select.innerHTML =
+        `<option value="">No ULDs available</option>`;
+
+  }catch(error){
+
+    console.error(error);
+
+    select.innerHTML =
+      `<option value="">Error loading ULDs</option>`;
+
+    alert("Could not load ULDs.\n\n" + error.message);
+
+  }
+
+};
+
+window.deleteSelectedULDAdmin = async () => {
+
+  const select = document.getElementById("deleteULDSelect");
+  const selected = select.options[select.selectedIndex];
+
+  if(!selected || !select.value){
+    alert("Please select a ULD.");
+    return;
+  }
+
+  const uldId =
+    selected.dataset.uldId ||
+    selected.textContent.split(" (")[0];
+
+  const confirmed = confirm(
+    `DELETE ULD ${uldId}?\n\n` +
+    `This will permanently delete the ULD and all AWBs allocated to it.\n\n` +
+    `This action cannot be undone.`
+  );
+
+  if(!confirmed) return;
+
+  try{
+
+    const scansSnapshot = await getDocs(
+      query(
+        collection(db,"scans"),
+        where("uldId","==",uldId)
+      )
+    );
+
+    for(const scanDoc of scansSnapshot.docs){
+      await deleteDoc(doc(db,"scans",scanDoc.id));
+    }
+
+    await deleteDoc(doc(db,"ulds",select.value));
+
+    alert(`ULD ${uldId} was deleted successfully.`);
+
+    await openDeleteULDAdmin();
+
+  }catch(error){
+
+    console.error(error);
+
+    alert(
+      "Could not delete ULD.\n\n" +
+      error.message
+    );
+
+  }
+
+};
+
+window.backToAdminMenuFromDeleteULD = () => {
+  switchScreen("adminMenu");
+};
+
+
 </script>
 
 </body>
