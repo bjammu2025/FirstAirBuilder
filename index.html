@@ -1685,7 +1685,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.57
+    Version 12.58
   </div>
 
   <div class="infoBox">
@@ -7760,121 +7760,79 @@ function renderPOConversionList(
   html +=
     `<div class="infoTitle">PO's On ${escapeHTML(uldId)}</div>`;
 
-  purchaseOrders.forEach((po,index) => {
+  html +=
+    `<div style="border:1px solid #6B7280;border-radius:10px;padding:12px;margin:10px 0;background:#FFFFFF;box-sizing:border-box;">
 
-    const rowId =
-      `poConvertRow_${index}`;
+      <div style="font-weight:700;font-size:1.2rem;margin-bottom:8px;">
+        All ${purchaseOrders.length} PO${purchaseOrders.length === 1 ? "" : "s"} will be converted to ONE AWB
+      </div>
 
-    const inputId =
-      `poConvertAWB_${index}`;
+      <div class="manualHint" style="margin-bottom:10px;">
+        PO's: ${escapeHTML(purchaseOrders.join(", "))}
+      </div>
 
-    const buttonId =
-      `poConvertButton_${index}`;
+      <input
+        id="poConvertAWB"
+        type="text"
+        placeholder="Enter one AWB for all PO's"
+        autocomplete="off"
+        inputmode="numeric"
+        style="width:100%;box-sizing:border-box;">
 
-    html +=
-      `<div
-        id="${rowId}"
-        style="border:1px solid #6B7280;border-radius:10px;padding:12px;margin:10px 0;background:#FFFFFF;box-sizing:border-box;">
+      <button
+        id="poConvertButton"
+        class="confirmButton"
+        type="button"
+        onclick="convertPOsToOneAWB('${docId}','${uldId}')">
+        SAVE AWB FOR ALL PO's
+      </button>
 
-        <div style="font-weight:700;font-size:1.2rem;margin-bottom:8px;">
-          PO: ${escapeHTML(po)}
-        </div>
+      <div
+        id="poConvertStatus"
+        class="manualHint">
+      </div>
 
-        <input
-          id="${inputId}"
-          type="text"
-          placeholder="Enter AWB"
-          autocomplete="off"
-          inputmode="numeric"
-          style="width:100%;box-sizing:border-box;">
-
-        <button
-          id="${buttonId}"
-          class="confirmButton"
-          type="button"
-          onclick="convertPOToAWB('${docId}','${uldId}','${po.replace(/'/g,"\\'")}','${index}')">
-          SAVE AWB
-        </button>
-
-        <div
-          id="poConvertStatus_${index}"
-          class="manualHint">
-        </div>
-
-      </div>`;
-
-  });
+    </div>`;
 
   list.innerHTML = html;
 
-  purchaseOrders.forEach((po,index) => {
+  const input =
+    document.getElementById("poConvertAWB");
 
-    const input =
-      document.getElementById(
-        `poConvertAWB_${index}`
-      );
-
-    if(input){
-
-      input.addEventListener(
-        "keydown",
-        event => {
-
-          if(event.key === "Enter"){
-
-            event.preventDefault();
-
-            convertPOToAWB(
-              docId,
-              uldId,
-              po,
-              String(index)
-            );
-
-          }
-
-        }
-      );
-
-    }
-
-  });
+  if(input){
+    input.addEventListener("keydown", event => {
+      if(event.key === "Enter"){
+        event.preventDefault();
+        convertPOsToOneAWB(docId,uldId);
+      }
+    });
+  }
 
 }
 
 
-window.convertPOToAWB = async (
+window.convertPOsToOneAWB = async (
   docId,
-  uldId,
-  po,
-  index
+  uldId
 ) => {
 
   if(!adminMenuUnlocked)
     return;
 
   const input =
-    document.getElementById(
-      `poConvertAWB_${index}`
-    );
+    document.getElementById("poConvertAWB");
 
   const button =
-    document.getElementById(
-      `poConvertButton_${index}`
-    );
+    document.getElementById("poConvertButton");
 
   const status =
-    document.getElementById(
-      `poConvertStatus_${index}`
-    );
+    document.getElementById("poConvertStatus");
 
   if(!input)
     return;
 
   const rawAWB =
-    String(
-      input.value || ""
-    ).trim();
+    String(input.value || "").trim();
 
   const awb =
     normalizeAWB(rawAWB);
@@ -7893,116 +7851,78 @@ window.convertPOToAWB = async (
   try{
 
     const uldRef =
-      doc(
-        db,
-        "ulds",
-        docId
-      );
+      doc(db,"ulds",docId);
 
-    /*
-       Re-read the exact ULD document. This verifies that the ULD
-       still exists, is CLOSED, and still contains the PO.
-    */
+    /* Re-read the exact ULD so it is still CLOSED and still has PO's. */
     const uldSnap =
-      await getDoc(
-        uldRef
-      );
+      await getDoc(uldRef);
 
     if(!uldSnap.exists()){
-
-      alert(
-        "The selected ULD could not be found."
-      );
-
+      alert("The selected ULD could not be found.");
       await loadULDsForDeletePOs();
       return;
-
     }
 
     const uldData =
       uldSnap.data();
 
     const currentStatus =
-      String(
-        uldData.status || ""
-      ).toUpperCase();
+      String(uldData.status || "").toUpperCase();
 
     if(currentStatus !== "CLOSED"){
-
       alert(
         `ULD ${uldId} is no longer CLOSED.\n\nNo AWB was added.`
       );
-
       await loadULDsForDeletePOs();
       return;
-
     }
 
     const currentPOs =
-      Array.isArray(
-        uldData.purchaseOrders
-      )
-        ? uldData.purchaseOrders
-            .map(v => String(v).trim().toUpperCase())
-            .filter(Boolean)
+      Array.isArray(uldData.purchaseOrders)
+        ? [...new Set(
+            uldData.purchaseOrders
+              .map(v => String(v).trim().toUpperCase())
+              .filter(Boolean)
+          )]
         : [];
 
-    const normalizedPO =
-      String(
-        po || ""
-      ).trim().toUpperCase();
-
-    if(!currentPOs.includes(normalizedPO)){
-
-      alert(
-        `PO ${po} is no longer on ULD ${uldId}.\n\nNo AWB was added.`
-      );
-
+    if(!currentPOs.length){
+      alert(`ULD ${uldId} no longer has any PO's to convert.`);
       await loadULDsForDeletePOs();
       return;
-
     }
 
     /*
-       Check the audit list so one PO cannot be converted twice.
+       Check the conversion audit list. If any PO on this ULD has
+       already been converted, the entire ULD conversion is treated
+       as already completed. One ULD has exactly one conversion AWB.
     */
     const conversions =
-      Array.isArray(
-        uldData.poAwbConversions
-      )
+      Array.isArray(uldData.poAwbConversions)
         ? uldData.poAwbConversions
         : [];
 
-    const existingPOConversion =
-      conversions.find(
-        item =>
-          String(
-            item?.po || ""
-          ).trim().toUpperCase()
-          === normalizedPO
-      );
+    const existingConversions =
+      currentPOs
+        .map(po => conversions.find(item =>
+          String(item?.po || "").trim().toUpperCase() === po
+        ))
+        .filter(Boolean);
 
-    if(existingPOConversion){
+    if(existingConversions.length){
 
       const existingAWB =
-        normalizeAWB(
-          existingPOConversion.awb
-        ) ||
-        String(
-          existingPOConversion.awb || ""
-        );
+        normalizeAWB(existingConversions[0]?.awb) ||
+        String(existingConversions[0]?.awb || "");
 
       alert(
-        `PO ${po} has already been converted to AWB ${existingAWB}.`
+        `The PO's on ULD ${uldId} have already been converted to AWB ${existingAWB}.`
       );
 
       return;
-
     }
 
-    /*
-       Same duplicate-AWB protection used by normal allocation.
-    */
+    /* Same duplicate-AWB protection used by normal allocation. */
     const duplicateSnapshot =
       await getDocs(
         query(
@@ -8013,23 +7933,16 @@ window.convertPOToAWB = async (
 
     let duplicate = null;
 
-    duplicateSnapshot.forEach(
-      docSnap => {
+    duplicateSnapshot.forEach(docSnap => {
+      const d = docSnap.data();
 
-        const d =
-          docSnap.data();
-
-        if(
-          d.positionId &&
-          d.positionId !== "[REMOVED]"
-        ){
-
-          duplicate = d;
-
-        }
-
+      if(
+        d.positionId &&
+        d.positionId !== "[REMOVED]"
+      ){
+        duplicate = d;
       }
-    );
+    });
 
     if(duplicate){
 
@@ -8049,35 +7962,31 @@ window.convertPOToAWB = async (
       input.focus();
       input.select();
       return;
-
     }
 
     const confirmed =
       await showConfirmation(
-        "CONVERT PO TO AWB",
-        `Convert PO ${po} to AWB ${awb}?\n\n` +
-        `ULD: ${uldId}\n` +
+        "CONVERT ALL PO'S TO ONE AWB",
+        `Convert ALL ${currentPOs.length} PO(s) on ULD ${uldId} to ONE AWB ${awb}?\n\n` +
+        `PO's: ${currentPOs.join(", ")}\n\n` +
         `The ULD will remain CLOSED.\n` +
-        `The original PO will remain visible in Live View.`
+        `The original PO's will remain visible in Live View.`
       );
 
     if(!confirmed)
       return;
 
     /*
-       Save both sides of the conversion in one Firestore batch:
-       1. The AWB becomes associated with the CLOSED ULD and therefore
-          appears in Live View / closed-ULD exports.
-       2. The conversion is recorded on the ULD.
-       3. purchaseOrders is deliberately left unchanged.
+       One AWB record is created for the ULD.
+       Every PO is recorded against that same AWB in the audit list.
+       purchaseOrders is deliberately left unchanged so all PO's remain
+       visible in Live View.
     */
     const batch =
       writeBatch(db);
 
     const scanRef =
-      doc(
-        collection(db,"scans")
-      );
+      doc(collection(db,"scans"));
 
     batch.set(
       scanRef,
@@ -8087,23 +7996,26 @@ window.convertPOToAWB = async (
         uldId:uldId,
         scannedAt:serverTimestamp(),
         scannedBy:currentUser,
-        convertedFromPO:normalizedPO,
+        convertedFromPOs:currentPOs,
         conversionType:"PO_TO_AWB"
       }
     );
 
+    const conversionTime =
+      new Date().toISOString();
+
+    const newConversions =
+      currentPOs.map(po => ({
+        po,
+        awb,
+        convertedAt:conversionTime,
+        convertedBy:currentUser
+      }));
+
     batch.update(
       uldRef,
       {
-        poAwbConversions:[
-          ...conversions,
-          {
-            po:normalizedPO,
-            awb:awb,
-            convertedAt:new Date().toISOString(),
-            convertedBy:currentUser
-          }
-        ]
+        poAwbConversions:newConversions
       }
     );
 
@@ -8113,7 +8025,7 @@ window.convertPOToAWB = async (
 
     if(status)
       status.innerText =
-        `✓ PO ${normalizedPO} converted to AWB ${awb}. PO remains on the ULD.`;
+        `✓ All ${currentPOs.length} PO's converted to AWB ${awb}. The PO's remain on the ULD.`;
 
     if(button)
       button.disabled = true;
@@ -8121,34 +8033,26 @@ window.convertPOToAWB = async (
     await showVerification(
       true,
       awb,
-      "PO CONVERTED TO AWB",
-      `PO ${normalizedPO} was converted to AWB ${awb}.\n\n` +
-      `ULD ${uldId} remains CLOSED.\n` +
-      `The original PO remains visible in Live View.`
+      "PO'S CONVERTED TO ONE AWB",
+      `All ${currentPOs.length} PO's on ULD ${uldId} were converted to AWB ${awb}.\n\n` +
+      `ULD remains CLOSED.\n` +
+      `All original PO's remain visible in Live View.`
     );
 
     await loadULDsForDeletePOs();
 
     const newSelect =
-      document.getElementById(
-        "deletePOsULDSelect"
-      );
+      document.getElementById("deletePOsULDSelect");
 
     if(newSelect){
-
-      newSelect.value =
-        docId;
-
-      newSelect.dispatchEvent(
-        new Event("change")
-      );
-
+      newSelect.value = docId;
+      newSelect.dispatchEvent(new Event("change"));
     }
 
   }catch(error){
 
     console.error(
-      "Convert PO to AWB error:",
+      "Convert PO's to one AWB error:",
       error
     );
 
@@ -8157,14 +8061,11 @@ window.convertPOToAWB = async (
         "Could not save the AWB.";
 
     alert(
-      "Could not convert PO to AWB.\n\n" +
+      "Could not convert PO's to AWB.\n\n" +
       error.message
     );
-
   }
-
 };
-
 
 window.backToAdminMenuFromDeletePOs=()=>{
   if(adminMenuUnlocked)
