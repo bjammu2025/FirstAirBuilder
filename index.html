@@ -651,6 +651,172 @@ button span{
   }
 }
 
+
+/* =========================================================
+   12.30 NAVY & WHITE AIRLINE THEME
+   Flat colors only - no gradients
+   ========================================================= */
+
+html,
+body{
+  background:#ffffff !important;
+  color:#111827 !important;
+}
+
+body{
+  background-color:#ffffff !important;
+  color:#111827 !important;
+}
+
+/* Main app surfaces */
+.screen,
+.container,
+.card,
+.panel,
+.infoBox,
+.weightBox,
+.modal,
+.overlay,
+.loginBox,
+.menuBox,
+table,
+tbody,
+thead,
+tr,
+td,
+th{
+  background:#ffffff !important;
+  color:#111827 !important;
+}
+
+/* Main buttons - flat navy */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"]{
+  background:#0B1F3A !important;
+  background-image:none !important;
+  color:#ffffff !important;
+  border-color:#0B1F3A !important;
+  box-shadow:none !important;
+}
+
+button:hover,
+button:active,
+button:focus{
+  background:#163A63 !important;
+  background-image:none !important;
+  color:#ffffff !important;
+  box-shadow:none !important;
+}
+
+button:disabled{
+  background:#0B1F3A !important;
+  color:#ffffff !important;
+  opacity:.45;
+}
+
+/* Inputs and dropdowns */
+input,
+select,
+textarea{
+  background:#ffffff !important;
+  color:#111827 !important;
+  border-color:#9CA3AF !important;
+  box-shadow:none !important;
+}
+
+option{
+  background:#ffffff !important;
+  color:#111827 !important;
+}
+
+/* Typography */
+h1,h2,h3,h4,h5,h6,
+p,
+label,
+.infoTitle,
+.weightValue,
+.manualHint,
+span,
+div{
+  color:#111827;
+}
+
+/* Navy headings / important labels */
+h1,h2,h3,
+.screenTitle,
+.infoTitle{
+  color:#0B1F3A !important;
+}
+
+/* Links */
+a{
+  color:#0B1F3A;
+}
+
+/* Tables */
+table,
+th,
+td{
+  border-color:#D1D5DB !important;
+}
+
+th{
+  background:#0B1F3A !important;
+  color:#ffffff !important;
+}
+
+/* Selected/focused controls */
+select:focus,
+input:focus,
+textarea:focus{
+  outline:2px solid #0B1F3A !important;
+  border-color:#0B1F3A !important;
+}
+
+/* Status colors */
+.success,
+.closed,
+.statusClosed{
+  color:#166534 !important;
+}
+
+.error,
+.statusError{
+  color:#B91C1C !important;
+}
+
+.open,
+.statusOpen{
+  color:#0B1F3A !important;
+}
+
+/* Preserve white text inside navy buttons */
+button *,
+button span{
+  color:#ffffff !important;
+}
+
+/* Confirmation/verification boxes remain flat */
+.confirmOverlay,
+.verificationOverlay{
+  background:rgba(0,0,0,.45) !important;
+}
+
+.error{
+  background:#ffffff !important;
+  color:#B91C1C !important;
+}
+
+/* Zebra/mobile landscape warning */
+@media (max-width:900px) and (pointer:coarse) and (orientation:landscape){
+  body::before{
+    background:#ffffff !important;
+    color:#0B1F3A !important;
+  }
+}
+
 </style>
 </head>
 
@@ -667,7 +833,7 @@ button span{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.29
+    Version 12.30
   </div>
 
   <div class="infoBox">
@@ -705,7 +871,7 @@ button span{
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.29
+    Version 12.30
   </div>
 
   <div class="infoBox">
@@ -1627,7 +1793,7 @@ button span{
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.29";
+const CODE_VERSION = "12.30";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
