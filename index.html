@@ -1683,28 +1683,57 @@ label *,
 }
 
 .liveSectionTitle{
-  background:#0B1F3A;
-  color:#FFFFFF !important;
-  border-radius:10px;
-  padding:12px;
-  margin:16px 0 10px;
-  font-size:1.4rem;
-  font-weight:700;
-  text-align:left;
+  background:#181818;
+  color:#00e676 !important;
+  border:1px solid #555;
+  border-radius:12px;
+  padding:10px;
+  margin:15px 0 10px;
+  font-size:1.6rem;
+  font-weight:bold;
+  text-align:center;
 }
 
 .liveULDMeta{
-  background:#E2E5E9;
-  border:1px solid #9CA3AF;
-  border-radius:10px;
+  background:#181818;
+  border:1px solid #555;
+  border-radius:12px;
   padding:10px;
   margin:8px 0 12px;
-  text-align:left;
+  text-align:center;
   line-height:1.55;
+  font-size:1.1rem;
 }
 
 .liveULDMeta strong{
-  color:#0B1F3A !important;
+  color:#00e676 !important;
+}
+
+/* Keep the Live View ULD cards in the original v12.58 visual style. */
+#liveView .liveULD{
+  background:#181818 !important;
+  border:2px solid #555 !important;
+  border-radius:15px !important;
+  padding:15px !important;
+}
+
+#liveView .liveULD.open{
+  border-color:#ffeb3b !important;
+}
+
+#liveView .liveULD.closed{
+  border-color:#00e676 !important;
+}
+
+#liveView .liveULDTitle,
+#liveView .liveULDWeight{
+  color:#FFFFFF !important;
+  text-align:center !important;
+}
+
+#liveView .liveULD table{
+  margin-left:auto !important;
+  margin-right:auto !important;
 }
 
 #leftoverCargoStatus{
@@ -1756,7 +1785,7 @@ label *,
   </div>
 
   <div class="version">
-    v. 12.59
+    v. 12.60
   </div>
 
 </div>
@@ -9128,7 +9157,7 @@ function downloadClosedULDExcel(rows){
       row.scannedAt || "", row.scannedBy || "", row.uldId || "",
       (row.weight !== "" && row.weight != null ? Number(row.weight) : ""),
       row.cargoType || "",
-      row.uldLocation || "CalmAir"
+      row.uldLocation || ""
     ]);
   });
 
