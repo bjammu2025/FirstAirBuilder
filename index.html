@@ -1687,7 +1687,7 @@ label *,
   color:#FFFFFF !important;
 }
 
-/* 12.59 LEFTOVER INVENTORY */
+/* 12.63 LEFTOVER INVENTORY */
 #leftoverScan table,
 #leftoverInventoryReport table{
   width:100%;
@@ -1717,6 +1717,24 @@ label *,
   margin-left:12px !important;
   white-space:nowrap !important;
 }
+
+/* 12.63 - LIVE VIEW ULD CARD WIDTH / EMPTY CARD FIX */
+#liveView #liveTables{
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+
+#liveView .liveULD{
+  width:calc(100% - 24px) !important;
+  max-width:1100px !important;
+  margin:15px auto !important;
+  box-sizing:border-box !important;
+}
+
+#liveView .liveULD table{
+  width:100% !important;
+  box-sizing:border-box !important;
+}
 </style>
 </head>
 
@@ -1733,7 +1751,7 @@ label *,
   <h2>First Air Builder</h2>
 
   <div class="version">
-    Version 12.59
+    Version 12.63
   </div>
 
   <div class="infoBox">
@@ -8952,6 +8970,12 @@ window.goToLiveView = () => {
 
           });
 
+          /* Ignore malformed/empty ULD records so Live View never
+             renders a blank outlined card. */
+          const validULDS = ulds.filter(uld =>
+            String(uld.uldId || uld.id || "").trim() !== ""
+          );
+
           /*
              Live View order:
              1. OPEN ULDs always stay at the top.
@@ -8978,7 +9002,7 @@ window.goToLiveView = () => {
             return Number.MAX_SAFE_INTEGER;
           };
 
-          ulds.sort((a,b) => {
+          validULDS.sort((a,b) => {
 
             const aOpen =
               String(a.status || "OPEN").toUpperCase() !== "CLOSED";
@@ -8999,7 +9023,7 @@ window.goToLiveView = () => {
               .localeCompare(String(b.uldId || b.id || ""));
           });
 
-          for(const uld of ulds){
+          for(const uld of validULDS){
 
             const uldId =
               uld.uldId || uld.id;
