@@ -323,10 +323,31 @@
       border-color:#ffeb3b;
     }
 
+    .liveULDTopRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      width:100%;
+      box-sizing:border-box;
+    }
+
     .liveULDTitle{
       font-size:1.7rem;
       font-weight:bold;
       margin-bottom:8px;
+      flex:1 1 auto;
+      text-align:center;
+    }
+
+    .liveULDDescription{
+      flex:0 1 35%;
+      max-width:35%;
+      font-size:1rem;
+      font-weight:600;
+      text-align:right;
+      overflow-wrap:anywhere;
+      word-break:break-word;
     }
 
     .liveULDWeight{
@@ -1623,7 +1644,8 @@
     }
 
     #liveView .liveULDTitle,
-    #liveView .liveULDWeight{
+    #liveView .liveULDWeight,
+    #liveView .liveULDDescription{
       color:#111827 !important;
     }
 
@@ -1814,42 +1836,6 @@
       word-break:break-word !important;
     }
 
-    /* 12.66 - ULD DESCRIPTION IN RIGHT-CENTER OF LIVE VIEW CARD */
-    #liveView .liveULD{
-      position:relative !important;
-    }
-    #liveView .liveULDDescription{
-      position:absolute !important;
-      right:20px !important;
-      top:50% !important;
-      transform:translateY(-50%) !important;
-      width:220px !important;
-      text-align:center !important;
-      font-size:1.15rem !important;
-      font-weight:700 !important;
-      line-height:1.25 !important;
-      z-index:2 !important;
-    }
-    #liveView .liveULDDescriptionLabel{
-      display:block !important;
-      font-size:.9rem !important;
-      font-weight:600 !important;
-      margin-bottom:4px !important;
-    }
-    @media (max-width:900px) and (pointer:coarse){
-      #liveView .liveULDDescription{
-        position:static !important;
-        transform:none !important;
-        width:100% !important;
-        margin:6px 0 8px !important;
-        text-align:center !important;
-        font-size:.95rem !important;
-      }
-      #liveView .liveULDDescriptionLabel{
-        font-size:.8rem !important;
-      }
-    }
-
     /* Login: keep the version at the bottom center. */
     #login.visible{
       min-height:calc(100vh - 20px) !important;
@@ -1901,13 +1887,23 @@
       #liveView .liveULD th:nth-child(1),
       #liveView .liveULD td:nth-child(1){ width:8% !important; }
       #liveView .liveULD th:nth-child(2),
-      #liveView .liveULD td:nth-child(2){ width:18% !important; }
+      #liveView .liveULD td:nth-child(2){ width:24% !important; }
       #liveView .liveULD th:nth-child(3),
-      #liveView .liveULD td:nth-child(3){ width:29% !important; }
+      #liveView .liveULD td:nth-child(3){ width:40% !important; }
       #liveView .liveULD th:nth-child(4),
-      #liveView .liveULD td:nth-child(4){ width:18% !important; }
-      #liveView .liveULD th:nth-child(5),
-      #liveView .liveULD td:nth-child(5){ width:27% !important; }
+      #liveView .liveULD td:nth-child(4){ width:28% !important; }
+
+      #liveView .liveULDTopRow{
+        gap:8px !important;
+      }
+      #liveView .liveULDTitle{
+        font-size:1.35rem !important;
+      }
+      #liveView .liveULDDescription{
+        flex-basis:40% !important;
+        max-width:40% !important;
+        font-size:.82rem !important;
+      }
       #login.visible{
         min-height:calc(100vh - 10px) !important;
       }
@@ -1928,7 +1924,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.66
+        V.12.65
       </div>
 
       <div class="infoBox">
@@ -9248,17 +9244,22 @@
     html +=
                   `<div class="liveULD ${isClosed ? "closed" : "open"}">
 
-                    <div class="liveULDTitle">
-                      ULD: ${escapeHTML(uldId)}
+                    <div class="liveULDTopRow">
+                      <div class="liveULDTitle">
+                        ULD: ${escapeHTML(uldId)}
+                      </div>
+                      <div class="liveULDDescription">
+                        ${escapeHTML(
+                          uld.cargoType ||
+                          uld.description ||
+                          uld.uldDesc ||
+                          ""
+                        )}
+                      </div>
                     </div>
 
                     <div class="uldStatus ${isClosed ? "closedStatus" : "openStatus"}">
                       STATUS: ${escapeHTML(status)}
-                    </div>
-
-                    <div class="liveULDDescription">
-                      <span class="liveULDDescriptionLabel">ULD Description</span>
-                      ${escapeHTML(uld.cargoType || uld.description || uld.uldDesc || "Not Set")}
                     </div>`;
 
                 html +=
@@ -9298,7 +9299,7 @@
 
                   html +=
                     `<tr>
-                      <td colspan="5">
+                      <td colspan="4">
                         No active AWBs
                       </td>
                     </tr>`;
@@ -9338,15 +9339,6 @@
                           <td>
                             ${escapeHTML(
                               d.scannedBy || ""
-                            )}
-                          </td>
-
-                          <td>
-                            ${escapeHTML(
-                              uld.cargoType ||
-                              uld.description ||
-                              uld.uldDesc ||
-                              ""
                             )}
                           </td>
 
