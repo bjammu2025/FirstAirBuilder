@@ -1693,6 +1693,30 @@ label *,
   width:100%;
 }
 
+
+/* 12.61 - CENTER LIVE VIEW ULD DETAILS */
+#liveView .liveULDDetails{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  justify-content:center !important;
+  align-items:center !important;
+  gap:6px 18px !important;
+  text-align:center !important;
+  margin:10px 0 12px !important;
+}
+#liveView .liveULDDetails .liveULDWeight,
+#liveView .liveULDDetails .liveULDMeta{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  margin:3px 0 !important;
+}
+#liveView .livePOInfo{ width:auto !important; }
+#liveView .liveULDPOCount{
+  margin-left:12px !important;
+  white-space:nowrap !important;
+}
 </style>
 </head>
 
@@ -1751,9 +1775,6 @@ label *,
     <button onclick="goToAllocate()">
     ALLOCATE
   </button>
-    <button onclick="goToLeftoverInventory()">
-    LEFTOVER INVENTORY
-  </button>
     <button onclick="goToOffload()">
     OFFLOAD
   </button>
@@ -1800,6 +1821,12 @@ label *,
     </button>
 
   </div>
+  </div>
+
+  <div class="homeSection">
+    <button onclick="goToLeftoverInventory()">
+    LEFTOVER INVENTORY
+  </button>
   </div>
 
   <div class="homeSection homeNavigationSection">
@@ -1867,15 +1894,17 @@ label *,
   </button>
 
     <button
-    class="manualButton"
-    onclick="openLeftoverInventoryReport()">
-    LEFTOVER INVENTORY REPORT
-  </button>
-
-    <button
     class="closeFlightButton"
     onclick="openDeleteULDAdmin()">
     DELETE ULD
+  </button>
+  </div>
+
+  <div class="adminSection">
+    <button
+    class="manualButton"
+    onclick="openLeftoverInventoryReport()">
+    LEFTOVER INVENTORY REPORT
   </button>
   </div>
 
@@ -8313,7 +8342,8 @@ window.backToAdminMenuFromDeletePOs=()=>{
    LEFTOVER INVENTORY
    ========================================================= */
 
-const LEFTOVER_COLLECTION = "leftoverInventory";
+const LEFTOVER_COLLECTION = "scans";
+const LEFTOVER_TYPE = "LEFTOVER";
 
 window.goToLeftoverInventory = async () => {
 
@@ -8356,7 +8386,10 @@ async function loadLeftoverInventoryTable(){
 
     const snapshot =
       await getDocs(
-        collection(db,LEFTOVER_COLLECTION)
+        query(
+          collection(db,LEFTOVER_COLLECTION),
+          where("inventoryType","==",LEFTOVER_TYPE)
+        )
       );
 
     const records = [];
@@ -8468,6 +8501,7 @@ async function processLeftoverAWB(code){
       const d = docSnap.data();
 
       if(
+        d.inventoryType !== LEFTOVER_TYPE &&
         d.positionId &&
         d.positionId !== "[REMOVED]"
       ){
@@ -8536,7 +8570,9 @@ async function processLeftoverAWB(code){
         code:code,
         scannedAt:serverTimestamp(),
         scannedBy:currentUser,
-        inventoryType:"LEFTOVER"
+        inventoryType:LEFTOVER_TYPE,
+        positionId:"[LEFTOVER]",
+        uldId:""
       }
     );
 
@@ -9012,26 +9048,17 @@ html +=
 
                 ${isClosed ? `
                 <div class="liveULDWeight">
-                  Weight:
-                  ${Number(uld.weightLbs || 0).toFixed(2)}
-                  LBS
-                  /
-                  ${Math.round(Number(uld.weightKg || 0))}
-                  KGS
+                  Weight: ${Number(uld.weightLbs || 0).toFixed(2)} LBS / ${Math.round(Number(uld.weightKg || 0))} KGS
                 </div>` : ""}
 
                 <div class="liveULDMeta">
-                  ULD Location:
-                  ${escapeHTML(uld.uldLocation || "Not Set")}
+                  ULD Location: ${escapeHTML(uld.uldLocation || "Not Set")}
                 </div>
 
                 ${purchaseOrders.length ? `
-                <div class="liveULDMeta">
-                  PO's:
-                  ${escapeHTML(poText)}
-                  <span class="liveULDPOCount">
-                    Total PO's: ${poCount}
-                  </span>
+                <div class="liveULDMeta livePOInfo">
+                  PO's: ${escapeHTML(poText)}
+                  <span class="liveULDPOCount">Total PO's: ${poCount}</span>
                 </div>` : ""}
 
               </div>
@@ -9930,6 +9957,12 @@ async function closeEntireFlight(){
     const deletePromises = [];
 
     scanSnapshot.forEach(docSnap => {
+
+      const scanData = docSnap.data();
+
+      /* Keep Leftover Inventory when the flight is closed. */
+      if(scanData.inventoryType === LEFTOVER_TYPE)
+        return;
 
       deletePromises.push(
         deleteDoc(
