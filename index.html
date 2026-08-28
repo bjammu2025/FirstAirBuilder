@@ -8535,7 +8535,9 @@ async function processLeftoverAWB(code){
 
     }
 
-    /* Do not create duplicate leftover inventory entries. */
+    /* Do not create duplicate leftover inventory entries.
+       Read only records for this AWB, then check the type locally.
+       This avoids a composite Firestore index requirement. */
     const leftoverSnapshot =
       await getDocs(
         query(
@@ -8544,7 +8546,14 @@ async function processLeftoverAWB(code){
         )
       );
 
-    if(!leftoverSnapshot.empty){
+    const existingLeftover = [];
+    leftoverSnapshot.forEach(docSnap => {
+      const d = docSnap.data();
+      if(d.inventoryType === LEFTOVER_TYPE)
+        existingLeftover.push(docSnap);
+    });
+
+    if(existingLeftover.length){
 
       await showVerification(
         false,
@@ -8640,7 +8649,10 @@ async function getLeftoverInventoryRecords(){
 
   const snapshot =
     await getDocs(
-      collection(db,LEFTOVER_COLLECTION)
+      query(
+        collection(db,LEFTOVER_COLLECTION),
+        where("inventoryType","==",LEFTOVER_TYPE)
+      )
     );
 
   const records = [];
