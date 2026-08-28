@@ -1814,6 +1814,42 @@
       word-break:break-word !important;
     }
 
+    /* 12.66 - ULD DESCRIPTION IN RIGHT-CENTER OF LIVE VIEW CARD */
+    #liveView .liveULD{
+      position:relative !important;
+    }
+    #liveView .liveULDDescription{
+      position:absolute !important;
+      right:20px !important;
+      top:50% !important;
+      transform:translateY(-50%) !important;
+      width:220px !important;
+      text-align:center !important;
+      font-size:1.15rem !important;
+      font-weight:700 !important;
+      line-height:1.25 !important;
+      z-index:2 !important;
+    }
+    #liveView .liveULDDescriptionLabel{
+      display:block !important;
+      font-size:.9rem !important;
+      font-weight:600 !important;
+      margin-bottom:4px !important;
+    }
+    @media (max-width:900px) and (pointer:coarse){
+      #liveView .liveULDDescription{
+        position:static !important;
+        transform:none !important;
+        width:100% !important;
+        margin:6px 0 8px !important;
+        text-align:center !important;
+        font-size:.95rem !important;
+      }
+      #liveView .liveULDDescriptionLabel{
+        font-size:.8rem !important;
+      }
+    }
+
     /* Login: keep the version at the bottom center. */
     #login.visible{
       min-height:calc(100vh - 20px) !important;
@@ -1892,7 +1928,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.65
+        V.12.66
       </div>
 
       <div class="infoBox">
@@ -9218,6 +9254,11 @@
 
                     <div class="uldStatus ${isClosed ? "closedStatus" : "openStatus"}">
                       STATUS: ${escapeHTML(status)}
+                    </div>
+
+                    <div class="liveULDDescription">
+                      <span class="liveULDDescriptionLabel">ULD Description</span>
+                      ${escapeHTML(uld.cargoType || uld.description || uld.uldDesc || "Not Set")}
                     </div>`;
 
                 html +=
@@ -9248,7 +9289,6 @@
                         <th>AWB</th>
                         <th>Scanned At</th>
                         <th>Scanned By</th>
-                        <th>ULD Description</th>
                       </tr>
                     </thead>
 
