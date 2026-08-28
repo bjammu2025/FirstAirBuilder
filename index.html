@@ -11,12 +11,12 @@
            maximum-scale=1.0,
            user-scalable=no">
 
-<title>First Air Builder</title>
+<title>Calm Air Builder</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#121212">
-<meta name="application-name" content="First Air Builder">
+<meta name="application-name" content="Calm Air Builder">
 
 <style>
 
@@ -1669,6 +1669,53 @@ label *,
   color:#FFFFFF !important;
 }
 
+
+
+/* 12.59 - LOGIN VERSION + LIVE VIEW / INVENTORY LAYOUT */
+#login .version{
+  width:95%;
+  max-width:900px;
+  margin-top:18px !important;
+  margin-bottom:0 !important;
+  text-align:center;
+  font-size:.8rem;
+  color:#4B5563 !important;
+}
+
+.liveSectionTitle{
+  background:#0B1F3A;
+  color:#FFFFFF !important;
+  border-radius:10px;
+  padding:12px;
+  margin:16px 0 10px;
+  font-size:1.4rem;
+  font-weight:700;
+  text-align:left;
+}
+
+.liveULDMeta{
+  background:#E2E5E9;
+  border:1px solid #9CA3AF;
+  border-radius:10px;
+  padding:10px;
+  margin:8px 0 12px;
+  text-align:left;
+  line-height:1.55;
+}
+
+.liveULDMeta strong{
+  color:#0B1F3A !important;
+}
+
+#leftoverCargoStatus{
+  min-height:2rem;
+  margin:8px 0;
+}
+
+#leftoverCargoTableBody td{
+  vertical-align:middle;
+}
+
 </style>
 </head>
 
@@ -1682,11 +1729,7 @@ label *,
 
 <div id="login" class="screen visible">
 
-  <h2>First Air Builder</h2>
-
-  <div class="version">
-    Version 12.58
-  </div>
+  <h2>Calm Air Builder</h2>
 
   <div class="infoBox">
     <div class="infoTitle">Login</div>
@@ -1712,6 +1755,10 @@ label *,
     <div id="loginStatus" class="cameraStatus"></div>
   </div>
 
+  <div class="version">
+    v. 12.59
+  </div>
+
 </div>
 
 <!-- =========================================================
@@ -1724,74 +1771,68 @@ label *,
 
   <div class="homeSection">
     <div class="homeSectionTitle">ULD OPERATIONS</div>
+
     <button onclick="goToAllocate()">
-    ALLOCATE
-  </button>
-    <button onclick="goToOffload()">
-    OFFLOAD
-  </button>
-    <button
-    class="closeULDButton"
-    onclick="goToCloseULD()">
-    CLOSE ULD
-  </button>
-    <button
-    class="createButton"
-    onclick="showCreateULD()">
-    + CREATE NEW ULD
-  </button>
-
-    <button
-    class="manualButton"
-    onclick="openUpdateULDLocation()">
-    UPDATE ULD LOCATION
-  </button>
-    <button
-    class="manualButton"
-    onclick="openYFBPOUpdate()">
-    YFB PO UPDATE
-  </button>
-
-    <div
-    id="newULDBox"
-    class="infoBox hidden">
-
-    <div class="infoTitle">
-      New ULD ID
-    </div>
-
-    <input
-      type="text"
-      id="newULDId"
-      placeholder="Enter ULD ID"
-      autocomplete="off">
-
-    <button
-      class="createButton"
-      onclick="createNewULD()">
-      CREATE ULD & NEXT
+      ALLOCATE
     </button>
 
+    <button onclick="goToOffload()">
+      OFFLOAD
+    </button>
+
+    <button class="closeULDButton" onclick="goToCloseULD()">
+      CLOSE ULD
+    </button>
+
+    <button class="createButton" onclick="showCreateULD()">
+      + CREATE NEW ULD
+    </button>
+
+    <button class="manualButton" onclick="openUpdateULDLocation()">
+      UPDATE ULD LOCATION
+    </button>
+
+    <button class="manualButton" onclick="openYFBPOUpdate()">
+      YFB PO UPDATE
+    </button>
+
+    <div id="newULDBox" class="infoBox hidden">
+      <div class="infoTitle">New ULD ID</div>
+
+      <input
+        type="text"
+        id="newULDId"
+        placeholder="Enter ULD ID"
+        autocomplete="off">
+
+      <button class="createButton" onclick="createNewULD()">
+        CREATE ULD &amp; NEXT
+      </button>
+    </div>
   </div>
+
+  <div class="homeSection">
+    <div class="homeSectionTitle">INVENTORY</div>
+
+    <button class="manualButton" onclick="goToLeftoverCargo()">
+      LEFTOVER CARGO (INVENTORY)
+    </button>
   </div>
 
   <div class="homeSection homeNavigationSection">
     <button onclick="goToLiveView()">
-    LIVE VIEW
-  </button>
-    <button
-    class="closeFlightButton"
-    onclick="openAdminMenu()">
-    ADMIN MENU
-  </button>
+      LIVE VIEW
+    </button>
+
+    <button class="closeFlightButton" onclick="openAdminMenu()">
+      ADMIN MENU
+    </button>
   </div>
 
   <div class="homeSection homeLogoutSection">
-    <button
-    class="backButton"
-    onclick="confirmLogout()">
-    LOG OUT
-  </button>
+    <button class="backButton" onclick="confirmLogout()">
+      LOG OUT
+    </button>
   </div>
 
 </div>
@@ -1808,6 +1849,12 @@ label *,
     <button onclick="exportToCSV()">
     EXPORT CLOSED ULDs
   </button>
+
+    <button
+      class="manualButton"
+      onclick="exportLeftoverCargoExcel()">
+      EXPORT LEFTOVER CARGO EXCEL
+    </button>
 
     <button
     class="closeFlightButton"
@@ -2622,6 +2669,47 @@ label *,
 
 
 <!-- =========================================================
+     LEFTOVER CARGO (INVENTORY)
+     ========================================================= -->
+<div id="leftoverCargo" class="screen">
+
+  <h3>Leftover Cargo (Inventory)</h3>
+
+  <div class="infoBox">
+    <div class="infoTitle">Scan AWB Barcodes</div>
+    <div id="leftoverCargoStatus" class="cameraStatus scanning">
+      Barcode scanner ready. Scan an AWB.
+    </div>
+    <div class="manualHint">
+      Scanned AWBs are kept in a separate inventory list.
+    </div>
+  </div>
+
+  <div class="infoBox">
+    <div class="infoTitle">Scanned Leftover Cargo</div>
+    <div id="leftoverCargoCount" class="manualHint">0 AWBs</div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>AWB</th>
+          <th>Scanned At</th>
+          <th>Scanned By</th>
+        </tr>
+      </thead>
+      <tbody id="leftoverCargoTableBody">
+        <tr><td colspan="4">No AWBs scanned.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button class="backButton" onclick="goHome()">
+    ⬅ BACK
+  </button>
+
+</div>
+
+<!-- =========================================================
      LIVE VIEW
      ========================================================= -->
 
@@ -2866,7 +2954,7 @@ label *,
    VERSION
    ========================================================= */
 
-const CODE_VERSION = "12.53";
+const CODE_VERSION = "12.59";
 
 /* =========================================================
    ZEBRA / ANDROID FULLSCREEN
@@ -3042,6 +3130,7 @@ let lastDetectedAWB = "";
 let lastDetectedTime = 0;
 
 let liveUnsubscribe = null;
+let leftoverUnsubscribe = null;
 
 let barcodeMode = null;
 let barcodeBuffer = "";
@@ -3097,6 +3186,13 @@ window.goHome = async () => {
 
     liveUnsubscribe();
     liveUnsubscribe = null;
+
+  }
+
+  if(typeof leftoverUnsubscribe === "function"){
+
+    leftoverUnsubscribe();
+    leftoverUnsubscribe = null;
 
   }
 
@@ -3789,7 +3885,7 @@ window.createNewULD = async () => {
 
         closedBy:"",
 
-        uldLocation:""
+        uldLocation:"CalmAir"
 
       }
     );
@@ -6079,10 +6175,18 @@ function(mode){
 
   input.focus();
 
-  setStatus(
-    "▣ Barcode scanner ready. Scan barcode.",
-    "scanning"
-  );
+  if(mode === "inventory"){
+    const status = document.getElementById("leftoverCargoStatus");
+    if(status){
+      status.innerText = "▣ Barcode scanner ready. Scan barcode.";
+      status.className = "cameraStatus scanning";
+    }
+  }else{
+    setStatus(
+      "▣ Barcode scanner ready. Scan barcode.",
+      "scanning"
+    );
+  }
 
 };
 
@@ -6219,6 +6323,9 @@ async function processBarcode(raw){
 
   if(barcodeMode === "offload")
     await processOffloadAWB(code);
+
+  if(barcodeMode === "inventory")
+    await processLeftoverCargoAWB(code);
 
 }
 
@@ -8076,6 +8183,222 @@ window.backToAdminMenuFromDeletePOs=()=>{
 
 
 /* =========================================================
+   LEFTOVER CARGO (INVENTORY)
+   ========================================================= */
+
+window.goToLeftoverCargo = async () => {
+
+  if(!getCurrentUser()){
+    alert("Please enter user name");
+    return;
+  }
+
+  switchScreen("leftoverCargo");
+
+  if(typeof leftoverUnsubscribe === "function")
+    leftoverUnsubscribe();
+
+  const body = document.getElementById("leftoverCargoTableBody");
+  const count = document.getElementById("leftoverCargoCount");
+  const status = document.getElementById("leftoverCargoStatus");
+
+  if(body)
+    body.innerHTML = `<tr><td colspan="4">Loading...</td></tr>`;
+
+  leftoverUnsubscribe = onSnapshot(
+    collection(db,"leftoverCargo"),
+    snapshot => {
+      const rows = [];
+
+      snapshot.forEach(docSnap => {
+        rows.push({
+          id:docSnap.id,
+          ...docSnap.data()
+        });
+      });
+
+      rows.sort((a,b) => {
+        const at = a.scannedAt?.seconds || 0;
+        const bt = b.scannedAt?.seconds || 0;
+        if(bt !== at) return bt - at;
+        return String(a.awb || a.id).localeCompare(String(b.awb || b.id));
+      });
+
+      if(count)
+        count.innerText = `${rows.length} AWB${rows.length === 1 ? "" : "s"}`;
+
+      if(!body) return;
+
+      if(!rows.length){
+        body.innerHTML = `<tr><td colspan="4">No AWBs scanned.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = rows.map((row,index) => {
+        const scannedAt = row.scannedAt
+          ? (typeof row.scannedAt.toDate === "function"
+              ? row.scannedAt.toDate().toLocaleString()
+              : row.scannedAt.seconds
+                ? new Date(row.scannedAt.seconds * 1000).toLocaleString()
+                : "N/A")
+          : "N/A";
+
+        return `<tr>` +
+          `<td>${index + 1}</td>` +
+          `<td>${escapeHTML(awbNumberOnly(row.awb || row.id))}</td>` +
+          `<td>${escapeHTML(scannedAt)}</td>` +
+          `<td>${escapeHTML(row.scannedBy || "")}</td>` +
+          `</tr>`;
+      }).join("");
+    },
+    error => {
+      console.error("Leftover cargo live list error:",error);
+      if(status){
+        status.innerText = "Could not load inventory: " + error.message;
+        status.className = "cameraStatus error";
+      }
+    }
+  );
+
+  openBarcodeScanner("inventory");
+};
+
+
+async function processLeftoverCargoAWB(code){
+
+  const validated = normalizeAWB(code);
+
+  if(!validated){
+    const status = document.getElementById("leftoverCargoStatus");
+    if(status){
+      status.innerText = "Invalid AWB. Scan an 8-digit AWB.";
+      status.className = "cameraStatus error";
+    }
+    return;
+  }
+
+  const status = document.getElementById("leftoverCargoStatus");
+
+  try{
+    const existingSnapshot = await getDocs(
+      query(
+        collection(db,"leftoverCargo"),
+        where("awb","==",validated)
+      )
+    );
+
+    if(!existingSnapshot.empty){
+      if(status){
+        status.innerText = `AWB ${validated} is already in Leftover Cargo inventory.`;
+        status.className = "cameraStatus error";
+      }
+      return;
+    }
+
+    await addDoc(collection(db,"leftoverCargo"),{
+      awb:validated,
+      scannedAt:serverTimestamp(),
+      scannedBy:currentUser
+    });
+
+    if(status){
+      status.innerText = `✓ AWB ${validated} added to Leftover Cargo inventory.`;
+      status.className = "cameraStatus success";
+    }
+
+  }catch(error){
+    console.error("Leftover cargo scan error:",error);
+    if(status){
+      status.innerText = "Could not save AWB: " + error.message;
+      status.className = "cameraStatus error";
+    }
+  }
+}
+
+
+/* =========================================================
+   LEFTOVER CARGO EXCEL EXPORT + RESET
+   ========================================================= */
+
+window.exportLeftoverCargoExcel = async () => {
+
+  if(!adminMenuUnlocked)
+    return;
+
+  try{
+
+    const snapshot = await getDocs(collection(db,"leftoverCargo"));
+
+    if(snapshot.empty){
+      alert("There are no Leftover Cargo AWBs to export.");
+      return;
+    }
+
+    const rows = [];
+
+    snapshot.forEach(docSnap => {
+      const d = docSnap.data();
+
+      let scannedAt = "";
+      if(d.scannedAt){
+        if(typeof d.scannedAt.toDate === "function")
+          scannedAt = d.scannedAt.toDate().toLocaleString();
+        else if(typeof d.scannedAt.seconds === "number")
+          scannedAt = new Date(d.scannedAt.seconds * 1000).toLocaleString();
+      }
+
+      rows.push({
+        awb:awbNumberOnly(d.awb || docSnap.id),
+        scannedAt,
+        scannedBy:d.scannedBy || ""
+      });
+    });
+
+    rows.sort((a,b) => String(a.awb).localeCompare(String(b.awb)));
+
+    const data = [
+      ["Airway Bill","Scanned At","Scanned By"]
+    ];
+
+    rows.forEach(row => {
+      data.push([row.awb,row.scannedAt,row.scannedBy]);
+    });
+
+    const worksheet = XLSX.utils.aoa_to_sheet(data);
+    worksheet["!cols"] = [
+      {wch:18},
+      {wch:24},
+      {wch:20}
+    ];
+
+    for(let c = 0; c < 3; c++){
+      const cell = worksheet[XLSX.utils.encode_cell({r:0,c})];
+      if(cell) cell.s = {font:{bold:true}};
+    }
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook,worksheet,"Leftover Cargo");
+
+    XLSX.writeFile(workbook,"CalmAir_Leftover_Cargo.xlsx");
+
+    // Reset the inventory only after the Excel file has been generated.
+    const docs = snapshot.docs;
+    for(let start = 0; start < docs.length; start += 450){
+      const batch = writeBatch(db);
+      docs.slice(start,start + 450).forEach(docSnap => {
+        batch.delete(doc(db,"leftoverCargo",docSnap.id));
+      });
+      await batch.commit();
+    }
+
+  }catch(error){
+    console.error("Leftover cargo export error:",error);
+    alert("Could not export Leftover Cargo.")
+  }
+};
+
+
+/* =========================================================
    LIVE VIEW
    ========================================================= */
 
@@ -8084,21 +8407,12 @@ window.goToLiveView = () => {
   switchScreen("liveView");
 
   const container =
-    document.getElementById(
-      "liveTables"
-    );
+    document.getElementById("liveTables");
 
-  container.innerHTML =
-    "Loading...";
+  container.innerHTML = "Loading...";
 
-  if(
-    typeof liveUnsubscribe ===
-    "function"
-  ){
-
+  if(typeof liveUnsubscribe === "function")
     liveUnsubscribe();
-
-  }
 
   liveUnsubscribe =
     onSnapshot(
@@ -8108,246 +8422,163 @@ window.goToLiveView = () => {
         try{
 
           if(uldSnapshot.empty){
-
-            container.innerHTML =
-              "<p>No ULDs.</p>";
-
+            container.innerHTML = "<p>No ULDs.</p>";
             return;
-
           }
-
-          let html = "";
 
           const ulds = [];
 
           uldSnapshot.forEach(docSnap => {
-
-            const d =
-              docSnap.data();
-
             ulds.push({
               id:docSnap.id,
-              ...d
+              ...docSnap.data()
             });
-
           });
 
-          ulds.sort(
-            (a,b) =>
-              String(a.uldId || "")
-                .localeCompare(
-                  String(b.uldId || "")
-                )
+          const openULDs = ulds.filter(
+            uld => String(uld.status || "OPEN").toUpperCase() !== "CLOSED"
           );
 
-          for(const uld of ulds){
+          const closedULDs = ulds.filter(
+            uld => String(uld.status || "OPEN").toUpperCase() === "CLOSED"
+          );
+
+          const sortULDs = (a,b) =>
+            String(a.uldId || a.id).localeCompare(
+              String(b.uldId || b.id)
+            );
+
+          openULDs.sort(sortULDs);
+          closedULDs.sort(sortULDs);
+
+          let html = "";
+
+          const renderULD = async uld => {
 
             const uldId =
               uld.uldId || uld.id;
 
             const status =
-              uld.status || "OPEN";
+              String(uld.status || "OPEN").toUpperCase();
 
-            const isClosed =
-              status === "CLOSED";
+            const isClosed = status === "CLOSED";
 
-            const q =
-              query(
-                collection(db,"scans"),
-                where("uldId","==",uldId)
-              );
-
-            const scanSnapshot =
-              await getDocs(q);
-
-            const scans = [];
-
-            scanSnapshot.forEach(
-              docSnap => {
-
-                const d =
-                  docSnap.data();
-
-                if(
-                  d.positionId ===
-                  "[REMOVED]"
-                )
-                  return;
-
-                scans.push(d);
-
-              }
+            const q = query(
+              collection(db,"scans"),
+              where("uldId","==",uldId)
             );
 
-                        const purchaseOrders = Array.isArray(uld.purchaseOrders)
-              ? [...new Set(uld.purchaseOrders.map(v => String(v).trim()).filter(Boolean))]
+            const scanSnapshot = await getDocs(q);
+            const scans = [];
+
+            scanSnapshot.forEach(docSnap => {
+              const d = docSnap.data();
+              if(d.positionId === "[REMOVED]") return;
+              scans.push(d);
+            });
+
+            const purchaseOrders = Array.isArray(uld.purchaseOrders)
+              ? [...new Set(
+                  uld.purchaseOrders
+                    .map(v => String(v).trim())
+                    .filter(Boolean)
+                )]
               : [];
+
             const poText = purchaseOrders.join(", ");
             const poCount = purchaseOrders.length;
 
-html +=
-              `<div class="liveULD ${isClosed ? "closed" : "open"}">
+            const description =
+              uld.cargoType ||
+              uld.description ||
+              uld.uldDesc ||
+              "";
 
-                <div class="liveULDTitle">
-                  ULD: ${escapeHTML(uldId)}
-                </div>
+            const location =
+              uld.uldLocation || "CalmAir";
 
-                <div class="uldStatus ${isClosed ? "closedStatus" : "openStatus"}">
-                  STATUS: ${escapeHTML(status)}
-                </div>`;
+            let trailerNumber = "";
+            const locationText = String(location || "");
+            const trailerMatch = locationText.match(/^Trailer\s+(.+)$/i);
+            if(trailerMatch)
+              trailerNumber = trailerMatch[1].trim();
+
+            let meta =
+              `<div class="liveULDMeta">` +
+              `<div><strong>ULD:</strong> ${escapeHTML(uldId)}</div>` +
+              `<div><strong>STATUS:</strong> ${escapeHTML(status)}</div>` +
+              `<div><strong>ULD DESCRIPTION:</strong> ${escapeHTML(description || "Not Set")}</div>` +
+              `<div><strong>ULD LOCATION:</strong> ${escapeHTML(location)}</div>`;
+
+            if(trailerNumber){
+              meta += `<div><strong>TRAILER NUMBER:</strong> ${escapeHTML(trailerNumber)}</div>`;
+            }
 
             if(isClosed){
-
-              html +=
-                `<div class="liveULDWeight">
-
-                  Weight:
-                  ${Number(
-                    uld.weightLbs || 0
-                  ).toFixed(2)}
-                  LBS
-                  /
-                  ${Math.round(Number(
-                    uld.weightKg || 0
-                  ))}
-                  KGS
-
-                </div>`;
-
+              meta +=
+                `<div><strong>WEIGHT:</strong> ` +
+                `${Number(uld.weightLbs || 0).toFixed(2)} LBS / ` +
+                `${Math.round(Number(uld.weightKg || 0))} KGS</div>`;
             }
 
-            html +=
-              `<table>
+            if(poCount > 0){
+              meta +=
+                `<div><strong>PO's:</strong> ${escapeHTML(poText)}</div>` +
+                `<div><strong>TOTAL PO's:</strong> ${poCount}</div>`;
+            }
 
-                <thead>
+            meta += `</div>`;
 
-                  <tr>
-
-                    <th>#</th>
-                    <th>AWB</th>
-                    <th>Scanned At</th>
-                    <th>Scanned By</th>
-                    <th>ULD Description</th>
-                    <th>ULD Location</th>
-                    <th>POs</th>
-                    <th>Total POs</th>
-
-                  </tr>
-
-                </thead>
-
-                <tbody>`;
+            let table =
+              `<table>` +
+              `<thead><tr>` +
+              `<th>#</th><th>AWB</th><th>Scanned At</th><th>Scanned By</th>` +
+              `</tr></thead><tbody>`;
 
             if(scans.length === 0){
-
-              html +=
-                `<tr>
-
-                  <td colspan="6">
-                    No active AWBs
-                  </td>
-                  <td>${escapeHTML(poText)}</td>
-                  <td>${poCount}</td>
-
-                </tr>`;
-
+              table += `<tr><td colspan="4">No active AWBs</td></tr>`;
             }else{
+              scans.forEach((d,index) => {
+                const scannedAt = d.scannedAt
+                  ? new Date(d.scannedAt.seconds * 1000).toLocaleString()
+                  : "N/A";
 
-              scans.forEach(
-                (d,index) => {
-
-                  const scannedAt =
-                    d.scannedAt
-                      ? new Date(
-                          d.scannedAt.seconds *
-                          1000
-                        ).toLocaleString()
-                      : "N/A";
-
-                  html +=
-                    `<tr>
-
-                      <td>
-                        ${index+1}
-                      </td>
-
-                      <td>
-                        ${escapeHTML(
-                          awbNumberOnly(d.code)
-                        )}
-                      </td>
-
-                      <td>
-                        ${escapeHTML(
-                          scannedAt
-                        )}
-                      </td>
-
-                      <td>
-                        ${escapeHTML(
-                          d.scannedBy || ""
-                        )}
-                      </td>
-
-                      <td>
-                        ${escapeHTML(
-                          uld.cargoType ||
-                          uld.description ||
-                          uld.uldDesc ||
-                          ""
-                        )}
-                      </td>
-
-                      <td>
-                        ${escapeHTML(
-                          uld.uldLocation || ""
-                        )}
-                      </td>
-
-                      <td>
-                        ${index === 0 ? escapeHTML(poText) : ""}
-                      </td>
-
-                      <td>
-                        ${index === 0 ? poCount : ""}
-                      </td>
-
-                    </tr>`;
-
-                }
-              );
-
+                table +=
+                  `<tr>` +
+                  `<td>${index + 1}</td>` +
+                  `<td>${escapeHTML(awbNumberOnly(d.code))}</td>` +
+                  `<td>${escapeHTML(scannedAt)}</td>` +
+                  `<td>${escapeHTML(d.scannedBy || "")}</td>` +
+                  `</tr>`;
+              });
             }
 
-            html +=
-              `</tbody>
-              </table>
-              </div>`;
+            table += `</tbody></table>`;
 
+            return `<div class="liveULD ${isClosed ? "closed" : "open"}">${meta}${table}</div>`;
+          };
+
+          if(openULDs.length){
+            html += `<div class="liveSectionTitle">OPEN ULDs (${openULDs.length})</div>`;
+            for(const uld of openULDs)
+              html += await renderULD(uld);
           }
 
-          container.innerHTML =
-            html;
+          if(closedULDs.length){
+            html += `<div class="liveSectionTitle">CLOSED ULDs (${closedULDs.length})</div>`;
+            for(const uld of closedULDs)
+              html += await renderULD(uld);
+          }
+
+          container.innerHTML = html || "<p>No ULDs.</p>";
 
         }catch(error){
 
-          console.error(
-            "Live view error:",
-            error
-          );
+          console.error("Live view error:",error);
 
           container.innerHTML =
-            `<p class="error">
-
-              Error loading Live View:
-              ${escapeHTML(
-                error.message
-              )}
-
-            </p>`;
-
+            `<p class="error">Error loading Live View: ${escapeHTML(error.message)}</p>`;
         }
-
       }
     );
 
@@ -8458,7 +8689,7 @@ window.exportToCSV = async () => {
               : ""),
 
           uldLocation:
-            uld.uldLocation || ""
+            uld.uldLocation || "CalmAir"
 
         });
 
@@ -8517,7 +8748,7 @@ window.exportToCSV = async () => {
 
             uldLocation:
               index === 0
-                ? (uld.uldLocation || "")
+                ? (uld.uldLocation || "CalmAir")
                 : ""
 
           });
@@ -8897,7 +9128,7 @@ function downloadClosedULDExcel(rows){
       row.scannedAt || "", row.scannedBy || "", row.uldId || "",
       (row.weight !== "" && row.weight != null ? Number(row.weight) : ""),
       row.cargoType || "",
-      row.uldLocation || ""
+      row.uldLocation || "CalmAir"
     ]);
   });
 
@@ -9011,7 +9242,7 @@ async function exportEntireFlightData(
               : ""),
 
           uldLocation:
-            uld.uldLocation || ""
+            uld.uldLocation || "CalmAir"
 
       });
 
@@ -9068,7 +9299,7 @@ async function exportEntireFlightData(
 
             uldLocation:
               index === 0
-                ? (uld.uldLocation || "")
+                ? (uld.uldLocation || "CalmAir")
                 : ""
 
       });
