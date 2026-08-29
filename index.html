@@ -1816,7 +1816,7 @@
     }
 
     /* =========================================================
-       12.69 - LIVE VIEW DEVICE FIT + LOGIN VERSION
+       12.70 - LIVE VIEW DEVICE FIT + LOGIN VERSION
        Desktop: responsive card sizing.
        Zebra/handheld: force all Live View content to stay within
        the available viewport; prevent wide tables from clipping.
@@ -1948,7 +1948,7 @@
     }
 
     /* =========================================================
-       12.69 - CENTER ULD HEADING + COMPACT CONFIRMATION WORDING
+       12.70 - CENTER ULD HEADING + COMPACT CONFIRMATION WORDING
        ========================================================= */
 
     #liveView .liveULDTopRow{
@@ -2018,12 +2018,136 @@
       }
     }
 
+    /* =========================================================
+       12.70 - LIVE VIEW ULD ROW LAYOUT
+       Row 1: ULD centered
+       Row 2: Status centered, Closed By right
+       Row 3: Weight
+       Row 4: PO's centered, Total PO's right (only when PO's exist)
+       ========================================================= */
+
+    #liveView .liveULD{
+      overflow:hidden !important;
+    }
+
+    #liveView .liveULDRow{
+      position:relative !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      min-height:2rem !important;
+    }
+
+    #liveView .liveULDRow1{
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      margin-bottom:4px !important;
+    }
+
+    #liveView .liveULDRow1 .liveULDTitle{
+      position:static !important;
+      transform:none !important;
+      width:auto !important;
+      max-width:100% !important;
+      margin:0 !important;
+      text-align:center !important;
+    }
+
+    #liveView .liveULDRow2{
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      margin:2px 0 6px !important;
+    }
+
+    #liveView .liveULDRow2 .uldStatus{
+      position:absolute !important;
+      left:50% !important;
+      transform:translateX(-50%) !important;
+      white-space:nowrap !important;
+      text-align:center !important;
+      margin:0 !important;
+    }
+
+    #liveView .liveULDRow2 .liveULDClosedBy{
+      margin-left:auto !important;
+      max-width:45% !important;
+      text-align:right !important;
+      white-space:normal !important;
+      overflow-wrap:anywhere !important;
+      margin-right:0 !important;
+    }
+
+    #liveView .liveULDRow3{
+      display:flex !important;
+      align-items:center !important;
+      justify-content:flex-start !important;
+      margin:2px 0 6px !important;
+    }
+
+    #liveView .liveULDRow3 .liveULDWeight{
+      margin:0 !important;
+      text-align:left !important;
+    }
+
+    #liveView .liveULDRow4{
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      margin:4px 0 10px !important;
+    }
+
+    #liveView .liveULDRow4 .livePOInfo{
+      width:auto !important;
+      max-width:calc(100% - 120px) !important;
+      margin:0 auto !important;
+      text-align:center !important;
+      overflow-wrap:anywhere !important;
+      word-break:break-word !important;
+    }
+
+    #liveView .liveULDRow4 .liveULDPOCount{
+      position:absolute !important;
+      right:0 !important;
+      margin:0 !important;
+      white-space:nowrap !important;
+      text-align:right !important;
+    }
+
+    @media(max-width:600px){
+      #liveView .liveULDRow1 .liveULDTitle{
+        font-size:1.25rem !important;
+      }
+
+      #liveView .liveULDRow2 .uldStatus{
+        font-size:.95rem !important;
+      }
+
+      #liveView .liveULDRow2 .liveULDClosedBy{
+        font-size:.72rem !important;
+        max-width:38% !important;
+      }
+
+      #liveView .liveULDRow3 .liveULDWeight{
+        font-size:1rem !important;
+      }
+
+      #liveView .liveULDRow4 .livePOInfo{
+        font-size:.9rem !important;
+        max-width:calc(100% - 100px) !important;
+      }
+
+      #liveView .liveULDRow4 .liveULDPOCount{
+        font-size:.85rem !important;
+      }
+    }
+
     </style>
     </head>
 
     <body>
 
-    <!-- 12.69: Barcode, camera, and manual AWB input use the existing
+    <!-- 12.70: Barcode, camera, and manual AWB input use the existing
          confirmation popup before the AWB is processed. -->
 
 
@@ -2038,7 +2162,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.69
+        V.12.70
       </div>
 
       <div class="infoBox">
@@ -3396,7 +3520,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.69";
+    const CODE_VERSION = "12.70";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -9545,21 +9669,13 @@
     html +=
                   `<div class="liveULD ${isClosed ? "closed" : "open"}">
 
-                    <div class="liveULDTopRow">
+                    <div class="liveULDRow liveULDRow1">
                       <div class="liveULDTitle">
                         ULD: ${escapeHTML(uldId)}
                       </div>
-                      <div class="liveULDDescription">
-                        ${escapeHTML(
-                          uld.cargoType ||
-                          uld.description ||
-                          uld.uldDesc ||
-                          ""
-                        )}
-                      </div>
                     </div>
 
-                    <div class="liveULDStatusRow">
+                    <div class="liveULDRow liveULDRow2">
                       <div class="uldStatus ${isClosed ? "closedStatus" : "openStatus"}">
                         STATUS: ${escapeHTML(status)}
                       </div>
@@ -9567,27 +9683,24 @@
                       <div class="liveULDClosedBy">
                         CLOSED BY: ${escapeHTML(uld.closedBy)}
                       </div>` : ""}
-                    </div>`;
-
-                html +=
-                  `<div class="liveULDDetails">
-
-                    ${isClosed ? `
-                    <div class="liveULDWeight">
-                      Weight: ${Number(uld.weightLbs || 0).toFixed(2)} LBS / ${Math.round(Number(uld.weightKg || 0))} KGS
-                    </div>` : ""}
-
-                    <div class="liveULDMeta">
-                      ULD Location: ${escapeHTML(uld.uldLocation || "Not Set")}
                     </div>
 
-                    ${purchaseOrders.length ? `
-                    <div class="liveULDMeta livePOInfo">
-                      PO's: ${escapeHTML(poText)}
-                      <span class="liveULDPOCount">Total PO's: ${poCount}</span>
+                    ${isClosed ? `
+                    <div class="liveULDRow liveULDRow3">
+                      <div class="liveULDWeight">
+                        Weight: ${Number(uld.weightLbs || 0).toFixed(2)} LBS / ${Math.round(Number(uld.weightKg || 0))} KGS
+                      </div>
                     </div>` : ""}
 
-                  </div>
+                    ${purchaseOrders.length ? `
+                    <div class="liveULDRow liveULDRow4">
+                      <div class="livePOInfo">
+                        PO's: ${escapeHTML(poText)}
+                      </div>
+                      <div class="liveULDPOCount">
+                        Total PO's: ${poCount}
+                      </div>
+                    </div>` : ""}
 
                   <table>
 
