@@ -1816,7 +1816,7 @@
     }
 
     /* =========================================================
-       12.68 - LIVE VIEW DEVICE FIT + LOGIN VERSION
+       12.69 - LIVE VIEW DEVICE FIT + LOGIN VERSION
        Desktop: responsive card sizing.
        Zebra/handheld: force all Live View content to stay within
        the available viewport; prevent wide tables from clipping.
@@ -1946,10 +1946,86 @@
         min-height:calc(100vh - 10px) !important;
       }
     }
+
+    /* =========================================================
+       12.69 - CENTER ULD HEADING + COMPACT CONFIRMATION WORDING
+       ========================================================= */
+
+    #liveView .liveULDTopRow{
+      position:relative !important;
+      display:flex !important;
+      align-items:flex-start !important;
+      justify-content:flex-end !important;
+      min-height:2.2rem !important;
+    }
+
+    #liveView .liveULDTitle{
+      position:absolute !important;
+      left:50% !important;
+      top:0 !important;
+      transform:translateX(-50%) !important;
+      width:max-content !important;
+      max-width:65% !important;
+      margin:0 !important;
+      text-align:center !important;
+    }
+
+    #liveView .liveULDDescription{
+      margin-left:auto !important;
+      text-align:right !important;
+    }
+
+    /* Smaller wording in confirmation dialogs */
+    .confirmTitle{
+      font-size:1.65rem !important;
+      margin-bottom:12px !important;
+    }
+
+    .confirmText{
+      font-size:1.15rem !important;
+      line-height:1.4 !important;
+      margin-bottom:12px !important;
+    }
+
+    .verificationTitle{
+      font-size:1.65rem !important;
+      margin-bottom:12px !important;
+    }
+
+    .verificationMessage{
+      font-size:1.15rem !important;
+      line-height:1.4 !important;
+      margin-bottom:10px !important;
+    }
+
+    /* Keep barcode/camera/manual AWB confirmation wording compact */
+    #awbConfirmMessage{
+      font-size:1.15rem !important;
+      line-height:1.4 !important;
+    }
+
+    @media(max-width:600px){
+      .confirmTitle,
+      .verificationTitle{
+        font-size:1.4rem !important;
+      }
+
+      .confirmText,
+      .verificationMessage,
+      #awbConfirmMessage{
+        font-size:1rem !important;
+        line-height:1.35 !important;
+      }
+    }
+
     </style>
     </head>
 
     <body>
+
+    <!-- 12.69: Barcode, camera, and manual AWB input use the existing
+         confirmation popup before the AWB is processed. -->
+
 
     <div class="container">
 
@@ -1962,7 +2038,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.68
+        V.12.69
       </div>
 
       <div class="infoBox">
@@ -3320,7 +3396,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.68";
+    const CODE_VERSION = "12.69";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
