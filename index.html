@@ -1649,6 +1649,31 @@
       color:#111827 !important;
     }
 
+    #liveView .liveULDStatusRow{
+      width:100% !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:space-between !important;
+      gap:12px !important;
+      box-sizing:border-box !important;
+      margin:8px 0 !important;
+    }
+
+    #liveView .liveULDStatusRow .uldStatus{
+      margin:0 !important;
+      text-align:left !important;
+      flex:0 0 auto !important;
+    }
+
+    #liveView .liveULDClosedBy{
+      font-size:1.15rem !important;
+      font-weight:700 !important;
+      color:#111827 !important;
+      text-align:right !important;
+      flex:0 1 auto !important;
+      overflow-wrap:anywhere !important;
+    }
+
     #liveView .liveULDDetails{
       margin:6px 0 12px;
       text-align:left;
@@ -1791,7 +1816,7 @@
     }
 
     /* =========================================================
-       12.66 - LIVE VIEW DEVICE FIT + LOGIN VERSION
+       12.67 - LIVE VIEW DEVICE FIT + LOGIN VERSION
        Desktop: responsive card sizing.
        Zebra/handheld: force all Live View content to stay within
        the available viewport; prevent wide tables from clipping.
@@ -1904,6 +1929,19 @@
         max-width:40% !important;
         font-size:.82rem !important;
       }
+
+      #liveView .liveULDStatusRow{
+        gap:6px !important;
+      }
+
+      #liveView .liveULDStatusRow .uldStatus{
+        font-size:1rem !important;
+      }
+
+      #liveView .liveULDClosedBy{
+        font-size:.78rem !important;
+      }
+
       #login.visible{
         min-height:calc(100vh - 10px) !important;
       }
@@ -1924,7 +1962,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.66
+        V.12.67
       </div>
 
       <div class="infoBox">
@@ -2783,6 +2821,26 @@
 
         <input type="text" id="cargoTypeManual" placeholder="Manual cargo type (optional)" autocomplete="off">
 
+        <div class="infoTitle">
+          Update ULD Location
+        </div>
+
+        <select id="closeULDLocationType" onchange="toggleCloseULDLocationInput()">
+          <option value="">Select Location</option>
+          <option value="TRAILER">Trailer Number</option>
+          <option value="CALMAIR">CalmAir</option>
+          <option value="CARGOJET">Cargojet</option>
+        </select>
+
+        <input
+          type="text"
+          id="closeULDTrailerNumber"
+          placeholder="Enter Trailer Number"
+          autocomplete="off"
+          class="hidden">
+
+        <div id="closeULDCurrentLocationInfo" class="manualHint"></div>
+
       <button
         class="confirmButton"
         onclick="confirmCloseULD()">
@@ -2926,6 +2984,13 @@
         </div>
 
       </div>
+
+      <button
+        id="leftoverCameraBackButton"
+        class="backButton hidden"
+        onclick="backFromLeftoverCamera()">
+        ⬅ BACK
+      </button>
 
       <div
         id="leftoverCameraStatus"
@@ -3255,7 +3320,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.53";
+    const CODE_VERSION = "12.67";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -4760,6 +4825,13 @@
         if(closeButton)
           closeButton.classList.remove("hidden");
 
+        if(mode === "leftover"){
+          const leftoverBack =
+            document.getElementById("leftoverCameraBackButton");
+          if(leftoverBack)
+            leftoverBack.classList.remove("hidden");
+        }
+
         setStatus(
           "🔎 Automatically scanning...",
           "scanning"
@@ -4888,7 +4960,8 @@
 
       [
         "closeAllocateButton",
-        "closeOffloadButton"
+        "closeOffloadButton",
+        "leftoverCameraBackButton"
       ].forEach(id => {
 
         document
@@ -5654,7 +5727,7 @@
        OFFLOAD AWB
        ========================================================= */
 
-    async function processOffloadAWB(code){
+    async function processOffloadAWB(code, fromBarcode = false){
 
       const validated =
         normalizeAWB(code);
@@ -5755,23 +5828,25 @@
 
         }
 
-        const confirmed =
-          await showConfirmation(
-            "CONFIRM OFFLOAD",
-            `Are you sure you want to offload AWB ${code} from ULD ${currentULD}?`
-          );
+        if(!fromBarcode){
+          const confirmed =
+            await showConfirmation(
+              "CONFIRM OFFLOAD",
+              `Are you sure you want to offload AWB ${code} from ULD ${currentULD}?`
+            );
 
-        if(!confirmed){
+          if(!confirmed){
 
-          setStatus(
-            "🔎 Offload cancelled. Ready for next AWB.",
-            "scanning"
-          );
+            setStatus(
+              "🔎 Offload cancelled. Ready for next AWB.",
+              "scanning"
+            );
 
-          restartOCR();
+            restartOCR();
 
-          return;
+            return;
 
+          }
         }
 
         await updateDoc(
@@ -5935,7 +6010,9 @@
         messageEl.innerText =
           source === "camera"
             ? "Camera detected this AWB.\n\nPlease verify the number before accepting it."
-            : "Please verify this AWB before accepting it.";
+            : source === "barcode"
+              ? "Barcode scanner read this AWB.\n\nPlease confirm the number before accepting it."
+              : "Please verify this AWB before accepting it.";
 
         editContainer.classList.add(
           "hidden"
@@ -6653,25 +6730,49 @@
         );
 
         return;
-
       }
 
       /*
-         Barcode is already machine-read,
-         so it does not require the camera's
-         double OCR confirmation.
-
-         It still goes through all AWB validation
-         and duplicate/system checks.
+         Barcode scans require user confirmation before
+         the AWB is processed. Pause barcode mode while
+         the confirmation popup is open so another scan
+         cannot be accepted accidentally.
       */
+      const mode = barcodeMode;
 
-      if(barcodeMode === "allocate")
+      if(
+        mode !== "allocate" &&
+        mode !== "offload" &&
+        mode !== "leftover"
+      )
+        return;
+
+      barcodeMode = null;
+
+      const confirmed =
+        await showAWBConfirmation(
+          code,
+          "barcode"
+        );
+
+      if(!confirmed){
+        barcodeMode = mode;
+        setStatus(
+          "▣ Barcode scanner ready. Scan barcode.",
+          "scanning"
+        );
+        return;
+      }
+
+      barcodeMode = mode;
+
+      if(mode === "allocate")
         await processAllocateAWB(code);
 
-      if(barcodeMode === "offload")
-        await processOffloadAWB(code);
+      if(mode === "offload")
+        await processOffloadAWB(code, true);
 
-      if(barcodeMode === "leftover")
+      if(mode === "leftover")
         await processLeftoverAWB(code);
 
     }
@@ -6796,6 +6897,8 @@
       document.getElementById("cargoTypeSelect").selectedIndex = -1;
       document.getElementById("cargoTypeManual").value = "";
 
+      loadCloseULDLocation("");
+
       switchScreen("closeULDStart");
       await loadOpenULDsForClose();
     };
@@ -6816,6 +6919,7 @@
       document.getElementById("weightKgDisplay").innerText = "0 KG";
       document.getElementById("cargoTypeSelect").selectedIndex = -1;
       document.getElementById("cargoTypeManual").value = "";
+      loadCloseULDLocation("");
 
       try{
         const snapshot = await getDocs(query(collection(db,"ulds"),where("uldId","==",uld),where("status","==","OPEN")));
@@ -6824,6 +6928,9 @@
           const oldLbs = Number(data.weightLbs || 0);
           const oldKg = Number(data.weightKg || 0);
           const oldCargo = Array.isArray(data.cargoTypes) ? data.cargoTypes.filter(Boolean) : (data.cargoType ? String(data.cargoType).split(",").map(v=>v.trim()).filter(Boolean) : []);
+          const oldLocation = data.uldLocation || "";
+
+          loadCloseULDLocation(oldLocation);
 
           if(oldLbs > 0){
             document.getElementById("weightLbs").value = oldLbs;
@@ -6885,6 +6992,104 @@
 
 
     /* =========================================================
+       CLOSE ULD LOCATION
+       ========================================================= */
+
+    window.toggleCloseULDLocationInput = () => {
+      const type =
+        document.getElementById("closeULDLocationType")?.value || "";
+
+      const trailerInput =
+        document.getElementById("closeULDTrailerNumber");
+
+      if(!trailerInput)
+        return;
+
+      if(type === "TRAILER"){
+        trailerInput.classList.remove("hidden");
+        trailerInput.focus();
+      }else{
+        trailerInput.value = "";
+        trailerInput.classList.add("hidden");
+      }
+    };
+
+    function getCloseULDLocation(){
+      const type =
+        document.getElementById("closeULDLocationType")?.value || "";
+
+      const trailerInput =
+        document.getElementById("closeULDTrailerNumber");
+
+      if(type === "TRAILER"){
+        const trailer =
+          String(trailerInput?.value || "")
+            .trim()
+            .toUpperCase();
+
+        if(!trailer){
+          alert("Please enter a Trailer Number.");
+          trailerInput?.focus();
+          return null;
+        }
+
+        return `Trailer ${trailer}`;
+      }
+
+      if(type === "CALMAIR")
+        return "CalmAir";
+
+      if(type === "CARGOJET")
+        return "Cargojet";
+
+      alert("Please select a ULD Location.");
+      return null;
+    }
+
+    function loadCloseULDLocation(location){
+      const typeSelect =
+        document.getElementById("closeULDLocationType");
+
+      const trailerInput =
+        document.getElementById("closeULDTrailerNumber");
+
+      const info =
+        document.getElementById("closeULDCurrentLocationInfo");
+
+      if(!typeSelect)
+        return;
+
+      const value =
+        String(location || "").trim();
+
+      if(info)
+        info.innerText =
+          value
+            ? `Current Location: ${value}`
+            : "Current Location: Not Set";
+
+      typeSelect.value = "";
+
+      if(trailerInput){
+        trailerInput.value = "";
+        trailerInput.classList.add("hidden");
+      }
+
+      if(value.toLowerCase() === "calmair"){
+        typeSelect.value = "CALMAIR";
+      }else if(value.toLowerCase() === "cargojet"){
+        typeSelect.value = "CARGOJET";
+      }else if(value.toLowerCase().startsWith("trailer ")){
+        typeSelect.value = "TRAILER";
+        if(trailerInput){
+          trailerInput.value = value.substring(8).trim();
+          trailerInput.classList.remove("hidden");
+        }
+      }
+    }
+
+
+    /* =========================================================
        CONFIRM CLOSE ULD
        ========================================================= */
 
@@ -6931,13 +7136,18 @@
         return;
       }
 
+      const uldLocation = getCloseULDLocation();
+      if(!uldLocation)
+        return;
+
       const confirmed =
         await showConfirmation(
           "CONFIRM CLOSE ULD",
           `Close ULD ${selectedCloseULD}?\n\n` +
           `Weight: ${lbs.toFixed(2)} LBS\n` +
           `Weight: ${kg} KGS\n` +
-          `Cargo Type: ${cargoTypes.join(", ")}`
+          `Cargo Type: ${cargoTypes.join(", ")}\n` +
+          `ULD Location: ${uldLocation}`
         );
 
       if(!confirmed)
@@ -6994,6 +7204,15 @@
                 cargoType:
                   cargoTypes.join(", "),
 
+                uldLocation:
+                  uldLocation,
+
+                locationUpdatedAt:
+                  serverTimestamp(),
+
+                locationUpdatedBy:
+                  currentUser,
+
                 closedAt:
                   serverTimestamp(),
 
@@ -7015,7 +7234,8 @@
           `ULD ${selectedCloseULD} is now CLOSED.\n\n` +
           `${lbs.toFixed(2)} LBS\n` +
           `${kg} KGS\n` +
-          `Cargo Type: ${cargoTypes.join(", ")}`
+          `Cargo Type: ${cargoTypes.join(", ")}\n` +
+           `ULD Location: ${uldLocation}`
         );
 
         selectedCloseULD = "";
@@ -8814,13 +9034,18 @@
     }
 
 
-    window.backFromLeftoverInventory = async () => {
-
+    window.backFromLeftoverCamera = async () => {
       await closeCamera();
       stopBarcodeScanner();
 
-      switchScreen("home");
+      /* Return to Leftover Inventory with the default barcode scanner ready. */
+      openBarcodeScanner("leftover");
+    };
 
+    window.backFromLeftoverInventory = async () => {
+      await closeCamera();
+      stopBarcodeScanner();
+      switchScreen("home");
     };
 
 
@@ -9258,8 +9483,14 @@
                       </div>
                     </div>
 
-                    <div class="uldStatus ${isClosed ? "closedStatus" : "openStatus"}">
-                      STATUS: ${escapeHTML(status)}
+                    <div class="liveULDStatusRow">
+                      <div class="uldStatus ${isClosed ? "closedStatus" : "openStatus"}">
+                        STATUS: ${escapeHTML(status)}
+                      </div>
+                      ${isClosed && uld.closedBy ? `
+                      <div class="liveULDClosedBy">
+                        CLOSED BY: ${escapeHTML(uld.closedBy)}
+                      </div>` : ""}
                     </div>`;
 
                 html +=
@@ -10918,7 +11149,9 @@
           "backToAllocateStart",
 
         leftoverScan:
-          "backFromLeftoverInventory",
+          currentCameraMode === "leftover"
+            ? "backFromLeftoverCamera"
+            : "backFromLeftoverInventory",
 
         offloadScan:
           "backToOffloadStart",
