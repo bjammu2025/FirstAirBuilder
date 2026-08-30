@@ -2164,7 +2164,7 @@
 
     
     /* =========================================================
-       12.76 - LIVE VIEW ULD SUMMARY + CLICKABLE DETAILS + TOTAL FLIGHT WEIGHT
+       12.77 - LIVE VIEW ULD SUMMARY + CLICKABLE DETAILS + TOTAL FLIGHT WEIGHT
        Main screen: one compact row per ULD.
        Selecting a row opens the full ULD detail view.
        ========================================================= */
@@ -2488,7 +2488,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.76
+        V.12.77
       </div>
 
       <div class="infoBox">
@@ -9864,10 +9864,22 @@
 
       }
 
+      /*
+         PERFORMANCE UPDATE - v12.77
+
+         The old Live View loaded the entire "scans" collection separately
+         for EVERY ULD before displaying the screen. That created one
+         Firestore read/query per ULD and made the initial Live View slow.
+
+         v12.77 loads ONLY the ULD summary data initially. Full AWB/scan
+         details are loaded when the user clicks a ULD row. This keeps the
+         Live View fast while preserving the clickable ULD detail feature.
+      */
+
       liveUnsubscribe =
         onSnapshot(
           collection(db,"ulds"),
-          async uldSnapshot => {
+          uldSnapshot => {
 
             try{
 
@@ -9986,17 +9998,21 @@
               });
 
               /*
-                 Build the cache used by the clickable ULD rows.
-                 This also means opening a ULD does not require a second
-                 Firestore lookup just to display its current data.
+                 Build the lightweight cache used by the clickable ULD rows.
+
+                 IMPORTANT:
+                 Do NOT query "scans" here. The scan/AWB records are fetched
+                 only after the user selects a specific ULD.
               */
               window.liveULDCache.clear();
 
-              for(const uld of validULDS){
+              validULDS.forEach(uld => {
 
                 const uldId =
-                  uld.uldId ||
-                  uld.id;
+                  String(
+                    uld.uldId ||
+                    uld.id
+                  );
 
                 const status =
                   String(
@@ -10006,41 +10022,6 @@
 
                 const isClosed =
                   status === "CLOSED";
-
-                const q =
-                  query(
-                    collection(
-                      db,
-                      "scans"
-                    ),
-                    where(
-                      "uldId",
-                      "==",
-                      uldId
-                    )
-                  );
-
-                const scanSnapshot =
-                  await getDocs(q);
-
-                const scans = [];
-
-                scanSnapshot.forEach(
-                  docSnap => {
-
-                    const d =
-                      docSnap.data();
-
-                    if(
-                      d.positionId ===
-                      "[REMOVED]"
-                    )
-                      return;
-
-                    scans.push(d);
-
-                  }
-                );
 
                 const purchaseOrders =
                   Array.isArray(
@@ -10071,23 +10052,24 @@
                   );
 
                 window.liveULDCache.set(
-                  String(uldId),
+                  uldId,
                   {
                     ...uld,
                     uldId,
                     status,
                     isClosed,
-                    scans,
+                    scans:[],
+                    scansLoaded:false,
                     purchaseOrders,
                     cargoType
                   }
                 );
 
-              }
+              });
 
               /*
-                 Calculate the total flight weight from every ULD.
-                 This includes all ULD records currently shown in Live View.
+                 Calculate total flight weight directly from the ULD snapshot.
+                 No additional Firestore reads are required.
               */
               const totalFlightWeightLbs =
                 validULDS.reduce(
@@ -10104,7 +10086,7 @@
                 );
 
               /*
-                 Main Live View is now a ULD summary table.
+                 Main Live View is a lightweight ULD summary table.
                  Each row is clickable and opens the full ULD details.
               */
               let html = "";
@@ -10226,57 +10208,67 @@
                 html;
 
               /*
-                 Tap/click a row to show its ULD details.
-                 Keyboard Enter/Space is also supported for desktop.
+                 PERFORMANCE:
+                 Use ONE delegated click/keyboard handler instead of creating
+                 two event listeners for every ULD row.
               */
-              container
-                .querySelectorAll(
-                  ".liveULDList tbody tr"
+              container.onclick = event => {
+
+                const row =
+                  event.target.closest(
+                    ".liveULDList tbody tr"
+                  );
+
+                if(!row)
+                  return;
+
+                const encoded =
+                  row.dataset.uldKey ||
+                  "";
+
+                if(!encoded)
+                  return;
+
+                showLiveULDDetail(
+                  decodeURIComponent(
+                    encoded
+                  )
+                );
+
+              };
+
+              container.onkeydown = event => {
+
+                if(
+                  event.key !== "Enter" &&
+                  event.key !== " "
                 )
-                .forEach(row => {
+                  return;
 
-                  const openRow = () => {
-
-                    const encoded =
-                      row.dataset.uldKey ||
-                      "";
-
-                    if(!encoded)
-                      return;
-
-                    showLiveULDDetail(
-                      decodeURIComponent(
-                        encoded
-                      )
-                    );
-
-                  };
-
-                  row.addEventListener(
-                    "click",
-                    openRow
+                const row =
+                  event.target.closest(
+                    ".liveULDList tbody tr"
                   );
 
-                  row.addEventListener(
-                    "keydown",
-                    event => {
+                if(!row)
+                  return;
 
-                      if(
-                        event.key ===
-                          "Enter" ||
-                        event.key ===
-                          " "
-                      ){
+                event.preventDefault();
 
-                        event.preventDefault();
-                        openRow();
+                const encoded =
+                  row.dataset.uldKey ||
+                  "";
 
-                      }
+                if(!encoded)
+                  return;
 
-                    }
-                  );
+                showLiveULDDetail(
+                  decodeURIComponent(
+                    encoded
+                  )
+                );
 
-                });
+              };
 
             }catch(error){
 
@@ -10307,7 +10299,7 @@
        ULD heading, status, Closed By, weight, Cargo Type, PO information,
        and the AWB scan table.
     */
-    window.showLiveULDDetail = (
+    window.showLiveULDDetail = async (
       uldId
     ) => {
 
@@ -10347,6 +10339,63 @@
 
       const isClosed =
         status === "CLOSED";
+
+      /*
+         Load AWB/scan records only for the ULD the user selected.
+
+         This is the key performance change: Live View no longer performs
+         one scans query for every ULD during initial loading.
+      */
+      if(!uld.scansLoaded){
+
+        try{
+
+          const scanSnapshot =
+            await getDocs(
+              query(
+                collection(db,"scans"),
+                where("uldId","==",key)
+              )
+            );
+
+          const scans = [];
+
+          scanSnapshot.forEach(
+            docSnap => {
+
+              const d =
+                docSnap.data();
+
+              if(
+                d.positionId ===
+                "[REMOVED]"
+              )
+                return;
+
+              scans.push(d);
+
+            }
+          );
+
+          uld.scans =
+            scans;
+
+          uld.scansLoaded =
+            true;
+
+        }catch(error){
+
+          console.error(
+            "Live ULD detail scan load error:",
+            error
+          );
+
+          uld.scans = [];
+          uld.scansLoaded = false;
+
+        }
+
+      }
 
       const scans =
         Array.isArray(
