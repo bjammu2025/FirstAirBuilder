@@ -2019,7 +2019,7 @@
     }
 
     /* =========================================================
-       12.81 - ALLOCATE ULD PO DISPLAY BELOW AWB TABLE
+       12.82 - ALLOCATE ULD PO DISPLAY BELOW AWB TABLE
        ========================================================= */
 
     #allocateScan #allocatePOInfo{
@@ -2282,7 +2282,7 @@
       background:#E5E7EB !important;
     }
 
-    /* 12.79 - COMPACT LIVE VIEW ROW COLORS
+    /* 12.82 - COMPACT LIVE VIEW ROW COLORS
        Closed ULDs = red row
        Open ULDs   = green row
        No separate Status column. */
@@ -2306,6 +2306,63 @@
 
     #liveView .liveSummaryOpen:hover td{
       background:#BBF7D0 !important;
+    }
+
+    /* 12.82 - COMPACT LIVE VIEW AWB DOTS */
+    #liveView .liveULDLocationCell{
+      width:28% !important;
+      max-width:28% !important;
+      overflow:hidden !important;
+      vertical-align:middle !important;
+    }
+
+    #liveView .liveAWBDots{
+      display:flex !important;
+      flex-wrap:wrap !important;
+      align-content:center !important;
+      justify-content:center !important;
+      align-items:center !important;
+      gap:3px !important;
+      width:100% !important;
+      max-width:100% !important;
+      max-height:46px !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+      padding:2px !important;
+    }
+
+    #liveView .liveAWBDot{
+      display:block !important;
+      flex:0 0 7px !important;
+      width:7px !important;
+      height:7px !important;
+      min-width:7px !important;
+      max-width:7px !important;
+      border-radius:50% !important;
+      background:#22C55E !important;
+      border:1px solid #15803D !important;
+      box-sizing:border-box !important;
+    }
+
+    #liveView .liveAWBNoDots{
+      font-weight:600 !important;
+      white-space:nowrap !important;
+    }
+
+    @media(max-width:600px){
+      #liveView .liveAWBDots{
+        gap:2px !important;
+        max-height:32px !important;
+        padding:1px !important;
+      }
+
+      #liveView .liveAWBDot{
+        flex-basis:5px !important;
+        width:5px !important;
+        height:5px !important;
+        min-width:5px !important;
+        max-width:5px !important;
+      }
     }
 
     #liveView .liveULDDetail{
@@ -2523,34 +2580,7 @@
 
 
     /* =========================================================
-       12.82 - COMPACT LIVE VIEW AWB DOTS
-       ========================================================= */
-    #liveView .liveAWBDots{
-      display:flex !important;
-      flex-wrap:wrap !important;
-      align-items:center !important;
-      justify-content:center !important;
-      gap:3px !important;
-      width:100% !important;
-      max-width:100% !important;
-      max-height:34px !important;
-      overflow:hidden !important;
-      box-sizing:border-box !important;
-      line-height:0 !important;
-    }
-    #liveView .liveAWBDot{
-      display:inline-block !important;
-      width:7px !important; height:7px !important; min-width:7px !important;
-      border-radius:50% !important; background:#16A34A !important;
-      box-sizing:border-box !important;
-    }
-    #liveView .liveAWBDotMore{
-      font-size:.68rem !important; line-height:1 !important;
-      font-weight:700 !important; white-space:nowrap !important;
-    }
-
-    /* =========================================================
-       12.79 - FINAL LIVE VIEW / ZEBRA OVERRIDES
+       12.82 - FINAL LIVE VIEW / ZEBRA OVERRIDES
        ========================================================= */
     #liveView .liveULDList{
       min-width:0 !important;
@@ -2601,7 +2631,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.79
+        V.12.82
       </div>
 
       <div class="infoBox">
@@ -3976,7 +4006,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.75";
+    const CODE_VERSION = "12.82";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -4132,7 +4162,7 @@
     let currentUser = "";
 
     /* =========================================================
-       12.79 - PERSIST LOGIN THROUGH PAGE RELOAD
+       12.82 - PERSIST LOGIN THROUGH PAGE RELOAD
        Desktop:
          sessionStorage keeps the login for the current browser tab.
 
@@ -10163,7 +10193,6 @@
 
     /* =========================================================
        LIVE VIEW
-       12.82 - compact AWB dots + closed ULD location sorting
        ========================================================= */
 
     window.liveULDCache = new Map();
@@ -10204,7 +10233,7 @@
       liveUnsubscribe =
         onSnapshot(
           collection(db,"ulds"),
-          uldSnapshot => {
+          async uldSnapshot => {
 
             try{
 
@@ -10243,64 +10272,164 @@
                   ).trim() !== ""
                 );
 
-              /* v12.82: Count active AWBs with one scans read. */
-              const liveAWBCounts = new Map();
-              try{
-                const scanSnapshot = await getDocs(collection(db,"scans"));
-                scanSnapshot.forEach(docSnap => {
-                  const d = docSnap.data();
-                  if(d.positionId === "[REMOVED]") return;
-                  const scanULD = String(d.uldId || d.positionId || "").trim();
-                  if(!scanULD) return;
-                  liveAWBCounts.set(scanULD,(liveAWBCounts.get(scanULD) || 0) + 1);
-                });
-              }catch(scanError){
-                console.warn("Live View AWB count load failed:",scanError);
-              }
-
               /*
                  Live View order:
                  1. OPEN ULDs at the top.
                  2. CLOSED ULDs at the bottom.
-                 3. OPEN ULDs keep their creation sequence.
-                 4. CLOSED ULDs are sorted by ULD LOCATION.
+                 3. CLOSED ULDs are ordered by ULD LOCATION.
+                 4. OPEN ULDs keep their existing creation sequence.
               */
               const uldSequence = uld => {
-                const value = uld.createdAt;
-                if(value && typeof value.seconds === "number")
+
+                const value =
+                  uld.createdAt;
+
+                if(
+                  value &&
+                  typeof value.seconds ===
+                    "number"
+                )
                   return value.seconds * 1000;
-                if(value && typeof value.toMillis === "function")
+
+                if(
+                  value &&
+                  typeof value.toMillis ===
+                    "function"
+                )
                   return value.toMillis();
+
                 if(value){
-                  const parsed = new Date(value).getTime();
-                  if(!isNaN(parsed)) return parsed;
+
+                  const parsed =
+                    new Date(value).getTime();
+
+                  if(!isNaN(parsed))
+                    return parsed;
+
                 }
+
                 return Number.MAX_SAFE_INTEGER;
+
               };
 
               validULDS.sort((a,b) => {
-                const aOpen = String(a.status || "OPEN").toUpperCase() !== "CLOSED";
-                const bOpen = String(b.status || "OPEN").toUpperCase() !== "CLOSED";
-                if(aOpen !== bOpen) return aOpen ? -1 : 1;
+
+                const aOpen =
+                  String(
+                    a.status ||
+                    "OPEN"
+                  ).toUpperCase() !==
+                  "CLOSED";
+
+                const bOpen =
+                  String(
+                    b.status ||
+                    "OPEN"
+                  ).toUpperCase() !==
+                  "CLOSED";
+
+                if(aOpen !== bOpen)
+                  return aOpen ? -1 : 1;
 
                 if(!aOpen && !bOpen){
-                  const locationDiff = String(a.uldLocation || "").trim().localeCompare(
-                    String(b.uldLocation || "").trim(),
-                    undefined,
-                    {numeric:true,sensitivity:"base"}
-                  );
-                  if(locationDiff !== 0) return locationDiff;
+
+                  const locationDiff =
+                    String(
+                      a.uldLocation ||
+                      ""
+                    ).trim().localeCompare(
+                      String(
+                        b.uldLocation ||
+                        ""
+                      ).trim(),
+                      undefined,
+                      {
+                        numeric:true,
+                        sensitivity:"base"
+                      }
+                    );
+
+                  if(locationDiff !== 0)
+                    return locationDiff;
+
                 }else{
-                  const seqDiff = uldSequence(a) - uldSequence(b);
-                  if(seqDiff !== 0) return seqDiff;
+
+                  const seqDiff =
+                    uldSequence(a) -
+                    uldSequence(b);
+
+                  if(seqDiff !== 0)
+                    return seqDiff;
+
                 }
 
-                return String(a.uldId || a.id || "").localeCompare(
-                  String(b.uldId || b.id || ""),
+                return String(
+                  a.uldId ||
+                  a.id ||
+                  ""
+                ).localeCompare(
+                  String(
+                    b.uldId ||
+                    b.id ||
+                    ""
+                  ),
                   undefined,
-                  {numeric:true,sensitivity:"base"}
+                  {
+                    numeric:true,
+                    sensitivity:"base"
+                  }
                 );
+
               });
+
+              /*
+                 Load active AWB counts with ONE scans query for the whole
+                 Live View. This avoids one Firestore query per ULD while
+                 still allowing the Location cell to show one dot per
+                 currently allocated AWB.
+              */
+              const activeAWBCounts = new Map();
+
+              try{
+
+                const scanSnapshot =
+                  await getDocs(
+                    collection(db,"scans")
+                  );
+
+                scanSnapshot.forEach(docSnap => {
+
+                  const scan =
+                    docSnap.data();
+
+                  const scanULD =
+                    String(
+                      scan.uldId ||
+                      scan.positionId ||
+                      ""
+                    ).trim();
+
+                  if(
+                    !scanULD ||
+                    scan.positionId === "[REMOVED]"
+                  )
+                    return;
+
+                  activeAWBCounts.set(
+                    scanULD,
+                    (activeAWBCounts.get(scanULD) || 0) + 1
+                  );
+
+                });
+
+              }catch(error){
+
+                console.error(
+                  "Live View AWB count load error:",
+                  error
+                );
+
+              }
 
               /*
                  Build the lightweight cache used by the clickable ULD rows.
@@ -10366,7 +10495,9 @@
                     scans:[],
                     scansLoaded:false,
                     purchaseOrders,
-                    cargoType
+                    cargoType,
+                    awbCount:
+                      activeAWBCounts.get(uldId) || 0
                   }
                 );
 
@@ -10460,24 +10591,27 @@
                     ? String(uld.uldLocation)
                     : "—";
 
-                const allocatedAWBCount =
-                  isClosed ? 0 : (liveAWBCounts.get(uldId) || 0);
+                const activeAWBCount =
+                  isClosed
+                    ? 0
+                    : (
+                        activeAWBCounts.get(uldId) ||
+                        0
+                      );
 
-                let locationDisplay = escapeHTML(uldLocation);
-
-                if(!isClosed && allocatedAWBCount > 0){
-                  const maxVisibleDots = 40;
-                  const visibleDots = Math.min(allocatedAWBCount,maxVisibleDots);
-                  const dots = Array.from(
-                    {length:visibleDots},
-                    () => `<span class="liveAWBDot" aria-hidden="true"></span>`
-                  ).join("");
-                  const moreText = allocatedAWBCount > maxVisibleDots
-                    ? `<span class="liveAWBDotMore">+${allocatedAWBCount - maxVisibleDots}</span>`
-                    : "";
-                  locationDisplay =
-                    `<div class="liveAWBDots" title="${allocatedAWBCount} allocated AWB(s)">${dots}${moreText}</div>`;
-                }
+                const liveLocationDisplay =
+                  isClosed
+                    ? escapeHTML(uldLocation)
+                    : (
+                        activeAWBCount > 0
+                          ? `<span class="liveAWBDots" aria-label="${activeAWBCount} allocated AWBs">${
+                              Array.from(
+                                {length:activeAWBCount},
+                                () => '<span class="liveAWBDot"></span>'
+                              ).join("")
+                            }</span>`
+                          : `<span class="liveAWBNoDots">0 AWB</span>`
+                      );
 
                 html += `
                   <tr
@@ -10498,8 +10632,8 @@
                         cargoType || "—"
                       )}
                     </td>
-                    <td>
-                      ${locationDisplay}
+                    <td class="liveULDLocationCell">
+                      ${liveLocationDisplay}
                     </td>
                   </tr>
                 `;
