@@ -4001,6 +4001,49 @@
     let currentULD = "";
     let currentUser = "";
 
+    /* =========================================================
+       12.77 - PERSIST LOGIN THROUGH PAGE RELOAD
+       sessionStorage keeps the login while the current browser
+       tab is open, including accidental page reloads.
+       Closing the tab/browser still requires a new login.
+       ========================================================= */
+    const LOGIN_SESSION_KEY = "calmAirBuilderLoggedInUser";
+
+    function saveLoginSession(username){
+      try{
+        sessionStorage.setItem(LOGIN_SESSION_KEY, String(username || ""));
+      }catch(error){
+        console.warn("Could not save login session:", error);
+      }
+    }
+
+    function clearLoginSession(){
+      try{
+        sessionStorage.removeItem(LOGIN_SESSION_KEY);
+      }catch(error){
+        console.warn("Could not clear login session:", error);
+      }
+    }
+
+    function restoreLoginSession(){
+      try{
+        const savedUser = sessionStorage.getItem(LOGIN_SESSION_KEY);
+
+        if(savedUser && savedUser.trim()){
+          currentUser = savedUser.trim();
+
+          const homeUserLabel = document.getElementById("homeUserLabel");
+          if(homeUserLabel){
+            homeUserLabel.innerText = currentUser;
+          }
+
+          switchScreen("home");
+        }
+      }catch(error){
+        console.warn("Could not restore login session:", error);
+      }
+    }
+
     let currentCameraMode = null;
     let cameraStream = null;
 
@@ -4177,6 +4220,7 @@
         }
 
         currentUser = username;
+        saveLoginSession(currentUser);
         document.getElementById("homeUserLabel").innerText = currentUser;
         document.getElementById("loginUsername").value = "";
         document.getElementById("loginPassword").value = "";
@@ -4202,6 +4246,7 @@
     window.logoutUser = async () => {
       await closeCamera();
       stopBarcodeScanner();
+      clearLoginSession();
       currentUser = "";
       const homeUserLabel = document.getElementById("homeUserLabel");
       if(homeUserLabel) homeUserLabel.innerText = "";
@@ -12573,6 +12618,9 @@
       }
     );
 
+
+    /* Restore the logged-in user after an accidental page reload. */
+    restoreLoginSession();
 
     </script>
 
