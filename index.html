@@ -2282,7 +2282,7 @@
       background:#E5E7EB !important;
     }
 
-    /* 12.79 - COMPACT LIVE VIEW ROW COLORS
+    /* 12.84 - COMPACT LIVE VIEW ROW COLORS
        Closed ULDs = red row
        Open ULDs   = green row
        No separate Status column. */
@@ -2550,7 +2550,7 @@
     }
 
     /* =========================================================
-       12.79 - FINAL LIVE VIEW / ZEBRA OVERRIDES
+       12.84 - FINAL LIVE VIEW / ZEBRA OVERRIDES
        ========================================================= */
     #liveView .liveULDList{
       min-width:0 !important;
@@ -2601,7 +2601,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.79
+        V.12.84
       </div>
 
       <div class="infoBox">
@@ -4142,7 +4142,7 @@
     let currentUser = "";
 
     /* =========================================================
-       12.79 - PERSIST LOGIN THROUGH PAGE RELOAD
+       12.84 - PERSIST LOGIN THROUGH PAGE RELOAD
        Desktop:
          sessionStorage keeps the login for the current browser tab.
 
@@ -10557,7 +10557,7 @@
                   ).trim() !== ""
                 );
 
-              /* v12.83: Count active AWBs with one scans read. */
+              /* v12.84: Count active AWBs with one scans read. */
               const liveAWBCounts = new Map();
               try{
                 const scanSnapshot = await getDocs(collection(db,"scans"));
