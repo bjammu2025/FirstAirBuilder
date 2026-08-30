@@ -2600,7 +2600,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.90
+        V.12.91
       </div>
 
       <div class="infoBox">
@@ -4089,6 +4089,7 @@
       getDocs,
       getDoc,
       deleteDoc,
+      deleteField,
       writeBatch
 
     }
@@ -6335,7 +6336,7 @@
 
 
     /* =========================================================
-       V12.90 - SINGLE ALLOCATE AWB WORKFLOW
+       V12.91 FIXED - SINGLE ALLOCATE AWB WORKFLOW
 
        Camera, Zebra barcode and Manual AWB input all end here.
        This function is the ONLY place where an Allocate AWB popup
@@ -6501,7 +6502,7 @@
 
 
     /* =========================================================
-       V12.90 - COMBINED PO ULD AWB POPUP
+       V12.91 - COMBINED PO ULD AWB POPUP
 
        This is deliberately separate from showAWBConfirmation().
        A PO ULD NEVER calls showAWBConfirmation().
@@ -9341,8 +9342,15 @@
           });
         });
 
-        if(awbs.length > 0){
-          const saved = await showAWBWeightsPopup(awbs, uldId);
+        /*
+           V12.91 FIX: only request weights that are actually missing.
+           AWBs that already have a saved weight are left alone and do
+           not require the user to confirm/save them again.
+        */
+        const awbsNeedingWeight = awbs.filter(item => !(Number(item.weightKg) > 0));
+
+        if(awbsNeedingWeight.length > 0){
+          const saved = await showAWBWeightsPopup(awbsNeedingWeight, uldId);
           if(!saved) return;
         }
 
@@ -9528,26 +9536,169 @@
     }
 
 
+    /* =========================================================
+       V12.91 FIX - PO COMMODITY SELECTION
+       Each PO saved through YFB PO UPDATE gets the same selected
+       commodity set. User may select one or more of:
+         Cooler / Frozen / Dry
+       ========================================================= */
+    function showPOCommodityPopup(poList){
+      return new Promise(resolve => {
+        const overlay = document.createElement("div");
+        overlay.style.cssText = `
+          position:fixed;inset:0;background:rgba(17,24,39,.72);
+          display:flex;align-items:center;justify-content:center;
+          z-index:30000;padding:16px;box-sizing:border-box;
+        `;
+
+        const box = document.createElement("div");
+        box.style.cssText = `
+          width:95%;max-width:620px;background:#F3F4F6;
+          border:2px solid #0B1F3A;border-radius:18px;
+          padding:22px;box-sizing:border-box;color:#111827;
+        `;
+
+        const title = document.createElement("div");
+        title.innerText = "SELECT PO COMMODITY";
+        title.style.cssText = "font-size:1.6rem;font-weight:800;color:#0B1F3A;text-align:center;margin-bottom:10px;";
+        box.appendChild(title);
+
+        const note = document.createElement("div");
+        note.innerText = `Select one or more commodities for ${poList.length} PO${poList.length === 1 ? "" : "s"}.`;
+        note.style.cssText = "font-size:1.05rem;text-align:center;margin-bottom:14px;color:#374151;";
+        box.appendChild(note);
+
+        const poText = document.createElement("div");
+        poText.innerText = `PO's: ${poList.join(", ")}`;
+        poText.style.cssText = "font-weight:700;text-align:center;margin-bottom:16px;word-break:break-word;color:#111827;";
+        box.appendChild(poText);
+
+        const select = document.createElement("select");
+        select.multiple = true;
+        select.size = 3;
+        select.style.cssText = "width:100%;font-size:1.25rem;padding:.8rem;margin:0 0 12px 0;box-sizing:border-box;background:#fff;color:#111827;border:1px solid #6B7280;border-radius:10px;";
+
+        ["Cooler","Frozen","Dry"].forEach(type => {
+          const option = document.createElement("option");
+          option.value = type;
+          option.textContent = type;
+          select.appendChild(option);
+        });
+        box.appendChild(select);
+
+        const hint = document.createElement("div");
+        hint.innerText = "Use CTRL/Command or tap multiple options to select more than one.";
+        hint.style.cssText = "font-size:.95rem;color:#4B5563;text-align:center;margin-bottom:12px;";
+        box.appendChild(hint);
+
+        const status = document.createElement("div");
+        status.style.cssText = "min-height:22px;color:#B91C1C;text-align:center;margin-bottom:8px;font-weight:700;";
+        box.appendChild(status);
+
+        const save = document.createElement("button");
+        save.type = "button";
+        save.innerText = "SAVE POs";
+        save.style.cssText = "width:100%;margin:.35rem 0;padding:1rem;background:#0B1F3A;color:#fff;border:0;border-radius:12px;font-size:1.15rem;font-weight:700;";
+
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.innerText = "CANCEL";
+        cancel.style.cssText = "width:100%;margin:.35rem 0;padding:1rem;background:#6B7280;color:#fff;border:0;border-radius:12px;font-size:1.15rem;font-weight:700;";
+
+        box.appendChild(save);
+        box.appendChild(cancel);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        const cleanup = () => overlay.remove();
+
+        cancel.onclick = () => {
+          cleanup();
+          resolve(null);
+        };
+
+        save.onclick = () => {
+          const selected = Array.from(select.selectedOptions).map(o => o.value);
+          if(!selected.length){
+            status.innerText = "Please select at least one PO Commodity.";
+            return;
+          }
+          cleanup();
+          resolve(selected);
+        };
+
+        setTimeout(() => select.focus(), 50);
+      });
+    }
+
     window.saveYFBPOs=async()=>{
       const select=document.getElementById("yfbPOULDSelect");
       if(!select||!select.value){alert("Please select an OPEN ULD.");return;}
-      const pos=Array.from(document.querySelectorAll("#poInputs .poInput")).map(i=>i.value.trim().toUpperCase()).filter(Boolean);
-      if(!pos.length){alert("Please enter at least one PO.");return;}
-      const uniqueNew=[...new Set(pos)];
-      try{
-        const snapshot=await getDocs(query(collection(db,"ulds"),where("uldId","==",select.value),where("status","==","OPEN")));
-        if(snapshot.empty){alert("ULD was not found or is not OPEN.");await loadOpenULDsForPOUpdate();return;}
-        await Promise.all(snapshot.docs.map(d=>{const data=d.data();const existing=Array.isArray(data.purchaseOrders)?data.purchaseOrders.map(v=>String(v).trim().toUpperCase()).filter(Boolean):[];return updateDoc(doc(db,"ulds",d.id),{
-              purchaseOrders:[...new Set([...existing,...uniqueNew])],
-              allocationPool:"PO_WEIGHT"
-            });}));
 
-        /* The current Allocate ULD changes pool immediately as well. */
+      const pos=Array.from(document.querySelectorAll("#poInputs .poInput"))
+        .map(i=>i.value.trim().toUpperCase())
+        .filter(Boolean);
+
+      if(!pos.length){alert("Please enter at least one PO.");return;}
+
+      const uniqueNew=[...new Set(pos)];
+
+      /* Ask for PO commodity before anything is written. */
+      const selectedCommodities = await showPOCommodityPopup(uniqueNew);
+      if(!selectedCommodities) return;
+
+      try{
+        const snapshot=await getDocs(
+          query(
+            collection(db,"ulds"),
+            where("uldId","==",select.value),
+            where("status","==","OPEN")
+          )
+        );
+
+        if(snapshot.empty){
+          alert("ULD was not found or is not OPEN.");
+          await loadOpenULDsForPOUpdate();
+          return;
+        }
+
+        await Promise.all(snapshot.docs.map(d=>{
+          const data=d.data();
+          const existing=Array.isArray(data.purchaseOrders)
+            ? data.purchaseOrders.map(v=>String(v).trim().toUpperCase()).filter(Boolean)
+            : [];
+
+          const existingCommodities =
+            data.poCommodities && typeof data.poCommodities === "object"
+              ? {...data.poCommodities}
+              : {};
+
+          uniqueNew.forEach(po => {
+            existingCommodities[po] = [...selectedCommodities];
+          });
+
+          return updateDoc(doc(db,"ulds",d.id),{
+            purchaseOrders:[...new Set([...existing,...uniqueNew])],
+            poCommodities:existingCommodities,
+            allocationPool:"PO_WEIGHT"
+          });
+        }));
+
         if(String(currentULD || "").trim().toUpperCase() === String(select.value || "").trim().toUpperCase())
           currentULDAllocationPool = "PO_WEIGHT";
-        await showVerification(true,select.value,"POs UPDATED",`${uniqueNew.length} PO(s) were added to ULD ${select.value}.`);
+
+        await showVerification(
+          true,
+          select.value,
+          "POs UPDATED",
+          `${uniqueNew.length} PO(s) were added to ULD ${select.value}.\n\nCommodity: ${selectedCommodities.join(", ")}`
+        );
+
         await loadOpenULDsForPOUpdate();
-      }catch(error){console.error(error);alert("Could not save POs.\n\n"+error.message);}
+      }catch(error){
+        console.error(error);
+        alert("Could not save POs.\n\n"+error.message);
+      }
     };
 
     window.backFromYFBPOUpdate=()=>{const box=document.getElementById("poInputs");if(box)box.innerHTML="";switchScreen("home");};
@@ -9568,198 +9719,180 @@
 
     async function loadULDsForDeletePOs(){
 
-      const select =
-        document.getElementById("deletePOsULDSelect");
-
-      const info =
-        document.getElementById("deletePOsInfo");
-
-      const list =
-        document.getElementById("deletePOsList");
+      const select = document.getElementById("deletePOsULDSelect");
+      const info = document.getElementById("deletePOsInfo");
+      const list = document.getElementById("deletePOsList");
 
       if(!select) return;
 
-      select.innerHTML =
-        `<option value="">Loading CLOSED ULDs...</option>`;
+      select.innerHTML = `<option value="">Loading CLOSED ULDs...</option>`;
 
-      if(info)
-        info.innerText = "";
-
+      if(info) info.innerText = "";
       if(list){
-        list.innerHTML =
-          `<div class="manualHint">Select a CLOSED ULD to view its PO's.</div>`;
+        list.innerHTML = `<div class="manualHint">Select a CLOSED ULD to view its PO's.</div>`;
       }
 
       try{
-
-        const snapshot =
-          await getDocs(
-            query(
-              collection(db,"ulds"),
-              where("status","==","CLOSED")
-            )
-          );
+        const snapshot = await getDocs(
+          query(collection(db,"ulds"),where("status","==","CLOSED"))
+        );
 
         const ulds = [];
 
         snapshot.forEach(docSnap => {
+          const d = docSnap.data();
+          const uldId = String(d.uldId || docSnap.id).trim();
 
-          const d =
-            docSnap.data();
+          const purchaseOrders = Array.isArray(d.purchaseOrders)
+            ? [...new Set(
+                d.purchaseOrders
+                  .map(v => String(v).trim().toUpperCase())
+                  .filter(Boolean)
+              )]
+            : [];
 
-          const uldId =
-            String(
-              d.uldId || docSnap.id
-            ).trim();
-
-          const purchaseOrders =
-            Array.isArray(d.purchaseOrders)
-              ? [...new Set(
-                  d.purchaseOrders
-                    .map(v => String(v).trim().toUpperCase())
-                    .filter(Boolean)
-                )]
-              : [];
-
-          if(
-            uldId &&
-            purchaseOrders.length > 0
-          ){
+          if(uldId && purchaseOrders.length > 0){
+            const poCommodities =
+              d.poCommodities && typeof d.poCommodities === "object"
+                ? d.poCommodities
+                : {};
 
             ulds.push({
               docId:docSnap.id,
               uldId,
-              purchaseOrders
+              purchaseOrders,
+              poCommodities
             });
-
           }
-
         });
 
-        ulds.sort(
-          (a,b) =>
-            a.uldId.localeCompare(b.uldId)
-        );
+        ulds.sort((a,b)=>a.uldId.localeCompare(b.uldId));
 
         if(!ulds.length){
-
-          select.innerHTML =
-            `<option value="">No CLOSED ULDs with PO's</option>`;
-
+          select.innerHTML = `<option value="">No CLOSED ULDs with PO's</option>`;
           if(info)
-            info.innerText =
-              "There are no CLOSED ULDs with PO's available for conversion.";
-
+            info.innerText = "There are no CLOSED ULDs with PO's available for conversion.";
           return;
-
         }
 
-        select.innerHTML =
-          `<option value="">Select a CLOSED ULD</option>`;
+        select.innerHTML = `<option value="">Select a CLOSED ULD</option>`;
 
         ulds.forEach(uld => {
-
-          const option =
-            document.createElement("option");
-
-          option.value =
-            uld.docId;
-
-          option.textContent =
-            `${uld.uldId} (${uld.purchaseOrders.length} PO${uld.purchaseOrders.length === 1 ? "" : "s"})`;
-
-          option.dataset.uldId =
-            uld.uldId;
-
-          option.dataset.purchaseOrders =
-            JSON.stringify(uld.purchaseOrders);
-
+          const option = document.createElement("option");
+          option.value = uld.docId;
+          option.textContent = `${uld.uldId} (${uld.purchaseOrders.length} PO${uld.purchaseOrders.length === 1 ? "" : "s"})`;
+          option.dataset.uldId = uld.uldId;
+          option.dataset.purchaseOrders = JSON.stringify(uld.purchaseOrders);
+          option.dataset.poCommodities = JSON.stringify(uld.poCommodities || {});
           select.appendChild(option);
-
         });
 
         select.onchange = () => {
-
-          const option =
-            select.options[
-              select.selectedIndex
-            ];
+          const option = select.options[select.selectedIndex];
 
           if(!option || !option.value){
-
-            if(info)
-              info.innerText = "";
-
+            if(info) info.innerText = "";
             if(list)
-              list.innerHTML =
-                `<div class="manualHint">Select a CLOSED ULD to view its PO's.</div>`;
-
+              list.innerHTML = `<div class="manualHint">Select a CLOSED ULD to view its PO's.</div>`;
             return;
-
           }
 
           let purchaseOrders = [];
+          let poCommodities = {};
 
           try{
-            purchaseOrders =
-              JSON.parse(
-                option.dataset.purchaseOrders || "[]"
-              );
+            purchaseOrders = JSON.parse(option.dataset.purchaseOrders || "[]");
           }catch(error){
             purchaseOrders = [];
           }
 
+          try{
+            poCommodities = JSON.parse(option.dataset.poCommodities || "{}");
+          }catch(error){
+            poCommodities = {};
+          }
+
           if(info)
-            info.innerText =
-              `CLOSED ULD ${option.dataset.uldId}: ${purchaseOrders.length} PO${purchaseOrders.length === 1 ? "" : "s"}`;
+            info.innerText = `CLOSED ULD ${option.dataset.uldId}: ${purchaseOrders.length} PO${purchaseOrders.length === 1 ? "" : "s"}`;
 
           renderPOConversionList(
             option.value,
             option.dataset.uldId,
-            purchaseOrders
+            purchaseOrders,
+            poCommodities
           );
-
         };
 
       }catch(error){
+        console.error("Load CLOSED ULDs for PO conversion error:",error);
+        select.innerHTML = `<option value="">Unable to load CLOSED ULDs</option>`;
+        alert("Could not load CLOSED ULDs.\n\n" + error.message);
+      }
+    }
 
-        console.error(
-          "Load CLOSED ULDs for PO conversion error:",
-          error
-        );
 
-        select.innerHTML =
-          `<option value="">Unable to load CLOSED ULDs</option>`;
+    async function copyPONumbers(poList){
+      const text = (Array.isArray(poList) ? poList : [])
+        .map(v => String(v || "").trim())
+        .filter(Boolean)
+        .join("\n");
 
-        alert(
-          "Could not load CLOSED ULDs.\n\n" +
-          error.message
-        );
-
+      if(!text){
+        alert("There are no PO numbers to copy.");
+        return;
       }
 
+      try{
+        if(navigator.clipboard && window.isSecureContext){
+          await navigator.clipboard.writeText(text);
+        }else{
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.style.position = "fixed";
+          textarea.style.left = "-10000px";
+          textarea.style.top = "-10000px";
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          const ok = document.execCommand("copy");
+          textarea.remove();
+          if(!ok) throw new Error("Clipboard copy was not available on this device.");
+        }
+
+        const status = document.getElementById("poCopyStatus");
+        if(status){
+          status.innerText = `✓ ${poList.length} PO number${poList.length === 1 ? "" : "s"} copied.`;
+          setTimeout(() => {
+            if(status) status.innerText = "";
+          }, 2500);
+        }else{
+          alert(`${poList.length} PO number${poList.length === 1 ? "" : "s"} copied.`);
+        }
+      }catch(error){
+        console.error("Copy PO numbers error:",error);
+        alert("Could not copy PO numbers.\n\nPlease select and copy them manually.");
+      }
     }
+
+    window.copyPONumbers = copyPONumbers;
 
 
     async function renderPOConversionList(
       docId,
       uldId,
-      purchaseOrders
+      purchaseOrders,
+      poCommodities={}
     ){
 
-      const list =
-        document.getElementById("deletePOsList");
-
+      const list = document.getElementById("deletePOsList");
       if(!list) return;
 
       if(!purchaseOrders.length){
-        list.innerHTML =
-          `<div class="manualHint">This CLOSED ULD has no PO's.</div>`;
+        list.innerHTML = `<div class="manualHint">This CLOSED ULD has no PO's.</div>`;
         return;
       }
 
-      list.innerHTML =
-        `<div class="manualHint">Loading AWB weights...</div>`;
+      list.innerHTML = `<div class="manualHint">Loading AWB weights...</div>`;
 
       let uldData = null;
       let awbs = [];
@@ -9769,10 +9902,7 @@
         if(uldSnap.exists()) uldData = uldSnap.data();
 
         const scanSnap = await getDocs(
-          query(
-            collection(db,"scans"),
-            where("uldId","==",uldId)
-          )
+          query(collection(db,"scans"),where("uldId","==",uldId))
         );
 
         scanSnap.forEach(scanDoc => {
@@ -9790,93 +9920,73 @@
         });
       }catch(error){
         console.error("Load AWB weights for PO conversion error:",error);
-        list.innerHTML =
-          `<div class="error">Could not load AWB weights.<br>${escapeHTML(error.message)}</div>`;
+        list.innerHTML = `<div class="error">Could not load AWB weights.<br>${escapeHTML(error.message)}</div>`;
         return;
       }
 
       const totalULDWeightKg = Number(uldData?.weightKg || 0);
-      const totalAWBWeightKg = awbs.reduce(
-        (total, item) => total + Number(item.weightKg || 0),
-        0
-      );
+      const totalAWBWeightKg = awbs.reduce((total,item)=>total + Number(item.weightKg || 0),0);
       const missingWeights = awbs.filter(item => !(Number(item.weightKg) > 0));
       const newWeightKg = totalULDWeightKg - (totalAWBWeightKg + 113);
 
       let html = "";
 
-      html +=
-        `<div class="infoTitle">PO's On ${escapeHTML(uldId)}</div>`;
+      html += `<div class="infoTitle">PO's On ${escapeHTML(uldId)}</div>`;
 
-      html +=
-        `<div style="border:1px solid #6B7280;border-radius:10px;padding:12px;margin:10px 0;background:#FFFFFF;box-sizing:border-box;">`;
+      html += `<div style="border:1px solid #6B7280;border-radius:10px;padding:12px;margin:10px 0;background:#FFFFFF;box-sizing:border-box;">`;
 
-      html +=
-        `<div style="font-weight:700;font-size:1.2rem;margin-bottom:8px;">`+
-        `All ${purchaseOrders.length} PO${purchaseOrders.length === 1 ? "" : "s"} will be converted to ONE AWB`+
-        `</div>`;
+      html += `<div style="font-weight:700;font-size:1.2rem;margin-bottom:8px;">All ${purchaseOrders.length} PO${purchaseOrders.length === 1 ? "" : "s"} will be converted to ONE AWB</div>`;
 
-      html +=
-        `<div class="manualHint" style="margin-bottom:10px;">`+
-        `PO's: ${escapeHTML(purchaseOrders.join(", "))}`+
-        `</div>`;
+      /* PO list + commodities */
+      html += `<div style="font-weight:700;margin-bottom:6px;">PO NUMBERS & COMMODITY</div>`;
+      html += `<div style="border:1px solid #D1D5DB;border-radius:8px;overflow:hidden;background:#fff;">`;
+      html += `<table style="margin-top:0;"><thead><tr><th>PO</th><th>COMMODITY</th></tr></thead><tbody>`;
 
-      html +=
-        `<div style="font-weight:700;margin-top:14px;margin-bottom:6px;">AIRWAYBILLS & WEIGHTS</div>`;
+      purchaseOrders.forEach(po => {
+        const raw = poCommodities?.[po] ?? poCommodities?.[String(po).toUpperCase()] ?? [];
+        const commodities = Array.isArray(raw)
+          ? raw.filter(Boolean)
+          : String(raw || "").split(",").map(v=>v.trim()).filter(Boolean);
+
+        html += `<tr><td>${escapeHTML(po)}</td><td>${escapeHTML(commodities.length ? commodities.join(", ") : "Not entered")}</td></tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+
+      html += `<button type="button" class="manualButton" style="width:100%;margin-top:10px;" onclick='copyPONumbers(${JSON.stringify(purchaseOrders).replace(/'/g,"&#39;")})'>COPY PO NUMBERS</button>`;
+      html += `<div id="poCopyStatus" class="manualHint" style="text-align:center;"></div>`;
+
+      html += `<div style="font-weight:700;margin-top:14px;margin-bottom:6px;">AIRWAYBILLS & WEIGHTS</div>`;
 
       if(!awbs.length){
         html += `<div class="manualHint">No scanned Airwaybills found on this ULD.</div>`;
       }else{
         html += `<table style="margin-top:6px;"><thead><tr><th>#</th><th>AWB</th><th>WEIGHT KG</th></tr></thead><tbody>`;
-        awbs.forEach((item,index) => {
+        awbs.forEach((item,index)=>{
           html += `<tr><td>${index + 1}</td><td>${escapeHTML(item.awb)}</td><td>${Number(item.weightKg || 0).toFixed(2)} KG</td></tr>`;
         });
         html += `</tbody></table>`;
       }
 
-      html +=
-        `<div style="margin-top:12px;font-weight:700;">`+
-        `TOTAL AIRWAYBILL WEIGHT: ${totalAWBWeightKg.toFixed(2)} KG`+
-        `</div>`;
-
-      html +=
-        `<div style="margin-top:8px;font-weight:700;">`+
-        `TOTAL ULD WEIGHT: ${totalULDWeightKg.toFixed(2)} KG`+
-        `</div>`;
-
-      html +=
-        `<div style="margin-top:8px;font-weight:700;">`+
-        `TARE WEIGHT: 113.00 KG`+
-        `</div>`;
-
-      html +=
-        `<div style="margin-top:12px;padding:12px;border:2px solid #0B1F3A;border-radius:10px;font-size:1.2rem;font-weight:700;">`+
-        `NEW WEIGHT: ${newWeightKg.toFixed(2)} KG`+
-        `</div>`;
+      html += `<div style="margin-top:12px;font-weight:700;">TOTAL AIRWAYBILL WEIGHT: ${totalAWBWeightKg.toFixed(2)} KG</div>`;
+      html += `<div style="margin-top:8px;font-weight:700;">TOTAL ULD WEIGHT: ${totalULDWeightKg.toFixed(2)} KG</div>`;
+      html += `<div style="margin-top:8px;font-weight:700;">TARE WEIGHT: 113.00 KG</div>`;
+      html += `<div style="margin-top:12px;padding:12px;border:2px solid #0B1F3A;border-radius:10px;font-size:1.2rem;font-weight:700;">NEW WEIGHT: ${newWeightKg.toFixed(2)} KG</div>`;
 
       if(missingWeights.length){
-        html +=
-          `<div style="margin-top:10px;color:#B91C1C;font-weight:700;">`+
-          `${missingWeights.length} AWB weight${missingWeights.length === 1 ? " is" : "s are"} missing or 0 KG. Update the AWB weight${missingWeights.length === 1 ? "" : "s"} in Allocate before conversion.`+
-          `</div>`;
+        html += `<div style="margin-top:10px;color:#B91C1C;font-weight:700;">${missingWeights.length} AWB weight${missingWeights.length === 1 ? " is" : "s are"} missing or 0 KG. Update the AWB weight${missingWeights.length === 1 ? "" : "s"} in Allocate before conversion.</div>`;
       }
 
-      html +=
-        `<input id="poConvertAWB" type="text" placeholder="Enter one AWB for all PO's" autocomplete="off" inputmode="numeric" style="width:100%;box-sizing:border-box;">`;
-
-      html +=
-        `<button id="poConvertButton" class="confirmButton" type="button" onclick="convertPOsToOneAWB('${docId}','${uldId}')">SAVE AWB FOR ALL PO's</button>`;
-
-      html +=
-        `<div id="poConvertStatus" class="manualHint"></div>`;
-
+      html += `<input id="poConvertAWB" type="text" placeholder="Enter one AWB for all PO's" autocomplete="off" inputmode="numeric" style="width:100%;box-sizing:border-box;">`;
+      html += `<button id="poConvertButton" class="confirmButton" type="button" onclick="convertPOsToOneAWB('${docId}','${uldId}')">SAVE AWB FOR ALL PO's</button>`;
+      html += `<div id="poConvertStatus" class="manualHint"></div>`;
       html += `</div>`;
 
       list.innerHTML = html;
 
       const input = document.getElementById("poConvertAWB");
       if(input){
-        input.addEventListener("keydown", event => {
+        input.addEventListener("keydown",event=>{
           if(event.key === "Enter"){
             event.preventDefault();
             convertPOsToOneAWB(docId,uldId);
@@ -9967,35 +10077,6 @@
           return;
         }
 
-        /*
-           Check the conversion audit list. If any PO on this ULD has
-           already been converted, the entire ULD conversion is treated
-           as already completed. One ULD has exactly one conversion AWB.
-        */
-        const conversions =
-          Array.isArray(uldData.poAwbConversions)
-            ? uldData.poAwbConversions
-            : [];
-
-        const existingConversions =
-          currentPOs
-            .map(po => conversions.find(item =>
-              String(item?.po || "").trim().toUpperCase() === po
-            ))
-            .filter(Boolean);
-
-        if(existingConversions.length){
-
-          const existingAWB =
-            normalizeAWB(existingConversions[0]?.awb) ||
-            String(existingConversions[0]?.awb || "");
-
-          alert(
-            `The PO's on ULD ${uldId} have already been converted to AWB ${existingAWB}.`
-          );
-
-          return;
-        }
 
         /* Same duplicate-AWB protection used by normal allocation. */
         const duplicateSnapshot =
@@ -10045,23 +10126,24 @@
             `Convert ALL ${currentPOs.length} PO(s) on ULD ${uldId} to ONE AWB ${awb}?\n\n` +
             `PO's: ${currentPOs.join(", ")}\n\n` +
             `The ULD will remain CLOSED.\n` +
-            `The original PO's will remain visible in Live View.`
+            `All PO data will be removed after conversion.`
           );
 
         if(!confirmed)
           return;
 
         /*
-           One AWB record is created for the ULD.
-           Every PO is recorded against that same AWB in the audit list.
-           purchaseOrders is deliberately left unchanged so all PO's remain
-           visible in Live View.
+           V12.91 FIX: create the resulting AWB as a normal AWB record,
+           then remove ALL PO-specific fields from the ULD. This means:
+             - purchaseOrders is removed
+             - poCommodities is removed
+             - poAwbConversions is removed
+             - PO allocation mode is removed/reset
+           No PO information is copied into the new AWB record.
         */
-        const batch =
-          writeBatch(db);
+        const batch = writeBatch(db);
 
-        const scanRef =
-          doc(collection(db,"scans"));
+        const scanRef = doc(collection(db,"scans"));
 
         batch.set(
           scanRef,
@@ -10070,27 +10152,17 @@
             positionId:uldId,
             uldId:uldId,
             scannedAt:serverTimestamp(),
-            scannedBy:currentUser,
-            convertedFromPOs:currentPOs,
-            conversionType:"PO_TO_AWB"
+            scannedBy:currentUser
           }
         );
-
-        const conversionTime =
-          new Date().toISOString();
-
-        const newConversions =
-          currentPOs.map(po => ({
-            po,
-            awb,
-            convertedAt:conversionTime,
-            convertedBy:currentUser
-          }));
 
         batch.update(
           uldRef,
           {
-            poAwbConversions:newConversions
+            purchaseOrders:deleteField(),
+            poCommodities:deleteField(),
+            poAwbConversions:deleteField(),
+            allocationPool:"NORMAL"
           }
         );
 
@@ -10100,7 +10172,7 @@
 
         if(status)
           status.innerText =
-            `✓ All ${currentPOs.length} PO's converted to AWB ${awb}. The PO's remain on the ULD.`;
+            `✓ All ${currentPOs.length} PO's converted to AWB ${awb}. All PO data was removed from the ULD.`;
 
         if(button)
           button.disabled = true;
@@ -10111,18 +10183,11 @@
           "PO'S CONVERTED TO ONE AWB",
           `All ${currentPOs.length} PO's on ULD ${uldId} were converted to AWB ${awb}.\n\n` +
           `ULD remains CLOSED.\n` +
-          `All original PO's remain visible in Live View.`
+          `All PO data was removed from the ULD.`
         );
 
+        /* The ULD no longer has PO data, so it must disappear from this list. */
         await loadULDsForDeletePOs();
-
-        const newSelect =
-          document.getElementById("deletePOsULDSelect");
-
-        if(newSelect){
-          newSelect.value = docId;
-          newSelect.dispatchEvent(new Event("change"));
-        }
 
       }catch(error){
 
