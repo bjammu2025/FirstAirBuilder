@@ -542,7 +542,7 @@
 
 
     /* =========================================================
-       12.8629 LIGHT THEME
+       12.8529 LIGHT THEME
        Entire app: white background, black buttons
        ========================================================= */
 
@@ -654,7 +654,7 @@
 
 
     /* =========================================================
-       12.8630 NAVY & WHITE AIRLINE THEME
+       12.8530 NAVY & WHITE AIRLINE THEME
        Flat colors only - no gradients
        ========================================================= */
 
@@ -816,7 +816,7 @@
 
 
     /* =========================================================
-       12.8631 NAVY / SOFT-GRAY + CALM AIR ATR 72 BACKGROUND
+       12.8531 NAVY / SOFT-GRAY + CALM AIR ATR 72 BACKGROUND
        Flat colors only - no gradients
        ========================================================= */
 
@@ -906,7 +906,7 @@
     }
 
 
-    /* 12.86: darker grey + Calm Air ATR background */
+    /* 12.85: darker grey + Calm Air ATR background */
     html, body{
       background:#AEB4BC !important;
       color:#111827 !important;
@@ -925,7 +925,7 @@
       background:rgba(174,180,188,.84) !important;
     }
 
-    /* 12.86: compact username on home screen */
+    /* 12.85: compact username on home screen */
     #homeUserLabel{
       display:block;
       width:100%;
@@ -959,7 +959,7 @@
 
 
 
-    /* 12.86 SOLID DARK GREY BACKGROUND */
+    /* 12.85 SOLID DARK GREY BACKGROUND */
     html,
     body{
       background:#B6BBC2 !important;
@@ -983,7 +983,7 @@
     }
 
 
-    /* 12.86 SCREEN FIT */
+    /* 12.85 SCREEN FIT */
     #home{
       box-sizing:border-box;
     }
@@ -2282,7 +2282,7 @@
       background:#E5E7EB !important;
     }
 
-    /* 12.86 - COMPACT LIVE VIEW ROW COLORS
+    /* 12.85 - COMPACT LIVE VIEW ROW COLORS
        Closed ULDs = red row
        Open ULDs   = green row
        No separate Status column. */
@@ -2550,7 +2550,7 @@
     }
 
     /* =========================================================
-       12.86 - FINAL LIVE VIEW / ZEBRA OVERRIDES
+       12.85 - FINAL LIVE VIEW / ZEBRA OVERRIDES
        ========================================================= */
     #liveView .liveULDList{
       min-width:0 !important;
@@ -2601,7 +2601,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.86
+        V.12.85
       </div>
 
       <div class="infoBox">
@@ -4142,7 +4142,7 @@
     let currentUser = "";
 
     /* =========================================================
-       12.86 - PERSIST LOGIN THROUGH PAGE RELOAD
+       12.85 - PERSIST LOGIN THROUGH PAGE RELOAD
        Desktop:
          sessionStorage keeps the login for the current browser tab.
 
@@ -10586,7 +10586,7 @@
                   ).trim() !== ""
                 );
 
-              /* v12.86: Count active AWBs with one scans read. */
+              /* v12.85: Count active AWBs with one scans read. */
               const liveAWBCounts = new Map();
               try{
                 const scanSnapshot = await getDocs(collection(db,"scans"));
@@ -11349,7 +11349,7 @@
        EXPORT CLOSED ULDs
        ========================================================= */
 
-    /* 12.8678 EXPORT COLUMNS:
+    /* 12.8578 EXPORT COLUMNS:
        P = ULD Commodity (source: Cargo Type)
        Q = Trailer # (source: ULD Location)
     */
@@ -13105,7 +13105,7 @@
 
 
     /* =========================================================
-       12.8641 - ZEBRA HARDWARE BACK BUTTON
+       12.8541 - ZEBRA HARDWARE BACK BUTTON
        Make Android/Zebra back behave exactly like the visible
        BACK button for the current screen.
        ========================================================= */
