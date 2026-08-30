@@ -542,7 +542,7 @@
 
 
     /* =========================================================
-       12.8629 LIGHT THEME
+       12.29 LIGHT THEME
        Entire app: white background, black buttons
        ========================================================= */
 
@@ -654,7 +654,7 @@
 
 
     /* =========================================================
-       12.8630 NAVY & WHITE AIRLINE THEME
+       12.30 NAVY & WHITE AIRLINE THEME
        Flat colors only - no gradients
        ========================================================= */
 
@@ -816,7 +816,7 @@
 
 
     /* =========================================================
-       12.8631 NAVY / SOFT-GRAY + CALM AIR ATR 72 BACKGROUND
+       12.31 NAVY / SOFT-GRAY + CALM AIR ATR 72 BACKGROUND
        Flat colors only - no gradients
        ========================================================= */
 
@@ -906,7 +906,7 @@
     }
 
 
-    /* 12.86: darker grey + Calm Air ATR background */
+    /* 12.32: darker grey + Calm Air ATR background */
     html, body{
       background:#AEB4BC !important;
       color:#111827 !important;
@@ -925,7 +925,7 @@
       background:rgba(174,180,188,.84) !important;
     }
 
-    /* 12.86: compact username on home screen */
+    /* 12.32: compact username on home screen */
     #homeUserLabel{
       display:block;
       width:100%;
@@ -959,7 +959,7 @@
 
 
 
-    /* 12.86 SOLID DARK GREY BACKGROUND */
+    /* 12.33 SOLID DARK GREY BACKGROUND */
     html,
     body{
       background:#B6BBC2 !important;
@@ -983,7 +983,7 @@
     }
 
 
-    /* 12.86 SCREEN FIT */
+    /* 12.33 SCREEN FIT */
     #home{
       box-sizing:border-box;
     }
@@ -2282,7 +2282,7 @@
       background:#E5E7EB !important;
     }
 
-    /* 12.86 - COMPACT LIVE VIEW ROW COLORS
+    /* 12.79 - COMPACT LIVE VIEW ROW COLORS
        Closed ULDs = red row
        Open ULDs   = green row
        No separate Status column. */
@@ -2550,7 +2550,7 @@
     }
 
     /* =========================================================
-       12.86 - FINAL LIVE VIEW / ZEBRA OVERRIDES
+       12.79 - FINAL LIVE VIEW / ZEBRA OVERRIDES
        ========================================================= */
     #liveView .liveULDList{
       min-width:0 !important;
@@ -2601,7 +2601,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.86
+        V.12.85
       </div>
 
       <div class="infoBox">
@@ -2662,12 +2662,6 @@
         onclick="openUpdateULDLocation()">
         UPDATE ULD LOCATION
       </button>
-        <button
-        class="manualButton"
-        onclick="openYFBPOUpdate()">
-        YFB PO UPDATE
-      </button>
-
         <div
         id="newULDBox"
         class="infoBox hidden">
@@ -3986,7 +3980,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.75";
+    const CODE_VERSION = "12.85";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -4142,7 +4136,7 @@
     let currentUser = "";
 
     /* =========================================================
-       12.86 - PERSIST LOGIN THROUGH PAGE RELOAD
+       12.79 - PERSIST LOGIN THROUGH PAGE RELOAD
        Desktop:
          sessionStorage keeps the login for the current browser tab.
 
@@ -5988,9 +5982,29 @@
           resetCameraCandidate();
 
           /*
-             IMPORTANT:
-             Camera does NOT save yet.
-             User must confirm.
+             ALLOCATE is handled by processAllocateAWB.
+             It checks the selected ULD for PO's BEFORE deciding
+             which popup to show:
+               - PO's present -> enter AWB KG weight
+               - No PO's -> use the normal AWB confirmation popup
+          */
+          if(
+            currentCameraMode ===
+            "allocate"
+          ){
+
+            await processAllocateAWB(
+              number,
+              "camera"
+            );
+
+            return;
+
+          }
+
+          /*
+             OFFLOAD / LEFTOVER keep their existing
+             AWB confirmation flow.
           */
 
           const confirmed =
@@ -5998,11 +6012,6 @@
               number,
               "camera"
             );
-
-          /*
-             If the user chose RESCAN,
-             showAWBConfirmation returns false.
-          */
 
           if(!confirmed){
 
@@ -6018,21 +6027,6 @@
             }
 
             return;
-
-          }
-
-          /*
-             CONFIRM or EDIT accepted the AWB.
-          */
-
-          if(
-            currentCameraMode ===
-            "allocate"
-          ){
-
-            await processAllocateAWB(
-              number
-            );
 
           }
 
@@ -6275,7 +6269,7 @@
        PROCESS ALLOCATE AWB
        ========================================================= */
 
-    async function processAllocateAWB(code){
+    async function processAllocateAWB(code, source="allocate"){
 
       const validated =
         normalizeAWB(code);
@@ -6359,6 +6353,8 @@
             )
           );
 
+        let uldHasPOs = false;
+
         if(!uldSnapshot.empty){
 
           const uldData =
@@ -6366,11 +6362,22 @@
 
           const purchaseOrders =
             Array.isArray(uldData.purchaseOrders)
-              ? uldData.purchaseOrders.filter(v => String(v).trim())
+              ? uldData.purchaseOrders.filter(
+                  v => String(v).trim()
+                )
               : [];
 
-          if(purchaseOrders.length > 0){
+          uldHasPOs =
+            purchaseOrders.length > 0;
 
+          if(uldHasPOs){
+
+            /*
+               IMPORTANT:
+               When PO's are already on this ULD, do NOT show the
+               normal AWB confirmation popup. The AWB weight popup
+               is the confirmation step for this workflow.
+            */
             stopContinuousOCR();
 
             awbWeightKg =
@@ -6389,7 +6396,55 @@
               restartOCR();
               return;
             }
+
+          }else{
+
+            /*
+               No PO's on this ULD:
+               keep the original AWB confirmation popup.
+            */
+            const confirmed =
+              await showAWBConfirmation(
+                code,
+                source
+              );
+
+            if(!confirmed){
+
+              setStatus(
+                "🔎 AWB not saved",
+                "scanning"
+              );
+
+              restartOCR();
+              return;
+            }
+
           }
+
+        }else{
+
+          /*
+             ULD lookup returned no OPEN record.
+             Preserve the normal confirmation behaviour.
+          */
+          const confirmed =
+            await showAWBConfirmation(
+              code,
+              source
+            );
+
+          if(!confirmed){
+
+            setStatus(
+              "🔎 AWB not saved",
+              "scanning"
+            );
+
+            restartOCR();
+            return;
+          }
+
         }
 
         const scanData = {
@@ -7366,10 +7421,24 @@
           closeManualAWB();
 
           /*
-             Manual input also gets a user verification
-             before being processed.
+             ALLOCATE decides which popup is required after checking
+             whether the selected ULD already contains PO's.
           */
+          if(mode === "allocate"){
 
+            await processAllocateAWB(
+              code,
+              "manual"
+            );
+
+            return;
+
+          }
+
+          /*
+             OFFLOAD / LEFTOVER keep their existing
+             verification flow.
+          */
           const confirmed =
             await showAWBConfirmation(
               code,
@@ -7379,14 +7448,6 @@
           if(!confirmed){
 
             return;
-
-          }
-
-          if(mode === "allocate"){
-
-            await processAllocateAWB(
-              code
-            );
 
           }
 
@@ -7642,6 +7703,30 @@
 
       barcodeMode = null;
 
+      /*
+         ALLOCATE must check the selected ULD for PO's before
+         showing any confirmation popup.
+      */
+      if(mode === "allocate"){
+
+        await processAllocateAWB(
+          code,
+          "barcode"
+        );
+
+        barcodeMode = mode;
+
+        setStatus(
+          "▣ Barcode scanner ready. Scan barcode.",
+          "scanning"
+        );
+
+        return;
+      }
+
+      /*
+         OFFLOAD / LEFTOVER keep the existing confirmation popup.
+      */
       const confirmed =
         await showAWBConfirmation(
           code,
@@ -7658,9 +7743,6 @@
       }
 
       barcodeMode = mode;
-
-      if(mode === "allocate")
-        await processAllocateAWB(code);
 
       if(mode === "offload")
         await processOffloadAWB(code, true);
@@ -9077,7 +9159,6 @@
        If AWBs already exist, collect their KG weights first.
        ========================================================= */
     window.openAllocateYFBPOUpdate = async () => {
-      window.returnToAllocateAfterPO = true;
       if(!getCurrentUser()){
         alert("Please enter user name");
         return;
@@ -9310,20 +9391,6 @@
         if(snapshot.empty){alert("ULD was not found or is not OPEN.");await loadOpenULDsForPOUpdate();return;}
         await Promise.all(snapshot.docs.map(d=>{const data=d.data();const existing=Array.isArray(data.purchaseOrders)?data.purchaseOrders.map(v=>String(v).trim().toUpperCase()).filter(Boolean):[];return updateDoc(doc(db,"ulds",d.id),{purchaseOrders:[...new Set([...existing,...uniqueNew])]});}));
         await showVerification(true,select.value,"POs UPDATED",`${uniqueNew.length} PO(s) were added to ULD ${select.value}.`);
-
-        if(window.returnToAllocateAfterPO){
-          window.returnToAllocateAfterPO = false;
-          currentULD = select.value;
-          positionId = select.value;
-          document.getElementById("allocULD").innerText = select.value;
-          document.getElementById("allocUser").innerText = currentUser;
-          switchScreen("allocateScan");
-          await loadAllocateAWBs(select.value);
-          await loadAllocateULDPOs(select.value);
-          openBarcodeScanner("allocate");
-          return;
-        }
-
         await loadOpenULDsForPOUpdate();
       }catch(error){console.error(error);alert("Could not save POs.\n\n"+error.message);}
     };
@@ -9399,23 +9466,9 @@
                 )]
               : [];
 
-          const conversions =
-            Array.isArray(d.poAwbConversions)
-              ? d.poAwbConversions
-              : [];
-
-          const alreadyConverted =
-            purchaseOrders.length > 0 &&
-            purchaseOrders.every(po =>
-              conversions.some(item =>
-                String(item?.po || "").trim().toUpperCase() === po
-              )
-            );
-
           if(
             uldId &&
-            purchaseOrders.length > 0 &&
-            !alreadyConverted
+            purchaseOrders.length > 0
           ){
 
             ulds.push({
@@ -10586,7 +10639,7 @@
                   ).trim() !== ""
                 );
 
-              /* v12.86: Count active AWBs with one scans read. */
+              /* v12.83: Count active AWBs with one scans read. */
               const liveAWBCounts = new Map();
               try{
                 const scanSnapshot = await getDocs(collection(db,"scans"));
@@ -11349,7 +11402,7 @@
        EXPORT CLOSED ULDs
        ========================================================= */
 
-    /* 12.8678 EXPORT COLUMNS:
+    /* 12.78 EXPORT COLUMNS:
        P = ULD Commodity (source: Cargo Type)
        Q = Trailer # (source: ULD Location)
     */
@@ -13105,7 +13158,7 @@
 
 
     /* =========================================================
-       12.8641 - ZEBRA HARDWARE BACK BUTTON
+       12.41 - ZEBRA HARDWARE BACK BUTTON
        Make Android/Zebra back behave exactly like the visible
        BACK button for the current screen.
        ========================================================= */
