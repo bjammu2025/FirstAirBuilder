@@ -2601,7 +2601,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.866
+        V.12.85
       </div>
 
       <div class="infoBox">
@@ -3980,7 +3980,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.86";
+    const CODE_VERSION = "12.87";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -4974,6 +4974,10 @@
             uldId:uldId,
 
             status:"OPEN",
+
+            allocationPool:"NORMAL",
+
+            purchaseOrders:[],
 
             weightLbs:0,
 
@@ -6290,7 +6294,7 @@
       code = validated;
 
       setStatus(
-        "⏳ Checking AWB...",
+        "⏳ Checking ULD...",
         "scanning"
       );
 
@@ -6344,6 +6348,17 @@
         */
         let awbWeightKg = null;
 
+        /*
+           IMPORTANT ALLOCATE RULE:
+           Decide the popup from the ULD's saved allocation pool BEFORE
+           showing ANY AWB confirmation popup.
+
+           PO_WEIGHT = AWB + KG popup
+           NORMAL    = old AWB confirmation popup
+
+           We inspect ALL matching OPEN ULD documents. This avoids an old
+           duplicate ULD document causing the wrong popup to be selected.
+        */
         const uldSnapshot =
           await getDocs(
             query(
@@ -6355,91 +6370,63 @@
 
         let uldHasPOs = false;
 
-        if(!uldSnapshot.empty){
+        uldSnapshot.forEach(uldDoc => {
 
-          const uldData =
-            uldSnapshot.docs[0].data();
+          const uldData = uldDoc.data() || {};
 
           const allocationPool =
             String(uldData.allocationPool || "")
               .trim()
               .toUpperCase();
 
-          /*
-             PO_WEIGHT is the dedicated pool for ULDs that have YFB PO's.
-             It is stored on the ULD itself, so the popup decision does not
-             depend on the PO display being loaded or on page state.
+          const purchaseOrders =
+            Array.isArray(uldData.purchaseOrders)
+              ? uldData.purchaseOrders
+                  .map(v => String(v || "").trim())
+                  .filter(Boolean)
+              : [];
 
-             Older ULDs without allocationPool are automatically recognized
-             by their existing purchaseOrders field.
-          */
-          if(allocationPool === "PO_WEIGHT")
+          /* PO_WEIGHT is authoritative. Existing PO data is a fallback
+             for ULDs created before the pool field was introduced. */
+          if(
+            allocationPool === "PO_WEIGHT" ||
+            purchaseOrders.length > 0
+          ){
             uldHasPOs = true;
-          else if(allocationPool === "NORMAL")
-            uldHasPOs = false;
-          else{
-            const purchaseOrders =
-              Array.isArray(uldData.purchaseOrders)
-                ? uldData.purchaseOrders.filter(
-                    v => String(v || "").trim()
-                  )
-                : [];
-
-            uldHasPOs = purchaseOrders.length > 0;
           }
+        });
 
-          if(uldHasPOs){
+        if(uldHasPOs){
 
-            /*
-               PO_WEIGHT pool: NEVER show the normal AWB confirmation.
-               ENTER AWB WEIGHT is the required confirmation step.
-            */
-            stopContinuousOCR();
+          /*
+             PO ULD: DO NOT call showAWBConfirmation().
+             The weight popup is the AWB confirmation AND weight entry
+             screen in one step.
+          */
+          stopContinuousOCR();
 
-            awbWeightKg =
-              await showSingleAWBWeightPopup(
-                code,
-                currentULD
-              );
+          awbWeightKg =
+            await showSingleAWBWeightPopup(
+              code,
+              currentULD
+            );
 
-            if(awbWeightKg === null){
+          if(awbWeightKg === null){
 
-              setStatus(
-                "🔎 AWB not saved",
-                "scanning"
-              );
+            setStatus(
+              "🔎 AWB not saved",
+              "scanning"
+            );
 
-              restartOCR();
-              return;
-            }
-
-          }else{
-
-            /*
-               NORMAL pool: use the original AWB confirmation popup.
-            */
-            const confirmed =
-              await showAWBConfirmation(
-                code,
-                source
-              );
-
-            if(!confirmed){
-
-              setStatus(
-                "🔎 AWB not saved",
-                "scanning"
-              );
-
-              restartOCR();
-              return;
-            }
-
+            restartOCR();
+            return;
           }
 
         }else{
 
-          /* No OPEN ULD record: preserve normal confirmation behaviour. */
+          /*
+             NORMAL ULD: old confirmation popup.
+          */
           const confirmed =
             await showAWBConfirmation(
               code,
@@ -6456,7 +6443,6 @@
             restartOCR();
             return;
           }
-
         }
 
         const scanData = {
@@ -9283,14 +9269,14 @@
 
         const title = document.createElement("div");
         title.innerText = single
-          ? `ENTER AWB WEIGHT - ${awb}`
+          ? `CONFIRM AWB & ENTER WEIGHT`
           : `ENTER AWB WEIGHTS - ${uldId}`;
         title.style.cssText = "font-size:1.7rem;font-weight:700;color:#0B1F3A;margin-bottom:8px;text-align:center;";
         box.appendChild(title);
 
         const note = document.createElement("div");
         note.innerText = single
-          ? "Enter the weight in KG for this AWB."
+          ? `AWB: ${awb}\nVerify that this AWB is correct, then enter its weight in KG.`
           : "Enter the weight in KG for every AWB scanned to this ULD.";
         note.style.cssText = "font-size:1.05rem;margin-bottom:14px;text-align:center;color:#374151;";
         box.appendChild(note);
@@ -9325,7 +9311,7 @@
         box.appendChild(status);
 
         const save = document.createElement("button");
-        save.innerText = single ? "SAVE WEIGHT" : "SAVE ALL WEIGHTS";
+        save.innerText = single ? "CONFIRM AWB & SAVE WEIGHT" : "SAVE ALL WEIGHTS";
         save.style.cssText = "width:100%;margin:.4rem 0;padding:1rem;background:#0B1F3A;color:#fff;border:0;border-radius:12px;font-size:1.2rem;font-weight:700;";
 
         const cancel = document.createElement("button");
@@ -9348,7 +9334,9 @@
           const values = rows.map(r => Number(r.input.value));
 
           if(values.some(v => !Number.isFinite(v) || v <= 0)){
-            status.innerText = "Please enter a valid KG weight for every AWB.";
+            status.innerText = single
+              ? "Please verify the AWB and enter a valid KG weight."
+              : "Please enter a valid KG weight for every AWB.";
             return;
           }
 
