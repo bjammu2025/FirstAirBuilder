@@ -1816,7 +1816,7 @@
     }
 
     /* =========================================================
-       12.71 - LIVE VIEW DEVICE FIT + LOGIN VERSION
+       12.72 - LIVE VIEW DEVICE FIT + LOGIN VERSION
        Desktop: responsive card sizing.
        Zebra/handheld: force all Live View content to stay within
        the available viewport; prevent wide tables from clipping.
@@ -1948,7 +1948,7 @@
     }
 
     /* =========================================================
-       12.71 - CENTER ULD HEADING + COMPACT CONFIRMATION WORDING
+       12.72 - CENTER ULD HEADING + COMPACT CONFIRMATION WORDING
        ========================================================= */
 
     #liveView .liveULDTopRow{
@@ -2019,7 +2019,7 @@
     }
 
     /* =========================================================
-       12.71 - LIVE VIEW ULD ROW LAYOUT
+       12.72 - LIVE VIEW ULD ROW LAYOUT
        Row 1: ULD centered
        Row 2: Status centered, Closed By right
        Row 3: Weight
@@ -2147,7 +2147,7 @@
 
     <body>
 
-    <!-- 12.71: Barcode, camera, and manual AWB input use the existing
+    <!-- 12.72: Barcode, camera, and manual AWB input use the existing
          confirmation popup before the AWB is processed. -->
 
 
@@ -2162,7 +2162,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.71
+        V.12.72
       </div>
 
       <div class="infoBox">
@@ -3520,7 +3520,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.71";
+    const CODE_VERSION = "12.72";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -9897,18 +9897,14 @@
 
               uldId:uldId,
 
-              weight:
+              weightKg:
+                Math.round(Number(
+                  uld.weightKg || 0
+                )),
+              weightLbs:
                 Math.round(Number(
                   uld.weightLbs || 0
-                )),
-              cargoType:
-                uld.cargoType ||
-                (Array.isArray(uld.cargoTypes)
-                  ? uld.cargoTypes.join(", ")
-                  : ""),
-
-              uldLocation:
-                uld.uldLocation || ""
+                ))
 
             });
 
@@ -9918,9 +9914,8 @@
               scannedAt:"",
               scannedBy:"",
               uldId:"",
-              weight:"",
-              cargoType:"",
-              uldLocation:""
+              weightKg:"",
+              weightLbs:""
             });
 
             continue;
@@ -9953,21 +9948,13 @@
                     ? uldId
                     : "",
 
-                weight:
+                weightKg:
+                  index === 0
+                    ? Math.round(Number(uld.weightKg || 0))
+                    : "",
+                weightLbs:
                   index === 0
                     ? Math.round(Number(uld.weightLbs || 0))
-                    : "",
-                cargoType:
-                  index === 0
-                    ? (uld.cargoType ||
-                       (Array.isArray(uld.cargoTypes)
-                         ? uld.cargoTypes.join(", ")
-                         : ""))
-                    : "",
-
-                uldLocation:
-                  index === 0
-                    ? (uld.uldLocation || "")
                     : ""
 
               });
@@ -10338,41 +10325,48 @@
     function downloadClosedULDExcel(rows){
 
       const data = [
-        ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (LBS)", "Cargo Type", "ULD Location"]
+        ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (KG)", "Weight (LBS)"]
       ];
 
       rows.forEach(row => {
         data.push([
           "", row.awb || "", "", "", "", "", "", "", "", "",
           row.scannedAt || "", row.scannedBy || "", row.uldId || "",
-          (row.weight !== "" && row.weight != null ? Number(row.weight) : ""),
-          row.cargoType || "",
-          row.uldLocation || ""
+          (row.weightKg !== "" && row.weightKg != null ? Number(row.weightKg) : ""),
+          (row.weightLbs !== "" && row.weightLbs != null ? Number(row.weightLbs) : "")
         ]);
       });
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
 
-        /* Keep Weight (LBS) as a real Excel number, not text. */
-        for(let r = 1; r < data.length; r++){
-          const cell = worksheet[XLSX.utils.encode_cell({r:r,c:13})];
-          if(cell && cell.v !== "" && cell.v != null){
-            cell.t = "n";
-            cell.v = Number(cell.v);
-            cell.z = "0";
-          }
+      /* Keep Weight (KG) and Weight (LBS) as real Excel numbers. */
+      for(let r = 1; r < data.length; r++){
+
+        const kgCell = worksheet[XLSX.utils.encode_cell({r:r,c:13})];
+        if(kgCell && kgCell.v !== "" && kgCell.v != null){
+          kgCell.t = "n";
+          kgCell.v = Number(kgCell.v);
+          kgCell.z = "0";
         }
+
+        const lbsCell = worksheet[XLSX.utils.encode_cell({r:r,c:14})];
+        if(lbsCell && lbsCell.v !== "" && lbsCell.v != null){
+          lbsCell.t = "n";
+          lbsCell.v = Number(lbsCell.v);
+          lbsCell.z = "0";
+        }
+      }
 
       worksheet["!cols"] = [
         { wch: 3 },
         { wch: 18 },
         { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
         { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
-        { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 20 }, { wch: 20 }
+        { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 16 }
       ];
 
       const headerRow = 0;
-      for(let c = 0; c < 16; c++){
+      for(let c = 0; c < 15; c++){
         const cell = worksheet[XLSX.utils.encode_cell({r:headerRow,c})];
         if(cell) cell.s = { font: { bold: true } };
       }
@@ -10452,16 +10446,10 @@
             scannedAt:"",
             scannedBy:"",
             uldId:uldId,
-            weight:
-              Math.round(Number(uld.weightLbs || 0)),
-              cargoType:
-                uld.cargoType ||
-                (Array.isArray(uld.cargoTypes)
-                  ? uld.cargoTypes.join(", ")
-                  : ""),
-
-              uldLocation:
-                uld.uldLocation || ""
+            weightKg:
+              Math.round(Number(uld.weightKg || 0)),
+            weightLbs:
+              Math.round(Number(uld.weightLbs || 0))
 
           });
 
@@ -10471,8 +10459,8 @@
             scannedAt:"",
             scannedBy:"",
             uldId:"",
-            weight:"",
-            cargoType:""
+            weightKg:"",
+            weightLbs:""
           });
 
           continue;
@@ -10504,22 +10492,14 @@
                 ? uldId
                 : "",
 
-            weight:
+            weightKg:
+              index === 0
+                ? Math.round(Number(uld.weightKg || 0))
+                : "",
+            weightLbs:
               index === 0
                 ? Math.round(Number(uld.weightLbs || 0))
-                : "",
-                cargoType:
-                  index === 0
-                    ? (uld.cargoType ||
-                       (Array.isArray(uld.cargoTypes)
-                         ? uld.cargoTypes.join(", ")
-                         : ""))
-                    : "",
-
-                uldLocation:
-                  index === 0
-                    ? (uld.uldLocation || "")
-                    : ""
+                : ""
 
           });
 
@@ -10531,9 +10511,8 @@
           scannedAt:"",
           scannedBy:"",
           uldId:"",
-          weight:"",
-          cargoType:"",
-          uldLocation:""
+          weightKg:"",
+          weightLbs:""
         });
 
       }
