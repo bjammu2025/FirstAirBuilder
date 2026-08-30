@@ -2019,7 +2019,7 @@
     }
 
     /* =========================================================
-       12.80 - ALLOCATE ULD PO DISPLAY
+       12.81 - ALLOCATE ULD PO DISPLAY BELOW AWB TABLE
        ========================================================= */
 
     #allocateScan #allocatePOInfo{
@@ -2282,7 +2282,7 @@
       background:#E5E7EB !important;
     }
 
-    /* 12.80 - COMPACT LIVE VIEW ROW COLORS
+    /* 12.79 - COMPACT LIVE VIEW ROW COLORS
        Closed ULDs = red row
        Open ULDs   = green row
        No separate Status column. */
@@ -2523,7 +2523,7 @@
 
 
     /* =========================================================
-       12.80 - FINAL LIVE VIEW / ZEBRA OVERRIDES
+       12.79 - FINAL LIVE VIEW / ZEBRA OVERRIDES
        ========================================================= */
     #liveView .liveULDList{
       min-width:0 !important;
@@ -2574,7 +2574,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.80
+        V.12.79
       </div>
 
       <div class="infoBox">
@@ -3131,19 +3131,6 @@
 
       </h3>
 
-      <div
-        id="allocatePOInfo"
-        class="infoBox"
-        style="text-align:center;">
-        <div class="infoTitle">
-          PO'S ON ULD
-        </div>
-        <div id="allocatePOList" class="manualHint">
-          Loading PO's...
-        </div>
-        <div id="allocatePOCount" class="manualHint"></div>
-      </div>
-
       <button
         id="openAllocateBarcodeButton"
         class="barcodeButton"
@@ -3213,6 +3200,23 @@
         <tbody id="scanTable"></tbody>
 
       </table>
+
+      <!-- =========================================================
+           ALLOCATE - PO INFORMATION
+           IMPORTANT: This section is intentionally BELOW the AWB table.
+           ========================================================= -->
+      <div
+        id="allocatePOInfo"
+        class="infoBox"
+        style="text-align:center;">
+        <div class="infoTitle">
+          PO'S ON ULD
+        </div>
+        <div id="allocatePOList" class="manualHint">
+          Loading PO's...
+        </div>
+        <div id="allocatePOCount" class="manualHint"></div>
+      </div>
 
       <button
         class="backButton"
@@ -4101,7 +4105,7 @@
     let currentUser = "";
 
     /* =========================================================
-       12.80 - PERSIST LOGIN THROUGH PAGE RELOAD
+       12.79 - PERSIST LOGIN THROUGH PAGE RELOAD
        Desktop:
          sessionStorage keeps the login for the current browser tab.
 
@@ -5034,8 +5038,9 @@
 
       switchScreen("allocateScan");
 
-      await loadAllocateULDPOs(uld);
+      // Load AWBs first. PO information is displayed underneath the AWB table.
       await loadAllocateAWBs(uld);
+      await loadAllocateULDPOs(uld);
 
       /* Barcode scanner is the default AWB input method */
       openBarcodeScanner("allocate");
@@ -6112,8 +6117,10 @@
 
         }
 
-        list.innerText =
-          purchaseOrders.join(", ");
+        list.innerHTML =
+          purchaseOrders
+            .map(po => `<div>${escapeHTML(po)}</div>`)
+            .join("");
 
         if(count)
           count.innerText =
