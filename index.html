@@ -2308,63 +2308,6 @@
       background:#BBF7D0 !important;
     }
 
-    /* 12.83 - COMPACT LIVE VIEW AWB DOTS */
-    #liveView .liveULDLocationCell{
-      width:28% !important;
-      max-width:28% !important;
-      overflow:hidden !important;
-      vertical-align:middle !important;
-    }
-
-    #liveView .liveAWBDots{
-      display:flex !important;
-      flex-wrap:wrap !important;
-      align-content:center !important;
-      justify-content:center !important;
-      align-items:center !important;
-      gap:3px !important;
-      width:100% !important;
-      max-width:100% !important;
-      max-height:46px !important;
-      overflow:hidden !important;
-      box-sizing:border-box !important;
-      padding:2px !important;
-    }
-
-    #liveView .liveAWBDot{
-      display:block !important;
-      flex:0 0 7px !important;
-      width:7px !important;
-      height:7px !important;
-      min-width:7px !important;
-      max-width:7px !important;
-      border-radius:50% !important;
-      background:#22C55E !important;
-      border:1px solid #15803D !important;
-      box-sizing:border-box !important;
-    }
-
-    #liveView .liveAWBNoDots{
-      font-weight:600 !important;
-      white-space:nowrap !important;
-    }
-
-    @media(max-width:600px){
-      #liveView .liveAWBDots{
-        gap:2px !important;
-        max-height:32px !important;
-        padding:1px !important;
-      }
-
-      #liveView .liveAWBDot{
-        flex-basis:5px !important;
-        width:5px !important;
-        height:5px !important;
-        min-width:5px !important;
-        max-width:5px !important;
-      }
-    }
-
     #liveView .liveULDDetail{
       width:100% !important;
       max-width:1200px !important;
@@ -2578,6 +2521,33 @@
 
     }
 
+
+    /* =========================================================
+       12.82 - COMPACT LIVE VIEW AWB DOTS
+       ========================================================= */
+    #liveView .liveAWBDots{
+      display:flex !important;
+      flex-wrap:wrap !important;
+      align-items:center !important;
+      justify-content:center !important;
+      gap:3px !important;
+      width:100% !important;
+      max-width:100% !important;
+      max-height:34px !important;
+      overflow:hidden !important;
+      box-sizing:border-box !important;
+      line-height:0 !important;
+    }
+    #liveView .liveAWBDot{
+      display:inline-block !important;
+      width:7px !important; height:7px !important; min-width:7px !important;
+      border-radius:50% !important; background:#16A34A !important;
+      box-sizing:border-box !important;
+    }
+    #liveView .liveAWBDotMore{
+      font-size:.68rem !important; line-height:1 !important;
+      font-weight:700 !important; white-space:nowrap !important;
+    }
 
     /* =========================================================
        12.79 - FINAL LIVE VIEW / ZEBRA OVERRIDES
@@ -3259,6 +3229,16 @@
       </table>
 
       <!-- =========================================================
+           ALLOCATE - YFB PO UPDATE
+           ========================================================= -->
+      <button
+        id="allocateYFBPOButton"
+        class="manualButton"
+        onclick="openAllocateYFBPOUpdate()">
+        YFB PO UPDATE
+      </button>
+
+      <!-- =========================================================
            ALLOCATE - PO INFORMATION
            IMPORTANT: This section is intentionally BELOW the AWB table.
            ========================================================= -->
@@ -3588,10 +3568,6 @@
 
     <!-- =========================================================
          CONVERT PO'S TO AWB'S - ADMIN
-         v12.83 additions:
-         - Show selected ULD weight
-         - Show AWBs already allocated to selected ULD
-         - Remove fully converted ULDs from conversion list
          ========================================================= -->
     <div id="deletePOs" class="screen">
       <h3>Convert PO's To AWB's</h3>
@@ -4010,7 +3986,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.83";
+    const CODE_VERSION = "12.75";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -6314,13 +6290,10 @@
         );
 
         restartOCR();
-
         return;
-
       }
 
-      code =
-        validated;
+      code = validated;
 
       setStatus(
         "⏳ Checking AWB...",
@@ -6342,18 +6315,14 @@
 
         snapshot.forEach(docSnap => {
 
-          const d =
-            docSnap.data();
+          const d = docSnap.data();
 
           if(
             d.positionId &&
             d.positionId !== "[REMOVED]"
           ){
-
             duplicate = d;
-
           }
-
         });
 
         if(duplicate){
@@ -6371,41 +6340,83 @@
           );
 
           vibrate();
-
           restartOCR();
-
           return;
-
         }
+
+        /*
+           If PO's have already been entered on this ULD, every new AWB
+           must have its KG weight entered before it can be saved.
+        */
+        let awbWeightKg = null;
+
+        const uldSnapshot =
+          await getDocs(
+            query(
+              collection(db,"ulds"),
+              where("uldId","==",currentULD),
+              where("status","==","OPEN")
+            )
+          );
+
+        if(!uldSnapshot.empty){
+
+          const uldData =
+            uldSnapshot.docs[0].data();
+
+          const purchaseOrders =
+            Array.isArray(uldData.purchaseOrders)
+              ? uldData.purchaseOrders.filter(v => String(v).trim())
+              : [];
+
+          if(purchaseOrders.length > 0){
+
+            stopContinuousOCR();
+
+            awbWeightKg =
+              await showSingleAWBWeightPopup(
+                code,
+                currentULD
+              );
+
+            if(awbWeightKg === null){
+
+              setStatus(
+                "🔎 AWB not saved",
+                "scanning"
+              );
+
+              restartOCR();
+              return;
+            }
+          }
+        }
+
+        const scanData = {
+          code:code,
+          positionId:currentULD,
+          uldId:currentULD,
+          scannedAt:serverTimestamp(),
+          scannedBy:currentUser
+        };
+
+        if(awbWeightKg !== null)
+          scanData.weightKg = awbWeightKg;
 
         await addDoc(
           collection(db,"scans"),
-          {
-
-            code:code,
-
-            positionId:currentULD,
-
-            uldId:currentULD,
-
-            scannedAt:
-              serverTimestamp(),
-
-            scannedBy:
-              currentUser
-
-          }
+          scanData
         );
 
-        await loadAllocateAWBs(
-          currentULD
-        );
+        await loadAllocateAWBs(currentULD);
 
         await showVerification(
           true,
           code,
           "AWB VERIFIED",
-          `AWB ${code} has been allocated to ULD ${currentULD}.`
+          awbWeightKg !== null
+            ? `AWB ${code} has been allocated to ULD ${currentULD}.\n\nWeight: ${awbWeightKg} KG`
+            : `AWB ${code} has been allocated to ULD ${currentULD}.`
         );
 
         setStatus(
@@ -6426,11 +6437,9 @@
           "The AWB could not be saved.\n\n" +
           error.message
         );
-
       }
 
       restartOCR();
-
     }
 
 
@@ -9063,7 +9072,62 @@
       await loadOpenULDsForPOUpdate();
     };
 
-    async function loadOpenULDsForPOUpdate(){
+    /* =========================================================
+       ALLOCATE -> YFB PO UPDATE
+       If AWBs already exist, collect their KG weights first.
+       ========================================================= */
+    window.openAllocateYFBPOUpdate = async () => {
+      if(!getCurrentUser()){
+        alert("Please enter user name");
+        return;
+      }
+
+      const uldId = String(currentULD || "").trim();
+      if(!uldId){
+        alert("No ULD is currently selected.");
+        return;
+      }
+
+      await closeCamera();
+      stopBarcodeScanner();
+
+      try{
+        const q = query(
+          collection(db,"scans"),
+          where("uldId","==",uldId)
+        );
+
+        const snapshot = await getDocs(q);
+        const awbs = [];
+
+        snapshot.forEach(docSnap => {
+          const d = docSnap.data();
+          if(d.positionId === "[REMOVED]") return;
+          if(d.conversionType === "PO_TO_AWB") return;
+
+          const awb = awbNumberOnly(d.code);
+          if(awb) awbs.push({
+            docId:docSnap.id,
+            awb,
+            weightKg:Number(d.weightKg || 0)
+          });
+        });
+
+        if(awbs.length > 0){
+          const saved = await showAWBWeightsPopup(awbs, uldId);
+          if(!saved) return;
+        }
+
+        switchScreen("yfbPOUpdate");
+        await loadOpenULDsForPOUpdate(uldId);
+
+      }catch(error){
+        console.error("Allocate YFB PO update error:",error);
+        alert("Could not prepare YFB PO Update.\n\n" + error.message);
+      }
+    };
+
+    async function loadOpenULDsForPOUpdate(preselectULD=""){
       const select=document.getElementById("yfbPOULDSelect");
       const box=document.getElementById("poInputs");
       if(!select||!box) return;
@@ -9075,6 +9139,11 @@
         ulds.sort((a,b)=>a.id.localeCompare(b.id));
         select.innerHTML=`<option value="">Select an OPEN ULD</option>`;
         ulds.forEach(u=>{const o=document.createElement("option");o.value=u.id;o.textContent=u.id;o.dataset.docId=u.docId;select.appendChild(o);});
+
+        if(preselectULD && ulds.some(u => u.id === preselectULD)){
+          select.value = preselectULD;
+        }
+
         addPOInput();
       }catch(error){ console.error(error); alert("Could not load OPEN ULDs.\n\n"+error.message); }
     }
@@ -9086,6 +9155,148 @@
       const remove=document.createElement("button"); remove.type="button"; remove.innerText="✕"; remove.style.width="70px"; remove.onclick=()=>row.remove();
       row.appendChild(input);row.appendChild(remove);box.appendChild(row);input.focus();
     };
+
+    async function showSingleAWBWeightPopup(awb, uldId){
+
+      const records = [{
+        docId:null,
+        awb,
+        weightKg:0,
+        isNew:true
+      }];
+
+      return await showAWBWeightsPopup(records, uldId, true);
+    }
+
+
+    async function showAWBWeightsPopup(records, uldId, single=false){
+
+      return new Promise(resolve => {
+
+        const overlay = document.createElement("div");
+        overlay.style.cssText = `
+          position:fixed;inset:0;background:rgba(0,0,0,.72);
+          display:flex;align-items:center;justify-content:center;
+          z-index:20000;padding:16px;box-sizing:border-box;
+        `;
+
+        const box = document.createElement("div");
+        box.style.cssText = `
+          width:95%;max-width:720px;max-height:90vh;overflow:auto;
+          background:#fff;border:3px solid #0B1F3A;border-radius:18px;
+          padding:20px;box-sizing:border-box;color:#111827;
+        `;
+
+        const title = document.createElement("div");
+        title.innerText = single
+          ? `ENTER AWB WEIGHT - ${awb}`
+          : `ENTER AWB WEIGHTS - ${uldId}`;
+        title.style.cssText = "font-size:1.7rem;font-weight:700;color:#0B1F3A;margin-bottom:8px;text-align:center;";
+        box.appendChild(title);
+
+        const note = document.createElement("div");
+        note.innerText = single
+          ? "Enter the weight in KG for this AWB."
+          : "Enter the weight in KG for every AWB scanned to this ULD.";
+        note.style.cssText = "font-size:1.05rem;margin-bottom:14px;text-align:center;color:#374151;";
+        box.appendChild(note);
+
+        const rows = [];
+
+        records.forEach((record, index) => {
+          const row = document.createElement("div");
+          row.style.cssText = "display:flex;gap:10px;align-items:center;margin:8px 0;padding:10px;border:1px solid #D1D5DB;border-radius:10px;";
+
+          const label = document.createElement("div");
+          label.innerText = `${index + 1}. ${record.awb}`;
+          label.style.cssText = "font-weight:700;flex:1;color:#111827;word-break:break-all;";
+
+          const input = document.createElement("input");
+          input.type = "number";
+          input.min = "0";
+          input.step = "0.01";
+          input.inputMode = "decimal";
+          input.placeholder = "KG";
+          input.value = record.weightKg > 0 ? record.weightKg : "";
+          input.style.cssText = "width:150px!important;margin:0!important;padding:.7rem!important;font-size:1.2rem!important;box-sizing:border-box;";
+
+          row.appendChild(label);
+          row.appendChild(input);
+          box.appendChild(row);
+          rows.push({record,input});
+        });
+
+        const status = document.createElement("div");
+        status.style.cssText = "min-height:24px;color:#B91C1C;text-align:center;margin:8px 0;font-weight:600;";
+        box.appendChild(status);
+
+        const save = document.createElement("button");
+        save.innerText = single ? "SAVE WEIGHT" : "SAVE ALL WEIGHTS";
+        save.style.cssText = "width:100%;margin:.4rem 0;padding:1rem;background:#0B1F3A;color:#fff;border:0;border-radius:12px;font-size:1.2rem;font-weight:700;";
+
+        const cancel = document.createElement("button");
+        cancel.innerText = "CANCEL";
+        cancel.style.cssText = "width:100%;margin:.4rem 0;padding:1rem;background:#6B7280;color:#fff;border:0;border-radius:12px;font-size:1.2rem;font-weight:700;";
+
+        box.appendChild(save);
+        box.appendChild(cancel);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        const cleanup = () => overlay.remove();
+
+        cancel.onclick = () => {
+          cleanup();
+          resolve(null);
+        };
+
+        save.onclick = async () => {
+          const values = rows.map(r => Number(r.input.value));
+
+          if(values.some(v => !Number.isFinite(v) || v <= 0)){
+            status.innerText = "Please enter a valid KG weight for every AWB.";
+            return;
+          }
+
+          save.disabled = true;
+          status.style.color = "#374151";
+          status.innerText = "Saving weights...";
+
+          try{
+            const batch = writeBatch(db);
+
+            rows.forEach((r, i) => {
+              r.record.weightKg = Number(values[i].toFixed(2));
+              if(r.record.docId){
+                batch.update(
+                  doc(db,"scans",r.record.docId),
+                  {weightKg:r.record.weightKg}
+                );
+              }
+            });
+
+            if(single && rows[0].record.isNew){
+              cleanup();
+              resolve(rows[0].record.weightKg);
+              return;
+            }
+
+            await batch.commit();
+            cleanup();
+            resolve(true);
+
+          }catch(error){
+            console.error("AWB weight save error:",error);
+            save.disabled = false;
+            status.style.color = "#B91C1C";
+            status.innerText = "Could not save weights. " + error.message;
+          }
+        };
+
+        setTimeout(() => rows[0]?.input?.focus(), 50);
+      });
+    }
+
 
     window.saveYFBPOs=async()=>{
       const select=document.getElementById("yfbPOULDSelect");
@@ -9107,10 +9318,6 @@
     /* =========================================================
        CONVERT PO'S TO AWB'S - ADMIN
        CLOSED ULD ONLY
-       v12.83:
-       - Show ULD weight when selected
-       - Show AWBs allocated to selected ULD
-       - Remove ULD from conversion list after all PO's are converted
        ========================================================= */
 
     window.openDeletePOs=async()=>{
@@ -9177,46 +9384,15 @@
                 )]
               : [];
 
-          /*
-             A ULD is only shown if it still has at least one PO
-             that has NOT been converted.
-
-             Existing v12.83 records are supported automatically:
-             poAwbConversions is checked instead of relying only on
-             a new flag.
-          */
-          const conversions =
-            Array.isArray(d.poAwbConversions)
-              ? d.poAwbConversions
-              : [];
-
-          const convertedPOs = new Set(
-            conversions
-              .map(item =>
-                String(item?.po || "")
-                  .trim()
-                  .toUpperCase()
-              )
-              .filter(Boolean)
-          );
-
-          const remainingPOs =
-            purchaseOrders.filter(
-              po => !convertedPOs.has(po)
-            );
-
           if(
             uldId &&
-            remainingPOs.length > 0
+            purchaseOrders.length > 0
           ){
 
             ulds.push({
               docId:docSnap.id,
               uldId,
-              purchaseOrders,
-              remainingPOs,
-              weightLbs:Number(d.weightLbs || 0),
-              weightKg:Number(d.weightKg || 0)
+              purchaseOrders
             });
 
           }
@@ -9231,15 +9407,11 @@
         if(!ulds.length){
 
           select.innerHTML =
-            `<option value="">No CLOSED ULDs need PO conversion</option>`;
+            `<option value="">No CLOSED ULDs with PO's</option>`;
 
           if(info)
             info.innerText =
-              "All CLOSED ULD PO's have already been converted.";
-
-          if(list)
-            list.innerHTML =
-              `<div class="manualHint">There are no CLOSED ULDs remaining that need PO conversion.</div>`;
+              "There are no CLOSED ULDs with PO's available for conversion.";
 
           return;
 
@@ -9257,25 +9429,19 @@
             uld.docId;
 
           option.textContent =
-            `${uld.uldId} (${uld.remainingPOs.length} PO${uld.remainingPOs.length === 1 ? "" : "s"} remaining)`;
+            `${uld.uldId} (${uld.purchaseOrders.length} PO${uld.purchaseOrders.length === 1 ? "" : "s"})`;
 
           option.dataset.uldId =
             uld.uldId;
 
           option.dataset.purchaseOrders =
-            JSON.stringify(uld.remainingPOs);
-
-          option.dataset.weightLbs =
-            String(uld.weightLbs);
-
-          option.dataset.weightKg =
-            String(uld.weightKg);
+            JSON.stringify(uld.purchaseOrders);
 
           select.appendChild(option);
 
         });
 
-        select.onchange = async () => {
+        select.onchange = () => {
 
           const option =
             select.options[
@@ -9306,23 +9472,14 @@
             purchaseOrders = [];
           }
 
-          const weightLbs =
-            Number(option.dataset.weightLbs || 0);
-
-          const weightKg =
-            Number(option.dataset.weightKg || 0);
-
           if(info)
             info.innerText =
-              `CLOSED ULD ${option.dataset.uldId}: ${purchaseOrders.length} PO${purchaseOrders.length === 1 ? "" : "s"} remaining | ` +
-              `${weightLbs.toFixed(2)} LBS / ${Math.round(weightKg)} KGS`;
+              `CLOSED ULD ${option.dataset.uldId}: ${purchaseOrders.length} PO${purchaseOrders.length === 1 ? "" : "s"}`;
 
-          await renderPOConversionList(
+          renderPOConversionList(
             option.value,
             option.dataset.uldId,
-            purchaseOrders,
-            weightLbs,
-            weightKg
+            purchaseOrders
           );
 
         };
@@ -9350,9 +9507,7 @@
     async function renderPOConversionList(
       docId,
       uldId,
-      purchaseOrders,
-      weightLbs,
-      weightKg
+      purchaseOrders
     ){
 
       const list =
@@ -9361,162 +9516,128 @@
       if(!list) return;
 
       if(!purchaseOrders.length){
-
         list.innerHTML =
-          `<div class="manualHint">This CLOSED ULD has no PO's remaining to convert.</div>`;
-
+          `<div class="manualHint">This CLOSED ULD has no PO's.</div>`;
         return;
-
       }
 
-      /*
-         Load the AWBs already allocated to this ULD.
-         This includes the AWB created by PO conversion as well as
-         normal AWBs allocated/scanned to the ULD.
-      */
+      list.innerHTML =
+        `<div class="manualHint">Loading AWB weights...</div>`;
+
+      let uldData = null;
       let awbs = [];
 
       try{
+        const uldSnap = await getDoc(doc(db,"ulds",docId));
+        if(uldSnap.exists()) uldData = uldSnap.data();
 
-        const scanSnapshot =
-          await getDocs(
-            query(
-              collection(db,"scans"),
-              where("uldId","==",uldId)
-            )
-          );
-
-        const awbSet = new Set();
-
-        scanSnapshot.forEach(docSnap => {
-
-          const d =
-            docSnap.data();
-
-          if(
-            d.positionId === "[REMOVED]"
+        const scanSnap = await getDocs(
+          query(
+            collection(db,"scans"),
+            where("uldId","==",uldId)
           )
-            return;
-
-          const awb =
-            awbNumberOnly(d.code);
-
-          if(awb)
-            awbSet.add(String(awb));
-
-        });
-
-        awbs = [...awbSet];
-
-      }catch(error){
-
-        console.error(
-          "Load allocated AWBs for PO conversion error:",
-          error
         );
 
+        scanSnap.forEach(scanDoc => {
+          const d = scanDoc.data();
+          if(d.positionId === "[REMOVED]") return;
+          if(d.conversionType === "PO_TO_AWB") return;
+
+          const awb = awbNumberOnly(d.code);
+          if(!awb) return;
+
+          awbs.push({
+            awb,
+            weightKg:Number(d.weightKg || 0)
+          });
+        });
+      }catch(error){
+        console.error("Load AWB weights for PO conversion error:",error);
+        list.innerHTML =
+          `<div class="error">Could not load AWB weights.<br>${escapeHTML(error.message)}</div>`;
+        return;
       }
+
+      const totalULDWeightKg = Number(uldData?.weightKg || 0);
+      const totalAWBWeightKg = awbs.reduce(
+        (total, item) => total + Number(item.weightKg || 0),
+        0
+      );
+      const missingWeights = awbs.filter(item => !(Number(item.weightKg) > 0));
+      const newWeightKg = totalULDWeightKg - (totalAWBWeightKg + 113);
 
       let html = "";
-
-      html +=
-        `<div class="infoTitle">ULD ${escapeHTML(uldId)}</div>`;
-
-      html +=
-        `<div style="border:1px solid #6B7280;border-radius:10px;padding:12px;margin:10px 0;background:#FFFFFF;box-sizing:border-box;">
-
-          <div style="font-weight:700;font-size:1.2rem;margin-bottom:8px;">
-            ULD WEIGHT
-          </div>
-
-          <div style="font-size:1.15rem;font-weight:600;margin-bottom:4px;">
-            ${weightLbs.toFixed(2)} LBS
-          </div>
-
-          <div style="font-size:1.15rem;font-weight:600;margin-bottom:12px;">
-            ${Math.round(weightKg)} KGS
-          </div>
-
-        </div>`;
-
-      html +=
-        `<div style="border:1px solid #6B7280;border-radius:10px;padding:12px;margin:10px 0;background:#FFFFFF;box-sizing:border-box;">
-
-          <div style="font-weight:700;font-size:1.2rem;margin-bottom:8px;">
-            AWB's ALLOCATED TO ULD
-          </div>`;
-
-      if(awbs.length){
-
-        html +=
-          `<div style="font-size:1.1rem;line-height:1.7;">`;
-
-        awbs.forEach((awb,index) => {
-
-          html +=
-            `<div>
-              ${index + 1}. ${escapeHTML(awb)}
-            </div>`;
-
-        });
-
-        html +=
-          `</div>`;
-
-      }else{
-
-        html +=
-          `<div class="manualHint">
-            No AWB's currently allocated to this ULD.
-          </div>`;
-
-      }
-
-      html +=
-        `</div>`;
 
       html +=
         `<div class="infoTitle">PO's On ${escapeHTML(uldId)}</div>`;
 
       html +=
-        `<div style="border:1px solid #6B7280;border-radius:10px;padding:12px;margin:10px 0;background:#FFFFFF;box-sizing:border-box;">
+        `<div style="border:1px solid #6B7280;border-radius:10px;padding:12px;margin:10px 0;background:#FFFFFF;box-sizing:border-box;">`;
 
-          <div style="font-weight:700;font-size:1.2rem;margin-bottom:8px;">
-            All ${purchaseOrders.length} PO${purchaseOrders.length === 1 ? "" : "s"} remaining will be converted to ONE AWB
-          </div>
+      html +=
+        `<div style="font-weight:700;font-size:1.2rem;margin-bottom:8px;">`+
+        `All ${purchaseOrders.length} PO${purchaseOrders.length === 1 ? "" : "s"} will be converted to ONE AWB`+
+        `</div>`;
 
-          <div class="manualHint" style="margin-bottom:10px;">
-            PO's: ${escapeHTML(purchaseOrders.join(", "))}
-          </div>
+      html +=
+        `<div class="manualHint" style="margin-bottom:10px;">`+
+        `PO's: ${escapeHTML(purchaseOrders.join(", "))}`+
+        `</div>`;
 
-          <input
-            id="poConvertAWB"
-            type="text"
-            placeholder="Enter one AWB for all PO's"
-            autocomplete="off"
-            inputmode="numeric"
-            style="width:100%;box-sizing:border-box;">
+      html +=
+        `<div style="font-weight:700;margin-top:14px;margin-bottom:6px;">AIRWAYBILLS & WEIGHTS</div>`;
 
-          <button
-            id="poConvertButton"
-            class="confirmButton"
-            type="button"
-            onclick="convertPOsToOneAWB('${docId}','${uldId}')">
-            SAVE AWB FOR ALL PO's
-          </button>
+      if(!awbs.length){
+        html += `<div class="manualHint">No scanned Airwaybills found on this ULD.</div>`;
+      }else{
+        html += `<table style="margin-top:6px;"><thead><tr><th>#</th><th>AWB</th><th>WEIGHT KG</th></tr></thead><tbody>`;
+        awbs.forEach((item,index) => {
+          html += `<tr><td>${index + 1}</td><td>${escapeHTML(item.awb)}</td><td>${Number(item.weightKg || 0).toFixed(2)} KG</td></tr>`;
+        });
+        html += `</tbody></table>`;
+      }
 
-          <div
-            id="poConvertStatus"
-            class="manualHint">
-          </div>
+      html +=
+        `<div style="margin-top:12px;font-weight:700;">`+
+        `TOTAL AIRWAYBILL WEIGHT: ${totalAWBWeightKg.toFixed(2)} KG`+
+        `</div>`;
 
-        </div>`;
+      html +=
+        `<div style="margin-top:8px;font-weight:700;">`+
+        `TOTAL ULD WEIGHT: ${totalULDWeightKg.toFixed(2)} KG`+
+        `</div>`;
+
+      html +=
+        `<div style="margin-top:8px;font-weight:700;">`+
+        `TARE WEIGHT: 113.00 KG`+
+        `</div>`;
+
+      html +=
+        `<div style="margin-top:12px;padding:12px;border:2px solid #0B1F3A;border-radius:10px;font-size:1.2rem;font-weight:700;">`+
+        `NEW WEIGHT: ${newWeightKg.toFixed(2)} KG`+
+        `</div>`;
+
+      if(missingWeights.length){
+        html +=
+          `<div style="margin-top:10px;color:#B91C1C;font-weight:700;">`+
+          `${missingWeights.length} AWB weight${missingWeights.length === 1 ? " is" : "s are"} missing or 0 KG. Update the AWB weight${missingWeights.length === 1 ? "" : "s"} in Allocate before conversion.`+
+          `</div>`;
+      }
+
+      html +=
+        `<input id="poConvertAWB" type="text" placeholder="Enter one AWB for all PO's" autocomplete="off" inputmode="numeric" style="width:100%;box-sizing:border-box;">`;
+
+      html +=
+        `<button id="poConvertButton" class="confirmButton" type="button" onclick="convertPOsToOneAWB('${docId}','${uldId}')">SAVE AWB FOR ALL PO's</button>`;
+
+      html +=
+        `<div id="poConvertStatus" class="manualHint"></div>`;
+
+      html += `</div>`;
 
       list.innerHTML = html;
 
-      const input =
-        document.getElementById("poConvertAWB");
-
+      const input = document.getElementById("poConvertAWB");
       if(input){
         input.addEventListener("keydown", event => {
           if(event.key === "Enter"){
@@ -9525,7 +9646,6 @@
           }
         });
       }
-
     }
 
 
@@ -9611,37 +9731,32 @@
         }
 
         /*
-           Only the PO's that have not already been converted are processed.
-           This also makes the function safe if the page was left open
-           while another admin/device completed a conversion.
+           Check the conversion audit list. If any PO on this ULD has
+           already been converted, the entire ULD conversion is treated
+           as already completed. One ULD has exactly one conversion AWB.
         */
         const conversions =
           Array.isArray(uldData.poAwbConversions)
             ? uldData.poAwbConversions
             : [];
 
-        const convertedPOs = new Set(
-          conversions
-            .map(item =>
-              String(item?.po || "")
-                .trim()
-                .toUpperCase()
-            )
-            .filter(Boolean)
-        );
+        const existingConversions =
+          currentPOs
+            .map(po => conversions.find(item =>
+              String(item?.po || "").trim().toUpperCase() === po
+            ))
+            .filter(Boolean);
 
-        const remainingPOs =
-          currentPOs.filter(
-            po => !convertedPOs.has(po)
-          );
+        if(existingConversions.length){
 
-        if(!remainingPOs.length){
+          const existingAWB =
+            normalizeAWB(existingConversions[0]?.awb) ||
+            String(existingConversions[0]?.awb || "");
 
           alert(
-            `All PO's on ULD ${uldId} have already been converted.`
+            `The PO's on ULD ${uldId} have already been converted to AWB ${existingAWB}.`
           );
 
-          await loadULDsForDeletePOs();
           return;
         }
 
@@ -9690,9 +9805,8 @@
         const confirmed =
           await showConfirmation(
             "CONVERT ALL PO'S TO ONE AWB",
-            `Convert ALL ${remainingPOs.length} remaining PO(s) on ULD ${uldId} to ONE AWB ${awb}?\n\n` +
-            `PO's: ${remainingPOs.join(", ")}\n\n` +
-            `ULD weight: ${Number(uldData.weightLbs || 0).toFixed(2)} LBS / ${Math.round(Number(uldData.weightKg || 0))} KGS\n\n` +
+            `Convert ALL ${currentPOs.length} PO(s) on ULD ${uldId} to ONE AWB ${awb}?\n\n` +
+            `PO's: ${currentPOs.join(", ")}\n\n` +
             `The ULD will remain CLOSED.\n` +
             `The original PO's will remain visible in Live View.`
           );
@@ -9702,9 +9816,9 @@
 
         /*
            One AWB record is created for the ULD.
-           Every converted PO is recorded against that same AWB.
-           purchaseOrders is deliberately left unchanged so all original
-           PO's remain visible in Live View.
+           Every PO is recorded against that same AWB in the audit list.
+           purchaseOrders is deliberately left unchanged so all PO's remain
+           visible in Live View.
         */
         const batch =
           writeBatch(db);
@@ -9720,7 +9834,7 @@
             uldId:uldId,
             scannedAt:serverTimestamp(),
             scannedBy:currentUser,
-            convertedFromPOs:remainingPOs,
+            convertedFromPOs:currentPOs,
             conversionType:"PO_TO_AWB"
           }
         );
@@ -9729,7 +9843,7 @@
           new Date().toISOString();
 
         const newConversions =
-          remainingPOs.map(po => ({
+          currentPOs.map(po => ({
             po,
             awb,
             convertedAt:conversionTime,
@@ -9739,14 +9853,7 @@
         batch.update(
           uldRef,
           {
-            poAwbConversions:[
-              ...conversions,
-              ...newConversions
-            ],
-            poConversionCompleted:true,
-            poConversionAWB:awb,
-            poConversionCompletedAt:conversionTime,
-            poConversionCompletedBy:currentUser
+            poAwbConversions:newConversions
           }
         );
 
@@ -9756,7 +9863,7 @@
 
         if(status)
           status.innerText =
-            `✓ All ${remainingPOs.length} PO's converted to AWB ${awb}.`;
+            `✓ All ${currentPOs.length} PO's converted to AWB ${awb}. The PO's remain on the ULD.`;
 
         if(button)
           button.disabled = true;
@@ -9765,16 +9872,20 @@
           true,
           awb,
           "PO'S CONVERTED TO ONE AWB",
-          `All ${remainingPOs.length} PO's on ULD ${uldId} were converted to AWB ${awb}.\n\n` +
+          `All ${currentPOs.length} PO's on ULD ${uldId} were converted to AWB ${awb}.\n\n` +
           `ULD remains CLOSED.\n` +
-          `The ULD has been removed from the list of ULDs still needing PO conversion.`
+          `All original PO's remain visible in Live View.`
         );
 
-        /*
-           Reload the list. Because all PO's are now recorded in
-           poAwbConversions, this ULD will no longer appear.
-        */
         await loadULDsForDeletePOs();
+
+        const newSelect =
+          document.getElementById("deletePOsULDSelect");
+
+        if(newSelect){
+          newSelect.value = docId;
+          newSelect.dispatchEvent(new Event("change"));
+        }
 
       }catch(error){
 
@@ -10366,6 +10477,7 @@
 
     /* =========================================================
        LIVE VIEW
+       12.82 - compact AWB dots + closed ULD location sorting
        ========================================================= */
 
     window.liveULDCache = new Map();
@@ -10445,164 +10557,64 @@
                   ).trim() !== ""
                 );
 
+              /* v12.83: Count active AWBs with one scans read. */
+              const liveAWBCounts = new Map();
+              try{
+                const scanSnapshot = await getDocs(collection(db,"scans"));
+                scanSnapshot.forEach(docSnap => {
+                  const d = docSnap.data();
+                  if(d.positionId === "[REMOVED]") return;
+                  const scanULD = String(d.uldId || d.positionId || "").trim();
+                  if(!scanULD) return;
+                  liveAWBCounts.set(scanULD,(liveAWBCounts.get(scanULD) || 0) + 1);
+                });
+              }catch(scanError){
+                console.warn("Live View AWB count load failed:",scanError);
+              }
+
               /*
                  Live View order:
                  1. OPEN ULDs at the top.
                  2. CLOSED ULDs at the bottom.
-                 3. CLOSED ULDs are ordered by ULD LOCATION.
-                 4. OPEN ULDs keep their existing creation sequence.
+                 3. OPEN ULDs keep their creation sequence.
+                 4. CLOSED ULDs are sorted by ULD LOCATION.
               */
               const uldSequence = uld => {
-
-                const value =
-                  uld.createdAt;
-
-                if(
-                  value &&
-                  typeof value.seconds ===
-                    "number"
-                )
+                const value = uld.createdAt;
+                if(value && typeof value.seconds === "number")
                   return value.seconds * 1000;
-
-                if(
-                  value &&
-                  typeof value.toMillis ===
-                    "function"
-                )
+                if(value && typeof value.toMillis === "function")
                   return value.toMillis();
-
                 if(value){
-
-                  const parsed =
-                    new Date(value).getTime();
-
-                  if(!isNaN(parsed))
-                    return parsed;
-
+                  const parsed = new Date(value).getTime();
+                  if(!isNaN(parsed)) return parsed;
                 }
-
                 return Number.MAX_SAFE_INTEGER;
-
               };
 
               validULDS.sort((a,b) => {
-
-                const aOpen =
-                  String(
-                    a.status ||
-                    "OPEN"
-                  ).toUpperCase() !==
-                  "CLOSED";
-
-                const bOpen =
-                  String(
-                    b.status ||
-                    "OPEN"
-                  ).toUpperCase() !==
-                  "CLOSED";
-
-                if(aOpen !== bOpen)
-                  return aOpen ? -1 : 1;
+                const aOpen = String(a.status || "OPEN").toUpperCase() !== "CLOSED";
+                const bOpen = String(b.status || "OPEN").toUpperCase() !== "CLOSED";
+                if(aOpen !== bOpen) return aOpen ? -1 : 1;
 
                 if(!aOpen && !bOpen){
-
-                  const locationDiff =
-                    String(
-                      a.uldLocation ||
-                      ""
-                    ).trim().localeCompare(
-                      String(
-                        b.uldLocation ||
-                        ""
-                      ).trim(),
-                      undefined,
-                      {
-                        numeric:true,
-                        sensitivity:"base"
-                      }
-                    );
-
-                  if(locationDiff !== 0)
-                    return locationDiff;
-
+                  const locationDiff = String(a.uldLocation || "").trim().localeCompare(
+                    String(b.uldLocation || "").trim(),
+                    undefined,
+                    {numeric:true,sensitivity:"base"}
+                  );
+                  if(locationDiff !== 0) return locationDiff;
                 }else{
-
-                  const seqDiff =
-                    uldSequence(a) -
-                    uldSequence(b);
-
-                  if(seqDiff !== 0)
-                    return seqDiff;
-
+                  const seqDiff = uldSequence(a) - uldSequence(b);
+                  if(seqDiff !== 0) return seqDiff;
                 }
 
-                return String(
-                  a.uldId ||
-                  a.id ||
-                  ""
-                ).localeCompare(
-                  String(
-                    b.uldId ||
-                    b.id ||
-                    ""
-                  ),
+                return String(a.uldId || a.id || "").localeCompare(
+                  String(b.uldId || b.id || ""),
                   undefined,
-                  {
-                    numeric:true,
-                    sensitivity:"base"
-                  }
+                  {numeric:true,sensitivity:"base"}
                 );
-
               });
-
-              /*
-                 Load active AWB counts with ONE scans query for the whole
-                 Live View. This avoids one Firestore query per ULD while
-                 still allowing the Location cell to show one dot per
-                 currently allocated AWB.
-              */
-              const activeAWBCounts = new Map();
-
-              try{
-
-                const scanSnapshot =
-                  await getDocs(
-                    collection(db,"scans")
-                  );
-
-                scanSnapshot.forEach(docSnap => {
-
-                  const scan =
-                    docSnap.data();
-
-                  const scanULD =
-                    String(
-                      scan.uldId ||
-                      scan.positionId ||
-                      ""
-                    ).trim();
-
-                  if(
-                    !scanULD ||
-                    scan.positionId === "[REMOVED]"
-                  )
-                    return;
-
-                  activeAWBCounts.set(
-                    scanULD,
-                    (activeAWBCounts.get(scanULD) || 0) + 1
-                  );
-
-                });
-
-              }catch(error){
-
-                console.error(
-                  "Live View AWB count load error:",
-                  error
-                );
-
-              }
 
               /*
                  Build the lightweight cache used by the clickable ULD rows.
@@ -10668,9 +10680,7 @@
                     scans:[],
                     scansLoaded:false,
                     purchaseOrders,
-                    cargoType,
-                    awbCount:
-                      activeAWBCounts.get(uldId) || 0
+                    cargoType
                   }
                 );
 
@@ -10764,27 +10774,24 @@
                     ? String(uld.uldLocation)
                     : "—";
 
-                const activeAWBCount =
-                  isClosed
-                    ? 0
-                    : (
-                        activeAWBCounts.get(uldId) ||
-                        0
-                      );
+                const allocatedAWBCount =
+                  isClosed ? 0 : (liveAWBCounts.get(uldId) || 0);
 
-                const liveLocationDisplay =
-                  isClosed
-                    ? escapeHTML(uldLocation)
-                    : (
-                        activeAWBCount > 0
-                          ? `<span class="liveAWBDots" aria-label="${activeAWBCount} allocated AWBs">${
-                              Array.from(
-                                {length:activeAWBCount},
-                                () => '<span class="liveAWBDot"></span>'
-                              ).join("")
-                            }</span>`
-                          : `<span class="liveAWBNoDots">0 AWB</span>`
-                      );
+                let locationDisplay = escapeHTML(uldLocation);
+
+                if(!isClosed && allocatedAWBCount > 0){
+                  const maxVisibleDots = 40;
+                  const visibleDots = Math.min(allocatedAWBCount,maxVisibleDots);
+                  const dots = Array.from(
+                    {length:visibleDots},
+                    () => `<span class="liveAWBDot" aria-hidden="true"></span>`
+                  ).join("");
+                  const moreText = allocatedAWBCount > maxVisibleDots
+                    ? `<span class="liveAWBDotMore">+${allocatedAWBCount - maxVisibleDots}</span>`
+                    : "";
+                  locationDisplay =
+                    `<div class="liveAWBDots" title="${allocatedAWBCount} allocated AWB(s)">${dots}${moreText}</div>`;
+                }
 
                 html += `
                   <tr
@@ -10805,8 +10812,8 @@
                         cargoType || "—"
                       )}
                     </td>
-                    <td class="liveULDLocationCell">
-                      ${liveLocationDisplay}
+                    <td>
+                      ${locationDisplay}
                     </td>
                   </tr>
                 `;
