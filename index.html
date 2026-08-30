@@ -2162,7 +2162,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.72
+        V.12.73
       </div>
 
       <div class="infoBox">
@@ -3511,7 +3511,7 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
 
     <script type="module">
@@ -3520,7 +3520,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.72";
+    const CODE_VERSION = "12.73";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -9904,7 +9904,14 @@
               weightLbs:
                 Math.round(Number(
                   uld.weightLbs || 0
-                ))
+                )),
+              cargoType:
+                uld.cargoType ||
+                (Array.isArray(uld.cargoTypes)
+                  ? uld.cargoTypes.join(", ")
+                  : ""),
+              uldLocation:
+                uld.uldLocation || ""
 
             });
 
@@ -9955,6 +9962,19 @@
                 weightLbs:
                   index === 0
                     ? Math.round(Number(uld.weightLbs || 0))
+                    : "",
+                cargoType:
+                  index === 0
+                    ? (
+                        uld.cargoType ||
+                        (Array.isArray(uld.cargoTypes)
+                          ? uld.cargoTypes.join(", ")
+                          : "")
+                      )
+                    : "",
+                uldLocation:
+                  index === 0
+                    ? (uld.uldLocation || "")
                     : ""
 
               });
@@ -10324,6 +10344,25 @@
 
     function downloadClosedULDExcel(rows){
 
+      /*
+         Sheet 1:
+         Existing Closed ULDs report.  This keeps the existing report/data
+         structure unchanged.
+
+         Sheet 2:
+         ULD Data / load sheet using the requested layout:
+           C = LBS
+           D = KGS
+           E = PALLET ID
+           F = DESCRIPTION
+           G = TRAILER #
+         Rows 4-5  = PLANK ULDs
+         Rows 6-18 = other non-Belly ULDs
+         Row 19    = blank
+         Row 20    = hatched separator
+         Rows 21-23 = BELLY ULDs
+      */
+
       const data = [
         ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (KG)", "Weight (LBS)"]
       ];
@@ -10371,8 +10410,207 @@
         if(cell) cell.s = { font: { bold: true } };
       }
 
+      /*
+         SECOND WORKSHEET - ULD DATA
+         The row data comes directly from each CLOSED ULD:
+           ULD          -> Pallet ID
+           Weight LBS   -> LBS
+           Weight KGS   -> KGS
+           Cargo Type   -> Description
+           ULD Location -> Trailer #
+      */
+
+      const uldRows = rows
+        .filter(row => String(row.uldId || "").trim() !== "")
+        .map(row => ({
+          uldId: String(row.uldId || "").trim(),
+          lbs: row.weightLbs !== "" && row.weightLbs != null
+            ? Number(row.weightLbs)
+            : "",
+          kg: row.weightKg !== "" && row.weightKg != null
+            ? Number(row.weightKg)
+            : "",
+          description: String(row.cargoType || "").trim(),
+          trailer: String(row.uldLocation || "").trim()
+        }));
+
+      /* Prevent duplicate ULDs if an export row ever contains repeated metadata. */
+      const seenULDs = new Set();
+      const uniqueULDs = uldRows.filter(row => {
+        const key = row.uldId.toUpperCase();
+        if(seenULDs.has(key))
+          return false;
+        seenULDs.add(key);
+        return true;
+      });
+
+      const isBelly = row =>
+        /\bBELLY\b/i.test(row.description);
+
+      const isPlank = row =>
+        /\bPLANK\b/i.test(row.description);
+
+      const bellyULDs = uniqueULDs.filter(isBelly);
+      const plankULDs = uniqueULDs.filter(row => !isBelly(row) && isPlank(row));
+      const regularULDs = uniqueULDs.filter(
+        row => !isBelly(row) && !isPlank(row)
+      );
+
+      /*
+         Requested fixed row areas:
+           4-5   PLANK
+           6-18  regular
+           20    separator
+           21-23 BELLY
+
+         If a category has fewer ULDs, its remaining rows stay blank.
+         If more than the available rows exist, the extra ULDs are not
+         forced into another category.
+      */
+      const loadSheet = XLSX.utils.aoa_to_sheet([]);
+
+      const setCell = (address, value) => {
+        loadSheet[address] = {
+          v: value,
+          t: typeof value === "number" ? "n" : "s"
+        };
+      };
+
+      setCell("C3", "LBS");
+      setCell("D3", "KGS");
+      setCell("E3", "PALLET ID");
+      setCell("F3", "DESCRIPTION");
+      setCell("G3", "TRAILER #");
+
+      const loadHeaderStyle = {
+        font: { bold: true, sz: 12 },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } }
+        }
+      };
+
+      const loadBodyStyle = {
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } }
+        }
+      };
+
+      ["C3","D3","E3","F3","G3"].forEach(address => {
+        loadSheet[address].s = loadHeaderStyle;
+      });
+
+      const writeULD = (rowNumber, uld) => {
+        setCell(`C${rowNumber}`, uld.lbs);
+        setCell(`D${rowNumber}`, uld.kg);
+        setCell(`E${rowNumber}`, uld.uldId);
+        setCell(`F${rowNumber}`, uld.description);
+        setCell(`G${rowNumber}`, uld.trailer);
+
+        ["C","D","E","F","G"].forEach(col => {
+          loadSheet[`${col}${rowNumber}`].s = loadBodyStyle;
+        });
+
+        if(loadSheet[`C${rowNumber}`].v !== "")
+          loadSheet[`C${rowNumber}`].z = "0";
+        if(loadSheet[`D${rowNumber}`].v !== "")
+          loadSheet[`D${rowNumber}`].z = "0";
+      };
+
+      /* Rows 4-5: PLANK ULDs */
+      plankULDs.slice(0,2).forEach((uld,index) => {
+        writeULD(4 + index, uld);
+      });
+
+      /* Rows 6-18: all other non-Belly ULDs */
+      regularULDs.slice(0,13).forEach((uld,index) => {
+        writeULD(6 + index, uld);
+      });
+
+      /* Rows 21-23: Belly ULDs */
+      bellyULDs.slice(0,3).forEach((uld,index) => {
+        writeULD(21 + index, uld);
+      });
+
+      /* Make all requested body cells bordered, including blank cells. */
+      for(let r = 4; r <= 18; r++){
+        for(const col of ["C","D","E","F","G"]){
+          const address = `${col}${r}`;
+          if(!loadSheet[address]){
+            setCell(address, "");
+          }
+          loadSheet[address].s = loadBodyStyle;
+        }
+      }
+
+      /* Row 19 remains blank with the same table boundary. */
+      for(const col of ["C","D","E","F","G"]){
+        setCell(`${col}19`, "");
+        loadSheet[`${col}19`].s = loadBodyStyle;
+      }
+
+      /*
+         Row 20: diagonal-style separator/hatch.
+         xlsx-js-style supports Excel fill patterns.
+      */
+      const separatorStyle = {
+        fill: {
+          patternType: "lightDown",
+          fgColor: { rgb: "000000" },
+          bgColor: { rgb: "FFFFFF" }
+        },
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } }
+        }
+      };
+
+      for(const col of ["C","D","E","F","G"]){
+        setCell(`${col}20`, "");
+        loadSheet[`${col}20`].s = separatorStyle;
+      }
+
+      /* Belly rows are always present as bordered blank/data rows. */
+      for(let r = 21; r <= 23; r++){
+        for(const col of ["C","D","E","F","G"]){
+          const address = `${col}${r}`;
+          if(!loadSheet[address]){
+            setCell(address, "");
+          }
+          loadSheet[address].s = loadBodyStyle;
+        }
+      }
+
+      loadSheet["!ref"] = "C3:G23";
+
+      loadSheet["!cols"] = [
+        { wch: 3, hidden: true },   // A
+        { wch: 3, hidden: true },   // B
+        { wch: 14 },  // C LBS
+        { wch: 14 },  // D KGS
+        { wch: 20 },  // E PALLET ID
+        { wch: 42 },  // F DESCRIPTION
+        { wch: 20 }   // G TRAILER #
+      ];
+
+      loadSheet["!rows"] = [];
+      for(let r = 0; r < 23; r++){
+        loadSheet["!rows"][r] = { hpt: 20 };
+      }
+      loadSheet["!rows"][2] = { hpt: 24 };
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Closed ULDs");
+      XLSX.utils.book_append_sheet(workbook, loadSheet, "ULD Data");
       XLSX.writeFile(workbook, "FirstAirBuilder_Closed_ULDs.xlsx");
     }
 
@@ -10449,7 +10687,14 @@
             weightKg:
               Math.round(Number(uld.weightKg || 0)),
             weightLbs:
-              Math.round(Number(uld.weightLbs || 0))
+              Math.round(Number(uld.weightLbs || 0)),
+            cargoType:
+              uld.cargoType ||
+              (Array.isArray(uld.cargoTypes)
+                ? uld.cargoTypes.join(", ")
+                : ""),
+            uldLocation:
+              uld.uldLocation || ""
 
           });
 
@@ -10499,6 +10744,19 @@
             weightLbs:
               index === 0
                 ? Math.round(Number(uld.weightLbs || 0))
+                : "",
+            cargoType:
+              index === 0
+                ? (
+                    uld.cargoType ||
+                    (Array.isArray(uld.cargoTypes)
+                      ? uld.cargoTypes.join(", ")
+                      : "")
+                  )
+                : "",
+            uldLocation:
+              index === 0
+                ? (uld.uldLocation || "")
                 : ""
 
           });
