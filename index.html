@@ -2019,6 +2019,55 @@
     }
 
     /* =========================================================
+       12.80 - ALLOCATE ULD PO DISPLAY
+       ========================================================= */
+
+    #allocateScan #allocatePOInfo{
+      width:95% !important;
+      max-width:900px !important;
+      box-sizing:border-box !important;
+      margin:8px auto 14px !important;
+      padding:10px 14px !important;
+      background:#D9DDE2 !important;
+      border:1px solid #6B7280 !important;
+      border-radius:10px !important;
+    }
+
+    #allocateScan #allocatePOInfo .infoTitle{
+      margin-bottom:5px !important;
+      font-size:1.1rem !important;
+    }
+
+    #allocateScan #allocatePOList{
+      font-size:1.05rem !important;
+      font-weight:600 !important;
+      line-height:1.4 !important;
+      overflow-wrap:anywhere !important;
+      word-break:break-word !important;
+    }
+
+    #allocateScan #allocatePOCount{
+      margin-top:4px !important;
+      font-size:.95rem !important;
+      font-weight:700 !important;
+    }
+
+    @media(max-width:600px){
+      #allocateScan #allocatePOInfo{
+        padding:8px 10px !important;
+      }
+
+      #allocateScan #allocatePOList{
+        font-size:.95rem !important;
+      }
+
+      #allocateScan #allocatePOCount{
+        font-size:.85rem !important;
+      }
+    }
+
+
+    /* =========================================================
        12.75 - LIVE VIEW ULD ROW LAYOUT
        Row 1: ULD centered
        Row 2: Status centered, Closed By right
@@ -3081,6 +3130,19 @@
         <span id="allocUser"></span>
 
       </h3>
+
+      <div
+        id="allocatePOInfo"
+        class="infoBox"
+        style="text-align:center;">
+        <div class="infoTitle">
+          PO'S ON ULD
+        </div>
+        <div id="allocatePOList" class="manualHint">
+          Loading PO's...
+        </div>
+        <div id="allocatePOCount" class="manualHint"></div>
+      </div>
 
       <button
         id="openAllocateBarcodeButton"
@@ -4916,6 +4978,7 @@
 
         switchScreen("allocateScan");
 
+        await loadAllocateULDPOs(uldId);
         await loadAllocateAWBs(uldId);
 
         /* Barcode scanner is the default AWB input method */
@@ -4971,6 +5034,7 @@
 
       switchScreen("allocateScan");
 
+      await loadAllocateULDPOs(uld);
       await loadAllocateAWBs(uld);
 
       /* Barcode scanner is the default AWB input method */
@@ -5964,6 +6028,109 @@
       }finally{
 
         ocrBusy = false;
+
+      }
+
+    }
+
+
+    /* =========================================================
+       LOAD ALLOCATE ULD PO'S
+       Show the PO's already assigned to the selected ULD.
+       ========================================================= */
+
+    async function loadAllocateULDPOs(uldId){
+
+      const list =
+        document.getElementById(
+          "allocatePOList"
+        );
+
+      const count =
+        document.getElementById(
+          "allocatePOCount"
+        );
+
+      if(!list)
+        return;
+
+      list.innerText = "Loading PO's...";
+
+      if(count)
+        count.innerText = "";
+
+      try{
+
+        const snapshot =
+          await getDocs(
+            query(
+              collection(db,"ulds"),
+              where("uldId","==",uldId),
+              where("status","==","OPEN")
+            )
+          );
+
+        const poSet = new Set();
+
+        snapshot.forEach(docSnap => {
+
+          const data =
+            docSnap.data();
+
+          const purchaseOrders =
+            Array.isArray(data.purchaseOrders)
+              ? data.purchaseOrders
+              : [];
+
+          purchaseOrders.forEach(po => {
+
+            const value =
+              String(po || "")
+                .trim()
+                .toUpperCase();
+
+            if(value)
+              poSet.add(value);
+
+          });
+
+        });
+
+        const purchaseOrders =
+          [...poSet];
+
+        if(!purchaseOrders.length){
+
+          list.innerText =
+            "No PO's added to this ULD.";
+
+          if(count)
+            count.innerText =
+              "Total PO's: 0";
+
+          return;
+
+        }
+
+        list.innerText =
+          purchaseOrders.join(", ");
+
+        if(count)
+          count.innerText =
+            `Total PO's: ${purchaseOrders.length}`;
+
+      }catch(error){
+
+        console.error(
+          "Allocate ULD PO load error:",
+          error
+        );
+
+        list.innerText =
+          "Could not load PO's.";
+
+        if(count)
+          count.innerText = "";
 
       }
 
@@ -10226,7 +10393,6 @@
                         <th>WEIGHT</th>
                         <th>CARGO TYPE</th>
                         <th>ULD LOCATION</th>
-                        <th>CLOSED BY</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -10279,14 +10445,6 @@
                     ? String(uld.uldLocation)
                     : "—";
 
-                const closedBy =
-                  isClosed &&
-                  uld.closedBy
-                    ? String(
-                        uld.closedBy
-                      )
-                    : "—";
-
                 html += `
                   <tr
                     class="${isClosed ? "liveSummaryClosed" : "liveSummaryOpen"}"
@@ -10308,9 +10466,6 @@
                     </td>
                     <td>
                       ${escapeHTML(uldLocation)}
-                    </td>
-                    <td>
-                      ${escapeHTML(closedBy)}
                     </td>
                   </tr>
                 `;
