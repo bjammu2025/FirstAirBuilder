@@ -2233,27 +2233,30 @@
       background:#E5E7EB !important;
     }
 
+    /* 12.79 - COMPACT LIVE VIEW ROW COLORS
+       Closed ULDs = red row
+       Open ULDs   = green row
+       No separate Status column. */
     #liveView .liveSummaryClosed td{
-      background:#FFFFFF !important;
+      background:#FEE2E2 !important;
+      color:#7F1D1D !important;
     }
 
     #liveView .liveSummaryOpen td{
-      background:#FFFDF3 !important;
+      background:#DCFCE7 !important;
+      color:#14532D !important;
     }
 
     #liveView .liveSummaryULD{
       font-weight:700 !important;
-      color:#0B1F3A !important;
     }
 
-    #liveView .liveSummaryStatusClosed{
-      color:#166534 !important;
-      font-weight:700 !important;
+    #liveView .liveSummaryClosed:hover td{
+      background:#FECACA !important;
     }
 
-    #liveView .liveSummaryStatusOpen{
-      color:#92400E !important;
-      font-weight:700 !important;
+    #liveView .liveSummaryOpen:hover td{
+      background:#BBF7D0 !important;
     }
 
     #liveView .liveULDDetail{
@@ -2407,17 +2410,17 @@
 
       #liveView .liveULDList th:nth-child(2),
       #liveView .liveULDList td:nth-child(2){
-        width:17% !important;
+        width:20% !important;
       }
 
       #liveView .liveULDList th:nth-child(3),
       #liveView .liveULDList td:nth-child(3){
-        width:23% !important;
+        width:22% !important;
       }
 
       #liveView .liveULDList th:nth-child(4),
       #liveView .liveULDList td:nth-child(4){
-        width:22% !important;
+        width:20% !important;
       }
 
       #liveView .liveULDList th:nth-child(5),
@@ -2469,6 +2472,39 @@
 
     }
 
+
+    /* =========================================================
+       12.79 - FINAL LIVE VIEW / ZEBRA OVERRIDES
+       ========================================================= */
+    #liveView .liveULDList{
+      min-width:0 !important;
+      width:100% !important;
+      table-layout:fixed !important;
+    }
+
+    #liveView .liveULDList th,
+    #liveView .liveULDList td{
+      box-sizing:border-box !important;
+    }
+
+    #liveView .liveSummaryClosed td{
+      background:#FEE2E2 !important;
+      color:#7F1D1D !important;
+    }
+
+    #liveView .liveSummaryOpen td{
+      background:#DCFCE7 !important;
+      color:#14532D !important;
+    }
+
+    #liveView .liveSummaryClosed:hover td{
+      background:#FECACA !important;
+    }
+
+    #liveView .liveSummaryOpen:hover td{
+      background:#BBF7D0 !important;
+    }
+
 </style>
     </head>
 
@@ -2489,7 +2525,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.78
+        V.12.79
       </div>
 
       <div class="infoBox">
@@ -4003,18 +4039,42 @@
     let currentUser = "";
 
     /* =========================================================
-       12.78 - PERSIST LOGIN THROUGH PAGE RELOAD
-       sessionStorage keeps the login while the current browser
-       tab is open, including accidental page reloads.
-       Closing the tab/browser still requires a new login.
+       12.79 - PERSIST LOGIN THROUGH PAGE RELOAD
+       Desktop:
+         sessionStorage keeps the login for the current browser tab.
+
+       Zebra / Android:
+         localStorage is used because some Zebra Chrome/PWA launch
+         configurations can recreate the page context on reload and
+         lose sessionStorage.
+
+       LOG OUT always clears the saved login.
        ========================================================= */
     const LOGIN_SESSION_KEY = "calmAirBuilderLoggedInUser";
 
+    function isZebraLoginMode(){
+      const ua = navigator.userAgent || "";
+      return /Android/i.test(ua) &&
+             /Chrome|CriOS|EdgA|SamsungBrowser/i.test(ua);
+    }
+
     function saveLoginSession(username){
+      const value = String(username || "");
+
       try{
-        sessionStorage.setItem(LOGIN_SESSION_KEY, String(username || ""));
+        if(isZebraLoginMode()){
+          localStorage.setItem(LOGIN_SESSION_KEY, value);
+        }else{
+          sessionStorage.setItem(LOGIN_SESSION_KEY, value);
+        }
       }catch(error){
         console.warn("Could not save login session:", error);
+
+        try{
+          localStorage.setItem(LOGIN_SESSION_KEY, value);
+        }catch(fallbackError){
+          console.warn("Could not save fallback login session:", fallbackError);
+        }
       }
     }
 
@@ -4022,13 +4082,30 @@
       try{
         sessionStorage.removeItem(LOGIN_SESSION_KEY);
       }catch(error){
-        console.warn("Could not clear login session:", error);
+        console.warn("Could not clear session login:", error);
+      }
+
+      try{
+        localStorage.removeItem(LOGIN_SESSION_KEY);
+      }catch(error){
+        console.warn("Could not clear persistent login:", error);
       }
     }
 
     function restoreLoginSession(){
       try{
-        const savedUser = sessionStorage.getItem(LOGIN_SESSION_KEY);
+        let savedUser = "";
+
+        if(isZebraLoginMode()){
+          savedUser =
+            localStorage.getItem(LOGIN_SESSION_KEY) ||
+            sessionStorage.getItem(LOGIN_SESSION_KEY) ||
+            "";
+        }else{
+          savedUser =
+            sessionStorage.getItem(LOGIN_SESSION_KEY) ||
+            "";
+        }
 
         if(savedUser && savedUser.trim()){
           currentUser = savedUser.trim();
@@ -10146,7 +10223,6 @@
                     <thead>
                       <tr>
                         <th>ULD</th>
-                        <th>STATUS</th>
                         <th>WEIGHT</th>
                         <th>CARGO TYPE</th>
                         <th>ULD LOCATION</th>
@@ -10221,13 +10297,6 @@
                   >
                     <td class="liveSummaryULD">
                       ${escapeHTML(uldId)}
-                    </td>
-                    <td class="${
-                      isClosed
-                        ? "liveSummaryStatusClosed"
-                        : "liveSummaryStatusOpen"
-                    }">
-                      ${escapeHTML(status)}
                     </td>
                     <td>
                       ${escapeHTML(weight)}
