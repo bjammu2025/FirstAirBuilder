@@ -2164,10 +2164,25 @@
 
     
     /* =========================================================
-       12.75 - LIVE VIEW ULD SUMMARY + CLICKABLE DETAILS
+       12.76 - LIVE VIEW ULD SUMMARY + CLICKABLE DETAILS + TOTAL FLIGHT WEIGHT
        Main screen: one compact row per ULD.
        Selecting a row opens the full ULD detail view.
        ========================================================= */
+
+    #liveView .liveFlightTotalWeight{
+      width:100% !important;
+      max-width:1200px !important;
+      margin:8px auto 12px !important;
+      padding:12px 10px !important;
+      box-sizing:border-box !important;
+      text-align:center !important;
+      background:#FFFFFF !important;
+      border:2px solid #1E4E89 !important;
+      border-radius:10px !important;
+      color:#0B1F3A !important;
+      font-size:1.2rem !important;
+      font-weight:700 !important;
+    }
 
     #liveView .liveULDListWrap{
       width:100% !important;
@@ -2360,6 +2375,14 @@
 
     @media (max-width:900px) and (pointer:coarse){
 
+      #liveView .liveFlightTotalWeight{
+        margin:5px 4px 8px !important;
+        width:calc(100% - 8px) !important;
+        padding:9px 5px !important;
+        font-size:.95rem !important;
+        line-height:1.2 !important;
+      }
+
       #liveView .liveULDListWrap{
         margin:6px 0 12px !important;
       }
@@ -2465,7 +2488,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.75
+        V.12.76
       </div>
 
       <div class="infoBox">
@@ -10063,12 +10086,33 @@
               }
 
               /*
+                 Calculate the total flight weight from every ULD.
+                 This includes all ULD records currently shown in Live View.
+              */
+              const totalFlightWeightLbs =
+                validULDS.reduce(
+                  (total, uld) =>
+                    total + Number(uld.weightLbs || 0),
+                  0
+                );
+
+              const totalFlightWeightKg =
+                validULDS.reduce(
+                  (total, uld) =>
+                    total + Number(uld.weightKg || 0),
+                  0
+                );
+
+              /*
                  Main Live View is now a ULD summary table.
                  Each row is clickable and opens the full ULD details.
               */
               let html = "";
 
               html += `
+                <div class="liveFlightTotalWeight">
+                  TOTAL FLIGHT WEIGHT: ${totalFlightWeightLbs.toFixed(2)} LBS / ${Math.round(totalFlightWeightKg)} KGS
+                </div>
                 <div class="liveULDListWrap">
                   <table class="liveULDList">
                     <thead>
