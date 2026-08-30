@@ -2162,7 +2162,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.74
+        V.12.75
       </div>
 
       <div class="infoBox">
@@ -3520,7 +3520,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.74";
+    const CODE_VERSION = "12.75";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -10499,10 +10499,10 @@
       setCell("F1", Math.round(totalKg));
       setCell("G1", "");
 
-      setCell("C2", "PLANK ULD'S DONE");
-      setCell("D2", plankULDs.length);
-      setCell("E2", "REGULAR ULD'S DONE");
-      setCell("F2", regularULDs.length);
+      setCell("C2", `PLANK ULD'S DONE: ${plankULDs.length}`);
+      setCell("D2", "");
+      setCell("E2", `REGULAR ULD'S DONE: ${regularULDs.length}`);
+      setCell("F2", "");
       setCell("G2", `BELLY ULD'S DONE: ${bellyULDs.length}`);
 
       setCell("C3", "LBS");
@@ -10549,6 +10549,8 @@
       });
 
       ["D1","F1","D2","F2"].forEach(address => {
+        if(!loadSheet[address])
+          setCell(address, "");
         loadSheet[address].s = summaryValueStyle;
       });
 
@@ -10654,7 +10656,7 @@
         }
       }
 
-      loadSheet["!ref"] = "C3:G23";
+      loadSheet["!ref"] = "C1:G23";
 
       loadSheet["!cols"] = [
         { wch: 3, hidden: true },   // A
