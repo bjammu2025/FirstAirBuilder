@@ -2019,7 +2019,7 @@
     }
 
     /* =========================================================
-       12.88 - ALLOCATE ULD PO DISPLAY BELOW AWB TABLE
+       12.81 - ALLOCATE ULD PO DISPLAY BELOW AWB TABLE
        ========================================================= */
 
     #allocateScan #allocatePOInfo{
@@ -2282,7 +2282,7 @@
       background:#E5E7EB !important;
     }
 
-    /* 12.88 - COMPACT LIVE VIEW ROW COLORS
+    /* 12.79 - COMPACT LIVE VIEW ROW COLORS
        Closed ULDs = red row
        Open ULDs   = green row
        No separate Status column. */
@@ -2523,7 +2523,7 @@
 
 
     /* =========================================================
-       12.88 - COMPACT LIVE VIEW AWB DOTS
+       12.82 - COMPACT LIVE VIEW AWB DOTS
        ========================================================= */
     #liveView .liveAWBDots{
       display:flex !important;
@@ -2550,7 +2550,7 @@
     }
 
     /* =========================================================
-       12.88 - FINAL LIVE VIEW / ZEBRA OVERRIDES
+       12.79 - FINAL LIVE VIEW / ZEBRA OVERRIDES
        ========================================================= */
     #liveView .liveULDList{
       min-width:0 !important;
@@ -2600,7 +2600,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.88
+        V.12.90
       </div>
 
       <div class="infoBox">
@@ -3979,7 +3979,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.88";
+    const CODE_VERSION = "12.86";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -4136,7 +4136,7 @@
     let currentUser = "";
 
     /* =========================================================
-       12.88 - PERSIST LOGIN THROUGH PAGE RELOAD
+       12.79 - PERSIST LOGIN THROUGH PAGE RELOAD
        Desktop:
          sessionStorage keeps the login for the current browser tab.
 
@@ -6335,168 +6335,312 @@
 
 
     /* =========================================================
-       PROCESS ALLOCATE AWB
+       V12.90 - SINGLE ALLOCATE AWB WORKFLOW
+
+       Camera, Zebra barcode and Manual AWB input all end here.
+       This function is the ONLY place where an Allocate AWB popup
+       is selected and the ONLY place where an Allocate AWB is saved.
+
+       NORMAL ULD:
+         AWB -> CHECK AWB popup -> SAVE
+
+       PO ULD:
+         AWB -> CONFIRM AWB + ENTER WEIGHT popup -> SAVE
        ========================================================= */
 
     async function processAllocateAWB(code, source="allocate"){
 
-      const validated =
-        normalizeAWB(code);
+      let finalAWB = normalizeAWB(code);
 
-      if(!validated){
-
+      if(!finalAWB){
         await showVerification(
           false,
           code || "",
           "INVALID AWB",
           "The AWB is not a valid 8-digit AWB."
         );
-
         restartOCR();
         return;
       }
 
-      code = validated;
-
-      setStatus(
-        "⏳ Checking ULD...",
-        "scanning"
-      );
+      setStatus("⏳ Checking ULD...", "scanning");
 
       try{
-
-        const q =
-          query(
-            collection(db,"scans"),
-            where("code","==",code)
-          );
-
-        const snapshot =
-          await getDocs(q);
-
-        let duplicate = null;
-
-        snapshot.forEach(docSnap => {
-
-          const d = docSnap.data();
-
-          if(
-            d.positionId &&
-            d.positionId !== "[REMOVED]"
-          ){
-            duplicate = d;
-          }
-        });
-
-        if(duplicate){
-
-          await showVerification(
-            false,
-            code,
-            "DUPLICATE AWB",
-            `This AWB is already allocated to ULD ${duplicate.uldId || duplicate.positionId}.`
-          );
-
-          setStatus(
-            "❌ Duplicate AWB",
-            "error"
-          );
-
-          vibrate();
-          restartOCR();
-          return;
-        }
-
         /*
-           IMPORTANT: The selected ULD has an allocation pool.
-           Never show the normal AWB confirmation first for a PO ULD.
-           PO_WEIGHT = one combined AWB verification + KG popup.
-           NORMAL    = the existing AWB confirmation popup.
+           ALWAYS determine the ULD pool before ANY AWB popup is shown.
+           PO_WEIGHT is persistent on the ULD document.  Existing ULDs
+           with PO's are also upgraded automatically by getAllocateULDPool.
         */
-        const allocationPool =
-          await getAllocateULDPool(currentULD);
+        const pool = await getAllocateULDPool(currentULD);
+        const isPOULD = pool === "PO_WEIGHT";
 
         let awbWeightKg = null;
 
-        if(allocationPool === "PO_WEIGHT"){
-
+        if(isPOULD){
+          /*
+             IMPORTANT: No CHECK AWB popup is allowed here.
+             This is one combined popup containing AWB confirmation
+             and the KG weight entry.
+          */
           stopContinuousOCR();
 
-          awbWeightKg =
-            await showSingleAWBWeightPopup(
-              code,
-              currentULD
-            );
+          const result = await showAllocatePOAWBPopup(
+            finalAWB,
+            currentULD,
+            source
+          );
 
-          if(awbWeightKg === null){
+          if(!result){
             setStatus("🔎 AWB not saved", "scanning");
             restartOCR();
             return;
           }
 
-        }else{
+          finalAWB = result.awb;
+          awbWeightKg = result.weightKg;
 
-          const confirmed =
-            await showAWBConfirmation(
-              code,
-              source
-            );
+        }else{
+          /* Normal ULD uses the existing CHECK AWB popup. */
+          const confirmed = await showAWBConfirmation(
+            finalAWB,
+            source
+          );
 
           if(!confirmed){
             setStatus("🔎 AWB not saved", "scanning");
             restartOCR();
             return;
           }
+
+          finalAWB = normalizeAWB(
+            typeof confirmed === "string" ? confirmed : finalAWB
+          );
+
+          if(!finalAWB){
+            await showVerification(
+              false,
+              code || "",
+              "INVALID AWB",
+              "The confirmed AWB is not valid."
+            );
+            restartOCR();
+            return;
+          }
+        }
+
+        /*
+           Duplicate checking happens AFTER popup confirmation so that
+           an edited AWB is checked too.
+        */
+        const duplicateSnapshot = await getDocs(
+          query(
+            collection(db,"scans"),
+            where("code","==",finalAWB)
+          )
+        );
+
+        let duplicate = null;
+        duplicateSnapshot.forEach(docSnap => {
+          const d = docSnap.data() || {};
+          if(d.positionId && d.positionId !== "[REMOVED]")
+            duplicate = d;
+        });
+
+        if(duplicate){
+          await showVerification(
+            false,
+            finalAWB,
+            "DUPLICATE AWB",
+            `This AWB is already allocated to ULD ${duplicate.uldId || duplicate.positionId}.`
+          );
+          setStatus("❌ Duplicate AWB", "error");
+          vibrate();
+          restartOCR();
+          return;
         }
 
         const scanData = {
-          code:code,
-          positionId:currentULD,
-          uldId:currentULD,
-          scannedAt:serverTimestamp(),
-          scannedBy:currentUser
+          code: finalAWB,
+          positionId: currentULD,
+          uldId: currentULD,
+          scannedAt: serverTimestamp(),
+          scannedBy: currentUser
         };
 
         if(awbWeightKg !== null)
           scanData.weightKg = awbWeightKg;
 
-        await addDoc(
-          collection(db,"scans"),
-          scanData
-        );
+        await addDoc(collection(db,"scans"), scanData);
 
         await loadAllocateAWBs(currentULD);
 
         await showVerification(
           true,
-          code,
+          finalAWB,
           "AWB VERIFIED",
-          awbWeightKg !== null
-            ? `AWB ${code} has been allocated to ULD ${currentULD}.\n\nWeight: ${awbWeightKg} KG`
-            : `AWB ${code} has been allocated to ULD ${currentULD}.`
+          isPOULD
+            ? `AWB ${finalAWB} has been allocated to ULD ${currentULD}.\n\nWeight: ${awbWeightKg} KG`
+            : `AWB ${finalAWB} has been allocated to ULD ${currentULD}.`
         );
 
-        setStatus(
-          "🔎 Ready for next AWB",
-          "scanning"
-        );
-
+        setStatus("🔎 Ready for next AWB", "scanning");
         vibrate();
 
       }catch(error){
-
-        console.error(error);
-
+        console.error("Allocate AWB error:", error);
         await showVerification(
           false,
-          code,
+          finalAWB || code || "",
           "SAVE ERROR",
-          "The AWB could not be saved.\n\n" +
-          error.message
+          "The AWB could not be saved.\n\n" + error.message
         );
       }
 
       restartOCR();
+    }
+
+
+    /* =========================================================
+       V12.90 - COMBINED PO ULD AWB POPUP
+
+       This is deliberately separate from showAWBConfirmation().
+       A PO ULD NEVER calls showAWBConfirmation().
+       ========================================================= */
+
+    function showAllocatePOAWBPopup(awb, uldId, source){
+      return new Promise(resolve => {
+
+        const overlay = document.createElement("div");
+        overlay.style.cssText = `
+          position:fixed;inset:0;background:rgba(0,0,0,.78);
+          display:flex;align-items:center;justify-content:center;
+          z-index:30000;padding:16px;box-sizing:border-box;
+        `;
+
+        const box = document.createElement("div");
+        box.style.cssText = `
+          width:95%;max-width:620px;max-height:90vh;overflow:auto;
+          background:#fff;border:3px solid #0B1F3A;border-radius:18px;
+          padding:22px;box-sizing:border-box;color:#111827;
+        `;
+
+        const title = document.createElement("div");
+        title.innerText = "CONFIRM AWB & ENTER WEIGHT";
+        title.style.cssText = "font-size:1.65rem;font-weight:800;color:#0B1F3A;margin-bottom:10px;text-align:center;";
+        box.appendChild(title);
+
+        const uldText = document.createElement("div");
+        uldText.innerText = `PO ULD: ${uldId}`;
+        uldText.style.cssText = "font-size:1rem;font-weight:700;text-align:center;margin-bottom:14px;color:#374151;";
+        box.appendChild(uldText);
+
+        const sourceText = document.createElement("div");
+        sourceText.innerText = source === "camera"
+          ? "Camera detected this AWB. Confirm the AWB number below."
+          : source === "barcode"
+            ? "Barcode scanner read this AWB. Confirm the AWB number below."
+            : "Confirm the AWB number below.";
+        sourceText.style.cssText = "font-size:1.05rem;line-height:1.4;text-align:center;margin-bottom:16px;color:#374151;";
+        box.appendChild(sourceText);
+
+        const awbLabel = document.createElement("div");
+        awbLabel.innerText = "AWB NUMBER";
+        awbLabel.style.cssText = "font-weight:800;margin-bottom:6px;color:#0B1F3A;";
+        box.appendChild(awbLabel);
+
+        const awbInput = document.createElement("input");
+        awbInput.type = "text";
+        awbInput.inputMode = "numeric";
+        awbInput.autocomplete = "off";
+        awbInput.value = awb;
+        awbInput.maxLength = 8;
+        awbInput.style.cssText = "width:100%;box-sizing:border-box;padding:14px;font-size:1.45rem;font-weight:800;text-align:center;letter-spacing:2px;margin-bottom:14px;";
+        box.appendChild(awbInput);
+
+        const weightLabel = document.createElement("div");
+        weightLabel.innerText = "AWB WEIGHT (KG)";
+        weightLabel.style.cssText = "font-weight:800;margin-bottom:6px;color:#0B1F3A;";
+        box.appendChild(weightLabel);
+
+        const weightInput = document.createElement("input");
+        weightInput.type = "number";
+        weightInput.min = "0.01";
+        weightInput.step = "0.01";
+        weightInput.inputMode = "decimal";
+        weightInput.placeholder = "Enter weight in KG";
+        weightInput.style.cssText = "width:100%;box-sizing:border-box;padding:14px;font-size:1.45rem;font-weight:700;text-align:center;margin-bottom:8px;";
+        box.appendChild(weightInput);
+
+        const status = document.createElement("div");
+        status.style.cssText = "min-height:25px;color:#B91C1C;text-align:center;margin:8px 0;font-weight:700;";
+        box.appendChild(status);
+
+        const confirm = document.createElement("button");
+        confirm.type = "button";
+        confirm.innerText = "CONFIRM AWB & SAVE WEIGHT";
+        confirm.style.cssText = "width:100%;padding:1rem;margin:.4rem 0;background:#0B1F3A;color:#fff;border:0;border-radius:12px;font-size:1.15rem;font-weight:800;";
+        box.appendChild(confirm);
+
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.innerText = "CANCEL / RESCAN";
+        cancel.style.cssText = "width:100%;padding:1rem;margin:.4rem 0;background:#6B7280;color:#fff;border:0;border-radius:12px;font-size:1.1rem;font-weight:800;";
+        box.appendChild(cancel);
+
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        let finished = false;
+        const cleanup = () => {
+          if(overlay.parentNode)
+            overlay.remove();
+        };
+
+        const finish = value => {
+          if(finished) return;
+          finished = true;
+          cleanup();
+          resolve(value);
+        };
+
+        cancel.onclick = () => finish(null);
+
+        confirm.onclick = () => {
+          const finalAWB = normalizeAWB(awbInput.value);
+          const weight = Number(weightInput.value);
+
+          if(!finalAWB){
+            status.innerText = "Please confirm a valid 8-digit AWB.";
+            awbInput.focus();
+            awbInput.select();
+            return;
+          }
+
+          if(!Number.isFinite(weight) || weight <= 0){
+            status.innerText = "Please enter a valid AWB weight in KG.";
+            weightInput.focus();
+            return;
+          }
+
+          finish({
+            awb: finalAWB,
+            weightKg: Number(weight.toFixed(2))
+          });
+        };
+
+        awbInput.addEventListener("input", () => {
+          awbInput.value = awbInput.value.replace(/\D/g,"").substring(0,8);
+        });
+
+        weightInput.addEventListener("keydown", event => {
+          if(event.key === "Enter"){
+            event.preventDefault();
+            confirm.click();
+          }
+        });
+
+        setTimeout(() => weightInput.focus(), 100);
+      });
     }
 
 
@@ -10570,7 +10714,7 @@
 
     /* =========================================================
        LIVE VIEW
-       12.88 - compact AWB dots + closed ULD location sorting
+       12.82 - compact AWB dots + closed ULD location sorting
        ========================================================= */
 
     window.liveULDCache = new Map();
@@ -10650,7 +10794,7 @@
                   ).trim() !== ""
                 );
 
-              /* v12.88: Count active AWBs with one scans read. */
+              /* v12.83: Count active AWBs with one scans read. */
               const liveAWBCounts = new Map();
               try{
                 const scanSnapshot = await getDocs(collection(db,"scans"));
