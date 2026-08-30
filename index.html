@@ -2164,8 +2164,9 @@
 
     
     /* =========================================================
-       12.77 - LIVE VIEW ULD SUMMARY + CLICKABLE DETAILS + TOTAL FLIGHT WEIGHT
+       12.78 - LIVE VIEW ULD SUMMARY + CLICKABLE DETAILS + TOTAL FLIGHT WEIGHT
        Main screen: one compact row per ULD.
+       Added ULD Location column to the summary table.
        Selecting a row opens the full ULD detail view.
        ========================================================= */
 
@@ -2195,7 +2196,7 @@
 
     #liveView .liveULDList{
       width:100% !important;
-      min-width:650px !important;
+      min-width:760px !important;
       margin:0 !important;
       table-layout:fixed !important;
       border-collapse:collapse !important;
@@ -2488,7 +2489,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.77
+        V.12.78
       </div>
 
       <div class="infoBox">
@@ -4002,7 +4003,7 @@
     let currentUser = "";
 
     /* =========================================================
-       12.77 - PERSIST LOGIN THROUGH PAGE RELOAD
+       12.78 - PERSIST LOGIN THROUGH PAGE RELOAD
        sessionStorage keeps the login while the current browser
        tab is open, including accidental page reloads.
        Closing the tab/browser still requires a new login.
@@ -9910,13 +9911,13 @@
       }
 
       /*
-         PERFORMANCE UPDATE - v12.77
+         PERFORMANCE UPDATE - v12.78
 
          The old Live View loaded the entire "scans" collection separately
          for EVERY ULD before displaying the screen. That created one
          Firestore read/query per ULD and made the initial Live View slow.
 
-         v12.77 loads ONLY the ULD summary data initially. Full AWB/scan
+         v12.78 loads ONLY the ULD summary data initially. Full AWB/scan
          details are loaded when the user clicks a ULD row. This keeps the
          Live View fast while preserving the clickable ULD detail feature.
       */
@@ -10148,6 +10149,7 @@
                         <th>STATUS</th>
                         <th>WEIGHT</th>
                         <th>CARGO TYPE</th>
+                        <th>ULD LOCATION</th>
                         <th>CLOSED BY</th>
                       </tr>
                     </thead>
@@ -10196,6 +10198,11 @@
                       )} KGS`
                     : "—";
 
+                const uldLocation =
+                  uld.uldLocation
+                    ? String(uld.uldLocation)
+                    : "—";
+
                 const closedBy =
                   isClosed &&
                   uld.closedBy
@@ -10229,6 +10236,9 @@
                       ${escapeHTML(
                         cargoType || "—"
                       )}
+                    </td>
+                    <td>
+                      ${escapeHTML(uldLocation)}
                     </td>
                     <td>
                       ${escapeHTML(closedBy)}
@@ -10738,6 +10748,10 @@
        EXPORT CLOSED ULDs
        ========================================================= */
 
+    /* 12.78 EXPORT COLUMNS:
+       P = ULD Commodity (source: Cargo Type)
+       Q = Trailer # (source: ULD Location)
+    */
     window.exportToCSV = async () => {
 
       try{
@@ -10852,7 +10866,9 @@
               scannedBy:"",
               uldId:"",
               weightKg:"",
-              weightLbs:""
+              weightLbs:"",
+              cargoType:"",
+              uldLocation:""
             });
 
             continue;
@@ -11294,7 +11310,7 @@
       */
 
       const data = [
-        ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (KG)", "Weight (LBS)"]
+        ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (KG)", "Weight (LBS)", "ULD Commodity", "Trailer #"]
       ];
 
       rows.forEach(row => {
@@ -11302,7 +11318,9 @@
           "", row.awb || "", "", "", "", "", "", "", "", "",
           row.scannedAt || "", row.scannedBy || "", row.uldId || "",
           (row.weightKg !== "" && row.weightKg != null ? Number(row.weightKg) : ""),
-          (row.weightLbs !== "" && row.weightLbs != null ? Number(row.weightLbs) : "")
+          (row.weightLbs !== "" && row.weightLbs != null ? Number(row.weightLbs) : ""),
+          row.cargoType || "",
+          row.uldLocation || ""
         ]);
       });
 
@@ -11331,11 +11349,12 @@
         { wch: 18 },
         { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
         { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
-        { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 16 }
+        { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 16 },
+        { wch: 20 }, { wch: 18 }
       ];
 
       const headerRow = 0;
-      for(let c = 0; c < 15; c++){
+      for(let c = 0; c < 17; c++){
         const cell = worksheet[XLSX.utils.encode_cell({r:headerRow,c})];
         if(cell) cell.s = { font: { bold: true } };
       }
@@ -11700,7 +11719,9 @@
           scannedBy:"",
           uldId:"",
           weightKg:"",
-          weightLbs:""
+          weightLbs:"",
+          cargoType:"",
+          uldLocation:""
         });
 
       }
