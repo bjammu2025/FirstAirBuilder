@@ -2019,7 +2019,7 @@
     }
 
     /* =========================================================
-       12.81 - ALLOCATE ULD PO DISPLAY BELOW AWB TABLE
+       12.82 - ALLOCATE ULD PO DISPLAY BELOW AWB TABLE
        ========================================================= */
 
     #allocateScan #allocatePOInfo{
@@ -2282,7 +2282,7 @@
       background:#E5E7EB !important;
     }
 
-    /* 12.79 - COMPACT LIVE VIEW ROW COLORS
+    /* 12.82 - COMPACT LIVE VIEW ROW COLORS
        Closed ULDs = red row
        Open ULDs   = green row
        No separate Status column. */
@@ -2523,7 +2523,29 @@
 
 
     /* =========================================================
-       12.79 - FINAL LIVE VIEW / ZEBRA OVERRIDES
+       12.82 - LIVE VIEW AWB DOTS
+       ========================================================= */
+    #liveView .liveAWBDots{
+      display:flex !important;
+      flex-wrap:wrap !important;
+      justify-content:center !important;
+      align-items:center !important;
+      gap:4px !important;
+      min-height:18px !important;
+      width:100% !important;
+    }
+
+    #liveView .liveAWBDot{
+      display:inline-block !important;
+      width:9px !important;
+      height:9px !important;
+      border-radius:50% !important;
+      background:#16A34A !important;
+      flex:0 0 9px !important;
+    }
+
+    /* =========================================================
+       12.82 - FINAL LIVE VIEW / ZEBRA OVERRIDES
        ========================================================= */
     #liveView .liveULDList{
       min-width:0 !important;
@@ -2574,7 +2596,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.79
+        V.12.82
       </div>
 
       <div class="infoBox">
@@ -4105,7 +4127,7 @@
     let currentUser = "";
 
     /* =========================================================
-       12.79 - PERSIST LOGIN THROUGH PAGE RELOAD
+       12.82 - PERSIST LOGIN THROUGH PAGE RELOAD
        Desktop:
          sessionStorage keeps the login for the current browser tab.
 
@@ -10254,53 +10276,77 @@
 
               };
 
+              /* v12.82: OPEN first; CLOSED last and ordered by ULD location. */
               validULDS.sort((a,b) => {
 
                 const aOpen =
-                  String(
-                    a.status ||
-                    "OPEN"
-                  ).toUpperCase() !==
-                  "CLOSED";
+                  String(a.status || "OPEN").toUpperCase() !== "CLOSED";
 
                 const bOpen =
-                  String(
-                    b.status ||
-                    "OPEN"
-                  ).toUpperCase() !==
-                  "CLOSED";
+                  String(b.status || "OPEN").toUpperCase() !== "CLOSED";
 
                 if(aOpen !== bOpen)
                   return aOpen ? -1 : 1;
 
-                const seqDiff =
-                  uldSequence(a) -
-                  uldSequence(b);
+                if(!aOpen && !bOpen){
+                  const locationDiff =
+                    String(a.uldLocation || "").trim().localeCompare(
+                      String(b.uldLocation || "").trim(),
+                      undefined,
+                      {numeric:true, sensitivity:"base"}
+                    );
 
+                  if(locationDiff !== 0)
+                    return locationDiff;
+                }
+
+                const seqDiff = uldSequence(a) - uldSequence(b);
                 if(seqDiff !== 0)
                   return seqDiff;
 
-                return String(
-                  a.uldId ||
-                  a.id ||
-                  ""
-                ).localeCompare(
-                  String(
-                    b.uldId ||
-                    b.id ||
-                    ""
-                  )
+                return String(a.uldId || a.id || "").localeCompare(
+                  String(b.uldId || b.id || "")
                 );
 
               });
 
               /*
-                 Build the lightweight cache used by the clickable ULD rows.
-
-                 IMPORTANT:
-                 Do NOT query "scans" here. The scan/AWB records are fetched
-                 only after the user selects a specific ULD.
+                 v12.82: Read scans ONCE and count currently allocated AWBs
+                 by ULD. Removed/offloaded AWBs and leftover inventory are
+                 excluded. This avoids one scans query per ULD.
               */
+              const openAWBCounts = new Map();
+
+              try{
+                const scanSnapshot = await getDocs(collection(db,"scans"));
+
+                scanSnapshot.forEach(docSnap => {
+                  const d = docSnap.data();
+
+                  if(
+                    d.inventoryType === LEFTOVER_TYPE ||
+                    d.positionId === "[REMOVED]"
+                  )
+                    return;
+
+                  const scanULD = String(
+                    d.uldId || d.positionId || ""
+                  ).trim();
+
+                  if(!scanULD)
+                    return;
+
+                  openAWBCounts.set(
+                    scanULD,
+                    (openAWBCounts.get(scanULD) || 0) + 1
+                  );
+                });
+
+              }catch(scanCountError){
+                console.error("Live View AWB count error:",scanCountError);
+              }
+
+              /* Build the lightweight cache used by the clickable ULD rows. */
               window.liveULDCache.clear();
 
               validULDS.forEach(uld => {
@@ -10447,10 +10493,32 @@
                       )} KGS`
                     : "—";
 
-                const uldLocation =
-                  uld.uldLocation
-                    ? String(uld.uldLocation)
+                let uldLocationHTML = "—";
+
+                if(isClosed){
+                  /* Closed ULD: show only its stored location / trailer. */
+                  uldLocationHTML = uld.uldLocation
+                    ? escapeHTML(String(uld.uldLocation))
                     : "—";
+                }else{
+                  /* Open ULD: one green dot for each allocated AWB. */
+                  const allocatedAWBs = openAWBCounts.get(uldId) || 0;
+
+                  if(allocatedAWBs > 0){
+                    uldLocationHTML = `
+                      <div
+                        class="liveAWBDots"
+                        aria-label="${allocatedAWBs} AWBs allocated"
+                        title="${allocatedAWBs} AWBs allocated"
+                      >
+                        ${Array.from(
+                          {length:allocatedAWBs},
+                          () => `<span class="liveAWBDot"></span>`
+                        ).join("")}
+                      </div>
+                    `;
+                  }
+                }
 
                 html += `
                   <tr
@@ -10472,7 +10540,7 @@
                       )}
                     </td>
                     <td>
-                      ${escapeHTML(uldLocation)}
+                      ${uldLocationHTML}
                     </td>
                   </tr>
                 `;
