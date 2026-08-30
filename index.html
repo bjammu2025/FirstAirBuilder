@@ -2019,7 +2019,7 @@
     }
 
     /* =========================================================
-       12.81 - ALLOCATE ULD PO DISPLAY BELOW AWB TABLE
+       12.88 - ALLOCATE ULD PO DISPLAY BELOW AWB TABLE
        ========================================================= */
 
     #allocateScan #allocatePOInfo{
@@ -2282,7 +2282,7 @@
       background:#E5E7EB !important;
     }
 
-    /* 12.79 - COMPACT LIVE VIEW ROW COLORS
+    /* 12.88 - COMPACT LIVE VIEW ROW COLORS
        Closed ULDs = red row
        Open ULDs   = green row
        No separate Status column. */
@@ -2523,7 +2523,7 @@
 
 
     /* =========================================================
-       12.82 - COMPACT LIVE VIEW AWB DOTS
+       12.88 - COMPACT LIVE VIEW AWB DOTS
        ========================================================= */
     #liveView .liveAWBDots{
       display:flex !important;
@@ -2550,7 +2550,7 @@
     }
 
     /* =========================================================
-       12.79 - FINAL LIVE VIEW / ZEBRA OVERRIDES
+       12.88 - FINAL LIVE VIEW / ZEBRA OVERRIDES
        ========================================================= */
     #liveView .liveULDList{
       min-width:0 !important;
@@ -2586,8 +2586,7 @@
 
     <body>
 
-    <!-- 12.72: Barcode, camera, and manual AWB input use the existing
-         confirmation popup before the AWB is processed. -->
+    <!-- 12.88: Allocate decides AWB popup from the selected ULD pool. -->
 
 
     <div class="container">
@@ -2601,7 +2600,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.85
+        V.12.88
       </div>
 
       <div class="infoBox">
@@ -3980,7 +3979,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.87";
+    const CODE_VERSION = "12.88";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -4133,10 +4132,11 @@
 
     let positionId = "";
     let currentULD = "";
+    let currentULDAllocationPool = "NORMAL";
     let currentUser = "";
 
     /* =========================================================
-       12.79 - PERSIST LOGIN THROUGH PAGE RELOAD
+       12.88 - PERSIST LOGIN THROUGH PAGE RELOAD
        Desktop:
          sessionStorage keeps the login for the current browser tab.
 
@@ -5000,6 +5000,7 @@
 
         currentULD = uldId;
         positionId = uldId;
+        currentULDAllocationPool = "NORMAL";
 
         /* Clear the New ULD box immediately after successful creation */
         input.value = "";
@@ -5062,6 +5063,7 @@
 
       currentULD = uld;
       positionId = uld;
+      await getAllocateULDPool(uld);
 
       document
         .getElementById("allocULD")
@@ -6079,6 +6081,64 @@
        Show the PO's already assigned to the selected ULD.
        ========================================================= */
 
+    /* =========================================================
+       ALLOCATE ULD POOL
+       The selected ULD gets ONE allocation mode for the entire
+       allocation session:
+         PO_WEIGHT = AWB confirmation + KG weight
+         NORMAL    = normal AWB confirmation
+       ========================================================= */
+
+    async function getAllocateULDPool(uldId){
+
+      const id = String(uldId || "").trim();
+
+      if(!id)
+        return "NORMAL";
+
+      try{
+
+        const snapshot = await getDocs(
+          query(
+            collection(db,"ulds"),
+            where("uldId","==",id),
+            where("status","==","OPEN")
+          )
+        );
+
+        let hasPO = false;
+        let explicitPool = "";
+
+        snapshot.forEach(docSnap => {
+          const d = docSnap.data() || {};
+          const pool = String(d.allocationPool || "").trim().toUpperCase();
+          const pos = Array.isArray(d.purchaseOrders)
+            ? d.purchaseOrders.map(v => String(v || "").trim()).filter(Boolean)
+            : [];
+
+          if(pool === "PO_WEIGHT")
+            explicitPool = "PO_WEIGHT";
+
+          if(pos.length)
+            hasPO = true;
+        });
+
+        /* PO data always wins. This also upgrades old ULDs created before
+           allocationPool existed. */
+        currentULDAllocationPool =
+          explicitPool === "PO_WEIGHT" || hasPO
+            ? "PO_WEIGHT"
+            : "NORMAL";
+
+        return currentULDAllocationPool;
+
+      }catch(error){
+        console.error("ULD allocation pool load error:", error);
+        currentULDAllocationPool = "NORMAL";
+        return "NORMAL";
+      }
+    }
+
     async function loadAllocateULDPOs(uldId){
 
       const list =
@@ -6111,6 +6171,7 @@
           );
 
         const poSet = new Set();
+        let hasPO = false;
 
         snapshot.forEach(docSnap => {
 
@@ -6129,8 +6190,10 @@
                 .trim()
                 .toUpperCase();
 
-            if(value)
+            if(value){
               poSet.add(value);
+              hasPO = true;
+            }
 
           });
 
@@ -6138,6 +6201,8 @@
 
         const purchaseOrders =
           [...poSet];
+
+        currentULDAllocationPool = hasPO ? "PO_WEIGHT" : "NORMAL";
 
         if(!purchaseOrders.length){
 
@@ -6343,66 +6408,18 @@
         }
 
         /*
-           If PO's have already been entered on this ULD, every new AWB
-           must have its KG weight entered before it can be saved.
+           IMPORTANT: The selected ULD has an allocation pool.
+           Never show the normal AWB confirmation first for a PO ULD.
+           PO_WEIGHT = one combined AWB verification + KG popup.
+           NORMAL    = the existing AWB confirmation popup.
         */
+        const allocationPool =
+          await getAllocateULDPool(currentULD);
+
         let awbWeightKg = null;
 
-        /*
-           IMPORTANT ALLOCATE RULE:
-           Decide the popup from the ULD's saved allocation pool BEFORE
-           showing ANY AWB confirmation popup.
+        if(allocationPool === "PO_WEIGHT"){
 
-           PO_WEIGHT = AWB + KG popup
-           NORMAL    = old AWB confirmation popup
-
-           We inspect ALL matching OPEN ULD documents. This avoids an old
-           duplicate ULD document causing the wrong popup to be selected.
-        */
-        const uldSnapshot =
-          await getDocs(
-            query(
-              collection(db,"ulds"),
-              where("uldId","==",currentULD),
-              where("status","==","OPEN")
-            )
-          );
-
-        let uldHasPOs = false;
-
-        uldSnapshot.forEach(uldDoc => {
-
-          const uldData = uldDoc.data() || {};
-
-          const allocationPool =
-            String(uldData.allocationPool || "")
-              .trim()
-              .toUpperCase();
-
-          const purchaseOrders =
-            Array.isArray(uldData.purchaseOrders)
-              ? uldData.purchaseOrders
-                  .map(v => String(v || "").trim())
-                  .filter(Boolean)
-              : [];
-
-          /* PO_WEIGHT is authoritative. Existing PO data is a fallback
-             for ULDs created before the pool field was introduced. */
-          if(
-            allocationPool === "PO_WEIGHT" ||
-            purchaseOrders.length > 0
-          ){
-            uldHasPOs = true;
-          }
-        });
-
-        if(uldHasPOs){
-
-          /*
-             PO ULD: DO NOT call showAWBConfirmation().
-             The weight popup is the AWB confirmation AND weight entry
-             screen in one step.
-          */
           stopContinuousOCR();
 
           awbWeightKg =
@@ -6412,21 +6429,13 @@
             );
 
           if(awbWeightKg === null){
-
-            setStatus(
-              "🔎 AWB not saved",
-              "scanning"
-            );
-
+            setStatus("🔎 AWB not saved", "scanning");
             restartOCR();
             return;
           }
 
         }else{
 
-          /*
-             NORMAL ULD: old confirmation popup.
-          */
           const confirmed =
             await showAWBConfirmation(
               code,
@@ -6434,12 +6443,7 @@
             );
 
           if(!confirmed){
-
-            setStatus(
-              "🔎 AWB not saved",
-              "scanning"
-            );
-
+            setStatus("🔎 AWB not saved", "scanning");
             restartOCR();
             return;
           }
@@ -9393,6 +9397,10 @@
               purchaseOrders:[...new Set([...existing,...uniqueNew])],
               allocationPool:"PO_WEIGHT"
             });}));
+
+        /* The current Allocate ULD changes pool immediately as well. */
+        if(String(currentULD || "").trim().toUpperCase() === String(select.value || "").trim().toUpperCase())
+          currentULDAllocationPool = "PO_WEIGHT";
         await showVerification(true,select.value,"POs UPDATED",`${uniqueNew.length} PO(s) were added to ULD ${select.value}.`);
         await loadOpenULDsForPOUpdate();
       }catch(error){console.error(error);alert("Could not save POs.\n\n"+error.message);}
@@ -10562,7 +10570,7 @@
 
     /* =========================================================
        LIVE VIEW
-       12.82 - compact AWB dots + closed ULD location sorting
+       12.88 - compact AWB dots + closed ULD location sorting
        ========================================================= */
 
     window.liveULDCache = new Map();
@@ -10642,7 +10650,7 @@
                   ).trim() !== ""
                 );
 
-              /* v12.83: Count active AWBs with one scans read. */
+              /* v12.88: Count active AWBs with one scans read. */
               const liveAWBCounts = new Map();
               try{
                 const scanSnapshot = await getDocs(collection(db,"scans"));
