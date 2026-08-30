@@ -542,7 +542,7 @@
 
 
     /* =========================================================
-       12.29 LIGHT THEME
+       12.8529 LIGHT THEME
        Entire app: white background, black buttons
        ========================================================= */
 
@@ -654,7 +654,7 @@
 
 
     /* =========================================================
-       12.30 NAVY & WHITE AIRLINE THEME
+       12.8530 NAVY & WHITE AIRLINE THEME
        Flat colors only - no gradients
        ========================================================= */
 
@@ -816,7 +816,7 @@
 
 
     /* =========================================================
-       12.31 NAVY / SOFT-GRAY + CALM AIR ATR 72 BACKGROUND
+       12.8531 NAVY / SOFT-GRAY + CALM AIR ATR 72 BACKGROUND
        Flat colors only - no gradients
        ========================================================= */
 
@@ -906,7 +906,7 @@
     }
 
 
-    /* 12.32: darker grey + Calm Air ATR background */
+    /* 12.85: darker grey + Calm Air ATR background */
     html, body{
       background:#AEB4BC !important;
       color:#111827 !important;
@@ -925,7 +925,7 @@
       background:rgba(174,180,188,.84) !important;
     }
 
-    /* 12.32: compact username on home screen */
+    /* 12.85: compact username on home screen */
     #homeUserLabel{
       display:block;
       width:100%;
@@ -959,7 +959,7 @@
 
 
 
-    /* 12.33 SOLID DARK GREY BACKGROUND */
+    /* 12.85 SOLID DARK GREY BACKGROUND */
     html,
     body{
       background:#B6BBC2 !important;
@@ -983,7 +983,7 @@
     }
 
 
-    /* 12.33 SCREEN FIT */
+    /* 12.85 SCREEN FIT */
     #home{
       box-sizing:border-box;
     }
@@ -2282,7 +2282,7 @@
       background:#E5E7EB !important;
     }
 
-    /* 12.84 - COMPACT LIVE VIEW ROW COLORS
+    /* 12.85 - COMPACT LIVE VIEW ROW COLORS
        Closed ULDs = red row
        Open ULDs   = green row
        No separate Status column. */
@@ -2550,7 +2550,7 @@
     }
 
     /* =========================================================
-       12.84 - FINAL LIVE VIEW / ZEBRA OVERRIDES
+       12.85 - FINAL LIVE VIEW / ZEBRA OVERRIDES
        ========================================================= */
     #liveView .liveULDList{
       min-width:0 !important;
@@ -2601,7 +2601,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.84
+        V.12.85
       </div>
 
       <div class="infoBox">
@@ -4142,7 +4142,7 @@
     let currentUser = "";
 
     /* =========================================================
-       12.84 - PERSIST LOGIN THROUGH PAGE RELOAD
+       12.85 - PERSIST LOGIN THROUGH PAGE RELOAD
        Desktop:
          sessionStorage keeps the login for the current browser tab.
 
@@ -6305,7 +6305,7 @@
         const q =
           query(
             collection(db,"scans"),
-            where("code","==",code)
+            where("code","==",awbNumber)
           );
 
         const snapshot =
@@ -6393,7 +6393,7 @@
         }
 
         const scanData = {
-          code:code,
+          code:awbNumber,
           positionId:currentULD,
           uldId:currentULD,
           scannedAt:serverTimestamp(),
@@ -6415,8 +6415,8 @@
           code,
           "AWB VERIFIED",
           awbWeightKg !== null
-            ? `AWB ${code} has been allocated to ULD ${currentULD}.\n\nWeight: ${awbWeightKg} KG`
-            : `AWB ${code} has been allocated to ULD ${currentULD}.`
+            ? `AWB ${awbNumber} has been allocated to ULD ${currentULD}.\n\nWeight: ${awbWeightKg} KG`
+            : `AWB ${awbNumber} has been allocated to ULD ${currentULD}.`
         );
 
         setStatus(
@@ -6432,7 +6432,7 @@
 
         await showVerification(
           false,
-          code,
+          awbNumber,
           "SAVE ERROR",
           "The AWB could not be saved.\n\n" +
           error.message
@@ -9077,6 +9077,7 @@
        If AWBs already exist, collect their KG weights first.
        ========================================================= */
     window.openAllocateYFBPOUpdate = async () => {
+      window.returnToAllocateAfterPO = true;
       if(!getCurrentUser()){
         alert("Please enter user name");
         return;
@@ -9309,6 +9310,20 @@
         if(snapshot.empty){alert("ULD was not found or is not OPEN.");await loadOpenULDsForPOUpdate();return;}
         await Promise.all(snapshot.docs.map(d=>{const data=d.data();const existing=Array.isArray(data.purchaseOrders)?data.purchaseOrders.map(v=>String(v).trim().toUpperCase()).filter(Boolean):[];return updateDoc(doc(db,"ulds",d.id),{purchaseOrders:[...new Set([...existing,...uniqueNew])]});}));
         await showVerification(true,select.value,"POs UPDATED",`${uniqueNew.length} PO(s) were added to ULD ${select.value}.`);
+
+        if(window.returnToAllocateAfterPO){
+          window.returnToAllocateAfterPO = false;
+          currentULD = select.value;
+          positionId = select.value;
+          document.getElementById("allocULD").innerText = select.value;
+          document.getElementById("allocUser").innerText = currentUser;
+          switchScreen("allocateScan");
+          await loadAllocateAWBs(select.value);
+          await loadAllocateULDPOs(select.value);
+          openBarcodeScanner("allocate");
+          return;
+        }
+
         await loadOpenULDsForPOUpdate();
       }catch(error){console.error(error);alert("Could not save POs.\n\n"+error.message);}
     };
@@ -9384,9 +9399,23 @@
                 )]
               : [];
 
+          const conversions =
+            Array.isArray(d.poAwbConversions)
+              ? d.poAwbConversions
+              : [];
+
+          const alreadyConverted =
+            purchaseOrders.length > 0 &&
+            purchaseOrders.every(po =>
+              conversions.some(item =>
+                String(item?.po || "").trim().toUpperCase() === po
+              )
+            );
+
           if(
             uldId &&
-            purchaseOrders.length > 0
+            purchaseOrders.length > 0 &&
+            !alreadyConverted
           ){
 
             ulds.push({
@@ -10557,7 +10586,7 @@
                   ).trim() !== ""
                 );
 
-              /* v12.84: Count active AWBs with one scans read. */
+              /* v12.85: Count active AWBs with one scans read. */
               const liveAWBCounts = new Map();
               try{
                 const scanSnapshot = await getDocs(collection(db,"scans"));
@@ -11320,7 +11349,7 @@
        EXPORT CLOSED ULDs
        ========================================================= */
 
-    /* 12.78 EXPORT COLUMNS:
+    /* 12.8578 EXPORT COLUMNS:
        P = ULD Commodity (source: Cargo Type)
        Q = Trailer # (source: ULD Location)
     */
@@ -13076,7 +13105,7 @@
 
 
     /* =========================================================
-       12.41 - ZEBRA HARDWARE BACK BUTTON
+       12.8541 - ZEBRA HARDWARE BACK BUTTON
        Make Android/Zebra back behave exactly like the visible
        BACK button for the current screen.
        ========================================================= */
