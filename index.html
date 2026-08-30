@@ -3980,7 +3980,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.85";
+    const CODE_VERSION = "12.86";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -6360,23 +6360,39 @@
           const uldData =
             uldSnapshot.docs[0].data();
 
-          const purchaseOrders =
-            Array.isArray(uldData.purchaseOrders)
-              ? uldData.purchaseOrders.filter(
-                  v => String(v).trim()
-                )
-              : [];
+          const allocationPool =
+            String(uldData.allocationPool || "")
+              .trim()
+              .toUpperCase();
 
-          uldHasPOs =
-            purchaseOrders.length > 0;
+          /*
+             PO_WEIGHT is the dedicated pool for ULDs that have YFB PO's.
+             It is stored on the ULD itself, so the popup decision does not
+             depend on the PO display being loaded or on page state.
+
+             Older ULDs without allocationPool are automatically recognized
+             by their existing purchaseOrders field.
+          */
+          if(allocationPool === "PO_WEIGHT")
+            uldHasPOs = true;
+          else if(allocationPool === "NORMAL")
+            uldHasPOs = false;
+          else{
+            const purchaseOrders =
+              Array.isArray(uldData.purchaseOrders)
+                ? uldData.purchaseOrders.filter(
+                    v => String(v || "").trim()
+                  )
+                : [];
+
+            uldHasPOs = purchaseOrders.length > 0;
+          }
 
           if(uldHasPOs){
 
             /*
-               IMPORTANT:
-               When PO's are already on this ULD, do NOT show the
-               normal AWB confirmation popup. The AWB weight popup
-               is the confirmation step for this workflow.
+               PO_WEIGHT pool: NEVER show the normal AWB confirmation.
+               ENTER AWB WEIGHT is the required confirmation step.
             */
             stopContinuousOCR();
 
@@ -6400,8 +6416,7 @@
           }else{
 
             /*
-               No PO's on this ULD:
-               keep the original AWB confirmation popup.
+               NORMAL pool: use the original AWB confirmation popup.
             */
             const confirmed =
               await showAWBConfirmation(
@@ -6424,10 +6439,7 @@
 
         }else{
 
-          /*
-             ULD lookup returned no OPEN record.
-             Preserve the normal confirmation behaviour.
-          */
+          /* No OPEN ULD record: preserve normal confirmation behaviour. */
           const confirmed =
             await showAWBConfirmation(
               code,
@@ -9389,7 +9401,10 @@
       try{
         const snapshot=await getDocs(query(collection(db,"ulds"),where("uldId","==",select.value),where("status","==","OPEN")));
         if(snapshot.empty){alert("ULD was not found or is not OPEN.");await loadOpenULDsForPOUpdate();return;}
-        await Promise.all(snapshot.docs.map(d=>{const data=d.data();const existing=Array.isArray(data.purchaseOrders)?data.purchaseOrders.map(v=>String(v).trim().toUpperCase()).filter(Boolean):[];return updateDoc(doc(db,"ulds",d.id),{purchaseOrders:[...new Set([...existing,...uniqueNew])]});}));
+        await Promise.all(snapshot.docs.map(d=>{const data=d.data();const existing=Array.isArray(data.purchaseOrders)?data.purchaseOrders.map(v=>String(v).trim().toUpperCase()).filter(Boolean):[];return updateDoc(doc(db,"ulds",d.id),{
+              purchaseOrders:[...new Set([...existing,...uniqueNew])],
+              allocationPool:"PO_WEIGHT"
+            });}));
         await showVerification(true,select.value,"POs UPDATED",`${uniqueNew.length} PO(s) were added to ULD ${select.value}.`);
         await loadOpenULDsForPOUpdate();
       }catch(error){console.error(error);alert("Could not save POs.\n\n"+error.message);}
