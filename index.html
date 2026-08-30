@@ -2019,7 +2019,7 @@
     }
 
     /* =========================================================
-       12.74 - LIVE VIEW ULD ROW LAYOUT
+       12.75 - LIVE VIEW ULD ROW LAYOUT
        Row 1: ULD centered
        Row 2: Status centered, Closed By right
        Row 3: Weight
@@ -2162,7 +2162,290 @@
       }
     }
 
-    </style>
+    
+    /* =========================================================
+       12.75 - LIVE VIEW ULD SUMMARY + CLICKABLE DETAILS
+       Main screen: one compact row per ULD.
+       Selecting a row opens the full ULD detail view.
+       ========================================================= */
+
+    #liveView .liveULDListWrap{
+      width:100% !important;
+      max-width:1200px !important;
+      margin:10px auto 15px !important;
+      box-sizing:border-box !important;
+      overflow-x:auto !important;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    #liveView .liveULDList{
+      width:100% !important;
+      min-width:650px !important;
+      margin:0 !important;
+      table-layout:fixed !important;
+      border-collapse:collapse !important;
+      background:#FFFFFF !important;
+    }
+
+    #liveView .liveULDList th,
+    #liveView .liveULDList td{
+      padding:12px 8px !important;
+      text-align:center !important;
+      vertical-align:middle !important;
+      border:1px solid #9CA3AF !important;
+      overflow-wrap:anywhere !important;
+      word-break:break-word !important;
+    }
+
+    #liveView .liveULDList th{
+      background:#1E4E89 !important;
+      color:#FFFFFF !important;
+      font-weight:700 !important;
+    }
+
+    #liveView .liveULDList tbody tr{
+      cursor:pointer !important;
+      min-height:52px !important;
+    }
+
+    #liveView .liveULDList tbody tr:focus{
+      outline:3px solid #2563EB !important;
+      outline-offset:-3px !important;
+    }
+
+    #liveView .liveULDList tbody tr:hover td{
+      background:#E5E7EB !important;
+    }
+
+    #liveView .liveSummaryClosed td{
+      background:#FFFFFF !important;
+    }
+
+    #liveView .liveSummaryOpen td{
+      background:#FFFDF3 !important;
+    }
+
+    #liveView .liveSummaryULD{
+      font-weight:700 !important;
+      color:#0B1F3A !important;
+    }
+
+    #liveView .liveSummaryStatusClosed{
+      color:#166534 !important;
+      font-weight:700 !important;
+    }
+
+    #liveView .liveSummaryStatusOpen{
+      color:#92400E !important;
+      font-weight:700 !important;
+    }
+
+    #liveView .liveULDDetail{
+      width:100% !important;
+      max-width:1200px !important;
+      margin:10px auto 15px !important;
+      box-sizing:border-box !important;
+    }
+
+    #liveView .liveULDDetailCard{
+      width:100% !important;
+      box-sizing:border-box !important;
+      background:#F3F4F6 !important;
+      border:2px solid #6B7280 !important;
+      border-radius:12px !important;
+      padding:15px !important;
+      overflow:hidden !important;
+    }
+
+    #liveView .liveULDDetailCard.closed{
+      border-color:#2E7D32 !important;
+    }
+
+    #liveView .liveULDDetailCard.open{
+      border-color:#B8860B !important;
+    }
+
+    #liveView .liveULDDetailTop{
+      position:relative !important;
+      width:100% !important;
+      min-height:2.4rem !important;
+      display:flex !important;
+      align-items:flex-start !important;
+      justify-content:flex-end !important;
+      box-sizing:border-box !important;
+    }
+
+    #liveView .liveULDDetailTitle{
+      position:absolute !important;
+      left:50% !important;
+      top:0 !important;
+      transform:translateX(-50%) !important;
+      width:max-content !important;
+      max-width:60% !important;
+      text-align:center !important;
+      color:#0B1F3A !important;
+      font-size:1.7rem !important;
+      font-weight:700 !important;
+      overflow-wrap:anywhere !important;
+    }
+
+    #liveView .liveULDDetailClosedBy{
+      margin-left:auto !important;
+      max-width:40% !important;
+      text-align:right !important;
+      color:#111827 !important;
+      font-size:1rem !important;
+      font-weight:700 !important;
+      overflow-wrap:anywhere !important;
+    }
+
+    #liveView .liveULDDetailStatus{
+      width:100% !important;
+      text-align:center !important;
+      font-size:1.25rem !important;
+      font-weight:700 !important;
+      margin:7px 0 !important;
+    }
+
+    #liveView .liveULDDetailWeight{
+      width:100% !important;
+      text-align:center !important;
+      font-size:1.15rem !important;
+      font-weight:600 !important;
+      margin:7px 0 !important;
+    }
+
+    #liveView .liveULDDetailCargo{
+      width:100% !important;
+      text-align:center !important;
+      font-size:1.05rem !important;
+      font-weight:600 !important;
+      margin:7px 0 !important;
+      overflow-wrap:anywhere !important;
+    }
+
+    #liveView .liveULDDetailPO{
+      width:100% !important;
+      display:flex !important;
+      justify-content:center !important;
+      align-items:center !important;
+      gap:18px !important;
+      flex-wrap:wrap !important;
+      text-align:center !important;
+      font-size:1rem !important;
+      font-weight:600 !important;
+      margin:8px 0 12px !important;
+    }
+
+    #liveView .liveULDDetailTable{
+      width:100% !important;
+      table-layout:fixed !important;
+      margin-top:12px !important;
+    }
+
+    #liveView .liveULDDetailTable th,
+    #liveView .liveULDDetailTable td{
+      padding:9px 7px !important;
+      vertical-align:middle !important;
+      overflow-wrap:anywhere !important;
+      word-break:break-word !important;
+    }
+
+    #liveView .liveULDDetailBack{
+      width:100% !important;
+      max-width:500px !important;
+      display:block !important;
+      margin:15px auto 0 !important;
+    }
+
+    @media (max-width:900px) and (pointer:coarse){
+
+      #liveView .liveULDListWrap{
+        margin:6px 0 12px !important;
+      }
+
+      #liveView .liveULDList{
+        min-width:0 !important;
+        table-layout:fixed !important;
+      }
+
+      #liveView .liveULDList th,
+      #liveView .liveULDList td{
+        padding:7px 3px !important;
+        font-size:.78rem !important;
+        line-height:1.15 !important;
+      }
+
+      #liveView .liveULDList th:nth-child(1),
+      #liveView .liveULDList td:nth-child(1){
+        width:20% !important;
+      }
+
+      #liveView .liveULDList th:nth-child(2),
+      #liveView .liveULDList td:nth-child(2){
+        width:17% !important;
+      }
+
+      #liveView .liveULDList th:nth-child(3),
+      #liveView .liveULDList td:nth-child(3){
+        width:23% !important;
+      }
+
+      #liveView .liveULDList th:nth-child(4),
+      #liveView .liveULDList td:nth-child(4){
+        width:22% !important;
+      }
+
+      #liveView .liveULDList th:nth-child(5),
+      #liveView .liveULDList td:nth-child(5){
+        width:18% !important;
+      }
+
+      #liveView .liveULDDetailCard{
+        padding:8px !important;
+        border-radius:10px !important;
+      }
+
+      #liveView .liveULDDetailTitle{
+        font-size:1.35rem !important;
+        max-width:58% !important;
+      }
+
+      #liveView .liveULDDetailClosedBy{
+        font-size:.72rem !important;
+        max-width:38% !important;
+      }
+
+      #liveView .liveULDDetailStatus{
+        font-size:1rem !important;
+      }
+
+      #liveView .liveULDDetailWeight{
+        font-size:.95rem !important;
+      }
+
+      #liveView .liveULDDetailCargo{
+        font-size:.9rem !important;
+      }
+
+      #liveView .liveULDDetailPO{
+        font-size:.82rem !important;
+        gap:8px !important;
+      }
+
+      #liveView .liveULDDetailTable{
+        font-size:.78rem !important;
+      }
+
+      #liveView .liveULDDetailTable th,
+      #liveView .liveULDDetailTable td{
+        padding:6px 3px !important;
+        line-height:1.15 !important;
+      }
+
+    }
+
+</style>
     </head>
 
     <body>
@@ -2182,7 +2465,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.74
+        V.12.75
       </div>
 
       <div class="infoBox">
@@ -3540,7 +3823,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.74";
+    const CODE_VERSION = "12.75";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -9535,6 +9818,8 @@
        LIVE VIEW
        ========================================================= */
 
+    window.liveULDCache = new Map();
+
     window.goToLiveView = () => {
 
       switchScreen("liveView");
@@ -9565,14 +9850,14 @@
 
               if(uldSnapshot.empty){
 
+                window.liveULDCache.clear();
+
                 container.innerHTML =
                   "<p>No ULDs.</p>";
 
                 return;
 
               }
-
-              let html = "";
 
               const ulds = [];
 
@@ -9588,74 +9873,128 @@
 
               });
 
-              /* Ignore malformed/empty ULD records so Live View never
-                 renders a blank outlined card. */
-              const validULDS = ulds.filter(uld =>
-                String(uld.uldId || uld.id || "").trim() !== ""
-              );
+              /* Ignore malformed/empty ULD records. */
+              const validULDS =
+                ulds.filter(uld =>
+                  String(
+                    uld.uldId ||
+                    uld.id ||
+                    ""
+                  ).trim() !== ""
+                );
 
               /*
                  Live View order:
-                 1. OPEN ULDs always stay at the top.
-                 2. CLOSED ULDs stay at the bottom.
-                 3. Within each group, preserve creation sequence.
-                 Older ULDs without createdAt fall back to their
-                 original Firestore document ID.
+                 1. OPEN ULDs at the top.
+                 2. CLOSED ULDs at the bottom.
+                 3. Preserve creation sequence within each group.
               */
               const uldSequence = uld => {
-                const value = uld.createdAt;
 
-                if(value && typeof value.seconds === "number")
+                const value =
+                  uld.createdAt;
+
+                if(
+                  value &&
+                  typeof value.seconds ===
+                    "number"
+                )
                   return value.seconds * 1000;
 
-                if(value && typeof value.toMillis === "function")
+                if(
+                  value &&
+                  typeof value.toMillis ===
+                    "function"
+                )
                   return value.toMillis();
 
                 if(value){
-                  const parsed = new Date(value).getTime();
+
+                  const parsed =
+                    new Date(value).getTime();
+
                   if(!isNaN(parsed))
                     return parsed;
+
                 }
 
                 return Number.MAX_SAFE_INTEGER;
+
               };
 
               validULDS.sort((a,b) => {
 
                 const aOpen =
-                  String(a.status || "OPEN").toUpperCase() !== "CLOSED";
+                  String(
+                    a.status ||
+                    "OPEN"
+                  ).toUpperCase() !==
+                  "CLOSED";
 
                 const bOpen =
-                  String(b.status || "OPEN").toUpperCase() !== "CLOSED";
+                  String(
+                    b.status ||
+                    "OPEN"
+                  ).toUpperCase() !==
+                  "CLOSED";
 
                 if(aOpen !== bOpen)
                   return aOpen ? -1 : 1;
 
                 const seqDiff =
-                  uldSequence(a) - uldSequence(b);
+                  uldSequence(a) -
+                  uldSequence(b);
 
                 if(seqDiff !== 0)
                   return seqDiff;
 
-                return String(a.uldId || a.id || "")
-                  .localeCompare(String(b.uldId || b.id || ""));
+                return String(
+                  a.uldId ||
+                  a.id ||
+                  ""
+                ).localeCompare(
+                  String(
+                    b.uldId ||
+                    b.id ||
+                    ""
+                  )
+                );
+
               });
+
+              /*
+                 Build the cache used by the clickable ULD rows.
+                 This also means opening a ULD does not require a second
+                 Firestore lookup just to display its current data.
+              */
+              window.liveULDCache.clear();
 
               for(const uld of validULDS){
 
                 const uldId =
-                  uld.uldId || uld.id;
+                  uld.uldId ||
+                  uld.id;
 
                 const status =
-                  uld.status || "OPEN";
+                  String(
+                    uld.status ||
+                    "OPEN"
+                  ).toUpperCase();
 
                 const isClosed =
                   status === "CLOSED";
 
                 const q =
                   query(
-                    collection(db,"scans"),
-                    where("uldId","==",uldId)
+                    collection(
+                      db,
+                      "scans"
+                    ),
+                    where(
+                      "uldId",
+                      "==",
+                      uldId
+                    )
                   );
 
                 const scanSnapshot =
@@ -9680,136 +10019,220 @@
                   }
                 );
 
-                            const purchaseOrders = Array.isArray(uld.purchaseOrders)
-                  ? [...new Set(uld.purchaseOrders.map(v => String(v).trim()).filter(Boolean))]
-                  : [];
-                const poText = purchaseOrders.join(", ");
-                const poCount = purchaseOrders.length;
+                const purchaseOrders =
+                  Array.isArray(
+                    uld.purchaseOrders
+                  )
+                    ? [
+                        ...new Set(
+                          uld.purchaseOrders
+                            .map(v =>
+                              String(v)
+                                .trim()
+                            )
+                            .filter(Boolean)
+                        )
+                      ]
+                    : [];
 
-    html +=
-                  `<div class="liveULD ${isClosed ? "closed" : "open"}">
+                const cargoType =
+                  uld.cargoType ||
+                  (
+                    Array.isArray(
+                      uld.cargoTypes
+                    )
+                      ? uld.cargoTypes
+                          .filter(Boolean)
+                          .join(", ")
+                      : ""
+                  );
 
-                    <div class="liveULDRow liveULDRow1">
-                      <div class="liveULDTitle">
-                        ULD: ${escapeHTML(uldId)}
-                      </div>
-                    </div>
+                window.liveULDCache.set(
+                  String(uldId),
+                  {
+                    ...uld,
+                    uldId,
+                    status,
+                    isClosed,
+                    scans,
+                    purchaseOrders,
+                    cargoType
+                  }
+                );
 
-                    <div class="liveULDRow liveULDRow2">
-                      <div class="uldStatus ${isClosed ? "closedStatus" : "openStatus"}">
-                        STATUS: ${escapeHTML(status)}
-                      </div>
-                      ${isClosed && uld.closedBy ? `
-                      <div class="liveULDClosedBy">
-                        CLOSED BY: ${escapeHTML(uld.closedBy)}
-                      </div>` : ""}
-                    </div>
+              }
 
-                    ${isClosed ? `
-                    <div class="liveULDRow liveULDRow3">
-                      <div class="liveULDWeight">
-                        Weight: ${Number(uld.weightLbs || 0).toFixed(2)} LBS / ${Math.round(Number(uld.weightKg || 0))} KGS
-                      </div>
-                    </div>` : ""}
+              /*
+                 Main Live View is now a ULD summary table.
+                 Each row is clickable and opens the full ULD details.
+              */
+              let html = "";
 
-                    ${isClosed && (uld.cargoType || (Array.isArray(uld.cargoTypes) && uld.cargoTypes.length)) ? `
-                    <div class="liveULDRow liveULDRow4">
-                      <div class="liveULDCargoType">
-                        Cargo Type: ${escapeHTML(
-                          uld.cargoType ||
-                          (Array.isArray(uld.cargoTypes)
-                            ? uld.cargoTypes.join(", ")
-                            : "")
-                        )}
-                      </div>
-                    </div>` : ""}
-
-                    ${purchaseOrders.length ? `
-                    <div class="liveULDRow liveULDRow5">
-                      <div class="livePOInfo">
-                        PO's: ${escapeHTML(poText)}
-                      </div>
-                      <div class="liveULDPOCount">
-                        Total PO's: ${poCount}
-                      </div>
-                    </div>` : ""}
-
-                  <table>
-
+              html += `
+                <div class="liveULDListWrap">
+                  <table class="liveULDList">
                     <thead>
                       <tr>
-                        <th>#</th>
-                        <th>AWB</th>
-                        <th>Scanned At</th>
-                        <th>Scanned By</th>
+                        <th>ULD</th>
+                        <th>STATUS</th>
+                        <th>WEIGHT</th>
+                        <th>CARGO TYPE</th>
+                        <th>CLOSED BY</th>
                       </tr>
                     </thead>
+                    <tbody>
+              `;
 
-                    <tbody>`;
+              validULDS.forEach(uld => {
 
-                if(scans.length === 0){
+                const uldId =
+                  String(
+                    uld.uldId ||
+                    uld.id
+                  );
 
-                  html +=
-                    `<tr>
-                      <td colspan="4">
-                        No active AWBs
-                      </td>
-                    </tr>`;
+                const status =
+                  String(
+                    uld.status ||
+                    "OPEN"
+                  ).toUpperCase();
 
-                }else{
+                const isClosed =
+                  status === "CLOSED";
 
-                  scans.forEach(
-                    (d,index) => {
+                const cargoType =
+                  uld.cargoType ||
+                  (
+                    Array.isArray(
+                      uld.cargoTypes
+                    )
+                      ? uld.cargoTypes
+                          .filter(Boolean)
+                          .join(", ")
+                      : ""
+                  );
 
-                      const scannedAt =
-                        d.scannedAt
-                          ? new Date(
-                              d.scannedAt.seconds *
-                              1000
-                            ).toLocaleString()
-                          : "N/A";
+                const weight =
+                  isClosed
+                    ? `${Number(
+                        uld.weightLbs ||
+                        0
+                      ).toFixed(2)} LBS / ${Math.round(
+                        Number(
+                          uld.weightKg ||
+                          0
+                        )
+                      )} KGS`
+                    : "—";
 
-                      html +=
-                        `<tr>
+                const closedBy =
+                  isClosed &&
+                  uld.closedBy
+                    ? String(
+                        uld.closedBy
+                      )
+                    : "—";
 
-                          <td>
-                            ${index+1}
-                          </td>
+                html += `
+                  <tr
+                    class="${isClosed ? "liveSummaryClosed" : "liveSummaryOpen"}"
+                    data-uld-key="${encodeURIComponent(uldId)}"
+                    tabindex="0"
+                    role="button"
+                    aria-label="View ULD ${escapeHTML(uldId)}"
+                  >
+                    <td class="liveSummaryULD">
+                      ${escapeHTML(uldId)}
+                    </td>
+                    <td class="${
+                      isClosed
+                        ? "liveSummaryStatusClosed"
+                        : "liveSummaryStatusOpen"
+                    }">
+                      ${escapeHTML(status)}
+                    </td>
+                    <td>
+                      ${escapeHTML(weight)}
+                    </td>
+                    <td>
+                      ${escapeHTML(
+                        cargoType || "—"
+                      )}
+                    </td>
+                    <td>
+                      ${escapeHTML(closedBy)}
+                    </td>
+                  </tr>
+                `;
 
-                          <td>
-                            ${escapeHTML(
-                              awbNumberOnly(d.code)
-                            )}
-                          </td>
+              });
 
-                          <td>
-                            ${escapeHTML(
-                              scannedAt
-                            )}
-                          </td>
+              html += `
+                    </tbody>
+                  </table>
+                </div>
+                <div
+                  id="liveULDDetail"
+                  class="liveULDDetail"
+                  style="display:none;"
+                ></div>
+              `;
 
-                          <td>
-                            ${escapeHTML(
-                              d.scannedBy || ""
-                            )}
-                          </td>
+              container.innerHTML =
+                html;
 
-                        </tr>`;
+              /*
+                 Tap/click a row to show its ULD details.
+                 Keyboard Enter/Space is also supported for desktop.
+              */
+              container
+                .querySelectorAll(
+                  ".liveULDList tbody tr"
+                )
+                .forEach(row => {
+
+                  const openRow = () => {
+
+                    const encoded =
+                      row.dataset.uldKey ||
+                      "";
+
+                    if(!encoded)
+                      return;
+
+                    showLiveULDDetail(
+                      decodeURIComponent(
+                        encoded
+                      )
+                    );
+
+                  };
+
+                  row.addEventListener(
+                    "click",
+                    openRow
+                  );
+
+                  row.addEventListener(
+                    "keydown",
+                    event => {
+
+                      if(
+                        event.key ===
+                          "Enter" ||
+                        event.key ===
+                          " "
+                      ){
+
+                        event.preventDefault();
+                        openRow();
+
+                      }
 
                     }
                   );
 
-                }
-
-                html +=
-                  `</tbody>
-                  </table>
-                  </div>`;
-
-              }
-
-              container.innerHTML =
-                html;
+                });
 
             }catch(error){
 
@@ -9820,12 +10243,10 @@
 
               container.innerHTML =
                 `<p class="error">
-
                   Error loading Live View:
                   ${escapeHTML(
                     error.message
                   )}
-
                 </p>`;
 
             }
@@ -9835,6 +10256,345 @@
 
     };
 
+
+    /*
+       Display the full ULD information after a row is selected.
+       The layout follows the existing Live View ULD detail design:
+       ULD heading, status, Closed By, weight, Cargo Type, PO information,
+       and the AWB scan table.
+    */
+    window.showLiveULDDetail = (
+      uldId
+    ) => {
+
+      const key =
+        String(
+          uldId || ""
+        );
+
+      const uld =
+        window.liveULDCache.get(
+          key
+        );
+
+      const container =
+        document.getElementById(
+          "liveTables"
+        );
+
+      if(
+        !uld ||
+        !container
+      ){
+
+        alert(
+          "ULD details are not available."
+        );
+
+        return;
+
+      }
+
+      const status =
+        String(
+          uld.status ||
+          "OPEN"
+        ).toUpperCase();
+
+      const isClosed =
+        status === "CLOSED";
+
+      const scans =
+        Array.isArray(
+          uld.scans
+        )
+          ? uld.scans
+          : [];
+
+      const purchaseOrders =
+        Array.isArray(
+          uld.purchaseOrders
+        )
+          ? uld.purchaseOrders
+          : [];
+
+      const cargoType =
+        uld.cargoType ||
+        (
+          Array.isArray(
+            uld.cargoTypes
+          )
+            ? uld.cargoTypes
+                .filter(Boolean)
+                .join(", ")
+            : ""
+        );
+
+      const detail =
+        document.getElementById(
+          "liveULDDetail"
+        );
+
+      if(!detail)
+        return;
+
+      let html = "";
+
+      html += `
+        <div class="liveULDDetailCard ${
+          isClosed
+            ? "closed"
+            : "open"
+        }">
+
+          <div class="liveULDDetailTop">
+
+            <div class="liveULDDetailTitle">
+              ULD: ${escapeHTML(
+                key
+              )}
+            </div>
+
+            ${
+              isClosed &&
+              uld.closedBy
+                ? `
+                  <div class="liveULDDetailClosedBy">
+                    CLOSED BY: ${escapeHTML(
+                      uld.closedBy
+                    )}
+                  </div>
+                `
+                : ""
+            }
+
+          </div>
+
+          <div class="liveULDDetailStatus ${
+            isClosed
+              ? "closedStatus"
+              : "openStatus"
+          }">
+            STATUS: ${escapeHTML(
+              status
+            )}
+          </div>
+
+          ${
+            isClosed
+              ? `
+                <div class="liveULDDetailWeight">
+                  Weight: ${Number(
+                    uld.weightLbs ||
+                    0
+                  ).toFixed(2)} LBS / ${Math.round(
+                    Number(
+                      uld.weightKg ||
+                      0
+                    )
+                  )} KGS
+                </div>
+              `
+              : `
+                <div class="liveULDDetailWeight">
+                  Weight: —
+                </div>
+              `
+          }
+
+          ${
+            cargoType
+              ? `
+                <div class="liveULDDetailCargo">
+                  Cargo Type: ${escapeHTML(
+                    cargoType
+                  )}
+                </div>
+              `
+              : ""
+          }
+
+          ${
+            purchaseOrders.length
+              ? `
+                <div class="liveULDDetailPO">
+                  <div>
+                    PO's: ${escapeHTML(
+                      purchaseOrders.join(
+                        ", "
+                      )
+                    )}
+                  </div>
+                  <div>
+                    Total PO's:
+                    ${purchaseOrders.length}
+                  </div>
+                </div>
+              `
+              : ""
+          }
+
+          <table class="liveULDDetailTable">
+
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>AWB</th>
+                <th>SCANNED AT</th>
+                <th>SCANNED BY</th>
+              </tr>
+            </thead>
+
+            <tbody>
+      `;
+
+      if(scans.length === 0){
+
+        html += `
+          <tr>
+            <td colspan="4">
+              No active AWBs
+            </td>
+          </tr>
+        `;
+
+      }else{
+
+        scans.forEach(
+          (d,index) => {
+
+            let scannedAt =
+              "N/A";
+
+            if(d.scannedAt){
+
+              if(
+                typeof d.scannedAt.toDate ===
+                  "function"
+              ){
+
+                scannedAt =
+                  d.scannedAt
+                    .toDate()
+                    .toLocaleString();
+
+              }else if(
+                typeof d.scannedAt.seconds ===
+                  "number"
+              ){
+
+                scannedAt =
+                  new Date(
+                    d.scannedAt.seconds *
+                    1000
+                  ).toLocaleString();
+
+              }else{
+
+                const parsed =
+                  new Date(
+                    d.scannedAt
+                  );
+
+                if(
+                  !isNaN(
+                    parsed.getTime()
+                  )
+                )
+                  scannedAt =
+                    parsed.toLocaleString();
+
+              }
+
+            }
+
+            html += `
+              <tr>
+                <td>
+                  ${index + 1}
+                </td>
+                <td>
+                  ${escapeHTML(
+                    awbNumberOnly(
+                      d.code
+                    )
+                  )}
+                </td>
+                <td>
+                  ${escapeHTML(
+                    scannedAt
+                  )}
+                </td>
+                <td>
+                  ${escapeHTML(
+                    d.scannedBy ||
+                    ""
+                  )}
+                </td>
+              </tr>
+            `;
+
+          }
+        );
+
+      }
+
+      html += `
+            </tbody>
+          </table>
+
+          <button
+            type="button"
+            class="backButton liveULDDetailBack"
+          >
+            ⬅ BACK TO ULD LIST
+          </button>
+
+        </div>
+      `;
+
+      detail.innerHTML =
+        html;
+
+      /*
+         Hide the summary and show the selected ULD.
+      */
+      const listWrap =
+        container.querySelector(
+          ".liveULDListWrap"
+        );
+
+      if(listWrap)
+        listWrap.style.display =
+          "none";
+
+      detail.style.display =
+        "block";
+
+      const backButton =
+        detail.querySelector(
+          ".liveULDDetailBack"
+        );
+
+      if(backButton){
+
+        backButton.addEventListener(
+          "click",
+          () => {
+
+            detail.style.display =
+              "none";
+
+            if(listWrap)
+              listWrap.style.display =
+                "block";
+
+          }
+        );
+
+      }
+
+    };
 
     /* =========================================================
        EXPORT CLOSED ULDs
