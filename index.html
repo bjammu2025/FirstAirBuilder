@@ -2019,6 +2019,13 @@
     }
 
     /* =========================================================
+       12.92 - NETWORK-SAFE CREATE NEW ULD
+       Prevent repeated taps/retries from creating duplicate ULDs.
+       Uses local in-progress locking plus atomic Firestore
+       transaction creation with deterministic ULD document IDs.
+       ========================================================= */
+
+    /* =========================================================
        12.81 - ALLOCATE ULD PO DISPLAY BELOW AWB TABLE
        ========================================================= */
 
@@ -2581,6 +2588,99 @@
       background:#BBF7D0 !important;
     }
 
+
+    /* =========================================================
+       12.93 - PHONE STYLE BACK BUTTONS
+       Keep BACK controls small and fixed at the top-right on
+       every application screen. Home LOG OUT remains separate.
+       ========================================================= */
+    .screen{
+      padding-top:58px !important;
+      box-sizing:border-box !important;
+    }
+
+    .screen > .backButton,
+    .screen .liveULDDetailBack{
+      position:fixed !important;
+      top:10px !important;
+      right:10px !important;
+      left:auto !important;
+      z-index:25000 !important;
+      width:auto !important;
+      min-width:0 !important;
+      max-width:none !important;
+      margin:0 !important;
+      width:42px !important;
+      height:42px !important;
+      padding:0 !important;
+      border-radius:50% !important;
+      font-size:1.45rem !important;
+      line-height:42px !important;
+      font-weight:800 !important;
+      box-shadow:0 2px 6px rgba(0,0,0,.18) !important;
+    }
+
+    .screen > .backButton{
+      white-space:nowrap !important;
+      text-align:center !important;
+    }
+
+    .screen .liveULDDetailBack{
+      right:10px !important;
+      bottom:auto !important;
+    }
+
+    .logoutButton{
+      width:100% !important;
+      max-width:none !important;
+      margin:6px 0 !important;
+      padding:1rem !important;
+      border-radius:15px !important;
+      font-size:1.8rem !important;
+      font-weight:700 !important;
+    }
+
+    .awbSkidContainer{
+      display:flex !important;
+      justify-content:center !important;
+      align-items:center !important;
+      margin:10px 0 14px !important;
+    }
+
+    .awbSkidContainer.hidden{
+      display:none !important;
+    }
+
+    .awbSkidLabel{
+      display:flex !important;
+      align-items:center !important;
+      gap:10px !important;
+      font-size:1.15rem !important;
+      font-weight:800 !important;
+      color:#0B1F3A !important;
+      cursor:pointer !important;
+    }
+
+    .awbSkidLabel input{
+      width:26px !important;
+      height:26px !important;
+      margin:0 !important;
+      padding:0 !important;
+      cursor:pointer !important;
+    }
+
+    .skidBadge{
+      display:inline-block !important;
+      margin-left:6px !important;
+      padding:3px 7px !important;
+      border-radius:999px !important;
+      background:#F59E0B !important;
+      color:#111827 !important;
+      font-size:.68rem !important;
+      font-weight:900 !important;
+      vertical-align:middle !important;
+    }
+
 </style>
     </head>
 
@@ -2600,7 +2700,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.91
+        V.12.93
       </div>
 
       <div class="infoBox">
@@ -2675,6 +2775,29 @@
           placeholder="Enter ULD ID"
           autocomplete="off">
 
+        <div class="infoTitle">
+          Cargo Type
+        </div>
+
+        <select id="newULDCargoTypeSelect" multiple size="4">
+          <option value="Cooler">Cooler</option>
+          <option value="Frozen">Frozen</option>
+          <option value="Dry">Dry</option>
+          <option value="DG">DG</option>
+          <option value="Plank">Plank</option>
+          <option value="Belly">Belly</option>
+        </select>
+
+        <div class="manualHint">
+          Select one or more cargo types. Use the field below for any other type.
+        </div>
+
+        <input
+          type="text"
+          id="newULDCargoTypeManual"
+          placeholder="Add cargo type (optional)"
+          autocomplete="off">
+
         <button
           class="createButton"
           onclick="createNewULD()">
@@ -2703,7 +2826,7 @@
 
       <div class="homeSection homeLogoutSection">
         <button
-        class="backButton"
+        class="logoutButton"
         onclick="confirmLogout()">
         LOG OUT
       </button>
@@ -2790,7 +2913,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -2832,7 +2955,7 @@
       <button
         class="backButton"
         onclick="backToAdminMenuFromCreateUser()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -2890,7 +3013,7 @@
       <button
         class="backButton"
         onclick="backToAdminMenu()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -2918,7 +3041,7 @@
       </button>
 
       <button class="backButton" onclick="backToAdminMenuFromReopen()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -2953,7 +3076,7 @@
       <button
         class="backButton"
         onclick="backToAdminMenuFromDeleteULD()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -2993,7 +3116,7 @@
       <button
         class="backButton"
         onclick="backToAdminMenuFromAmendULD()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3087,7 +3210,7 @@
       <button
         class="backButton"
         onclick="backFromUpdateULDLocation()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3127,7 +3250,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3148,6 +3271,11 @@
 
         User:
         <span id="allocUser"></span>
+
+        <br>
+
+        Cargo Type:
+        <span id="allocCargoType">—</span>
 
       </h3>
 
@@ -3251,7 +3379,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3288,7 +3416,7 @@
     <button
         class="backButton"
         onclick="goHome()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3385,7 +3513,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3414,7 +3542,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3509,7 +3637,7 @@
       <button
         class="backButton"
         onclick="backFromCloseULDWeight()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3537,7 +3665,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3556,7 +3684,7 @@
         <button class="manualButton" onclick="addPOInput()">+ ADD PO</button>
       </div>
       <button class="confirmButton" onclick="saveYFBPOs()">SAVE POs</button>
-      <button class="backButton" onclick="backFromYFBPOUpdate()">⬅ BACK</button>
+      <button class="backButton" onclick="backFromYFBPOUpdate()">←</button>
     </div>
 
     <!-- =========================================================
@@ -3586,7 +3714,7 @@
       <button
         class="backButton"
         onclick="backToAdminMenuFromDeletePOs()">
-        ⬅ BACK
+        ←
       </button>
     </div>
 
@@ -3648,7 +3776,7 @@
         id="leftoverCameraBackButton"
         class="backButton hidden"
         onclick="backFromLeftoverCamera()">
-        ⬅ BACK
+        ←
       </button>
 
       <div
@@ -3675,7 +3803,7 @@
       <button
         class="backButton"
         onclick="backFromLeftoverInventory()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3728,7 +3856,7 @@
       <button
         class="backButton"
         onclick="backToAdminMenuFromLeftoverReport()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3749,7 +3877,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ⬅ BACK
+        ←
       </button>
 
     </div>
@@ -3845,6 +3973,13 @@
             Enter the 8-digit AWB number only.
           </div>
 
+        </div>
+
+        <div id="awbSkidContainer" class="awbSkidContainer hidden">
+          <label class="awbSkidLabel">
+            <input id="awbSkidCheckbox" type="checkbox">
+            <span>SKID</span>
+          </label>
         </div>
 
         <button
@@ -4090,7 +4225,8 @@
       getDoc,
       deleteDoc,
       deleteField,
-      writeBatch
+      writeBatch,
+      runTransaction
 
     }
     from
@@ -4135,6 +4271,12 @@
     let currentULD = "";
     let currentULDAllocationPool = "NORMAL";
     let currentUser = "";
+
+    /* 12.92 - Network-safe CREATE ULD guard.
+       Prevents repeated taps while a create request is pending.
+       Firestore transaction below provides the second layer of
+       protection across devices/retries. */
+    let createNewULDInProgress = false;
 
     /* =========================================================
        12.79 - PERSIST LOGIN THROUGH PAGE RELOAD
@@ -4256,6 +4398,8 @@
     let pendingAWB = "";
     let pendingAWBSource = "";
     let pendingAWBResolve = null;
+    let pendingAWBAllowSkid = false;
+    let pendingAWBSkid = false;
 
 
     /* =========================================================
@@ -4321,6 +4465,14 @@
       document
         .getElementById("newULDId")
         .value = "";
+
+      const newCargoSelect = document.getElementById("newULDCargoTypeSelect");
+      if(newCargoSelect)
+        Array.from(newCargoSelect.options).forEach(option => option.selected = false);
+
+      const newCargoManual = document.getElementById("newULDCargoTypeManual");
+      if(newCargoManual)
+        newCargoManual.value = "";
 
       document
         .getElementById("newULDBox")
@@ -4672,6 +4824,10 @@
         .getElementById("newULDBox")
         .classList.add("hidden");
 
+      const allocCargoLabel = document.getElementById("allocCargoType");
+      if(allocCargoLabel)
+        allocCargoLabel.innerText = "—";
+
       switchScreen("allocateStart");
 
       await loadOpenULDsForAllocate();
@@ -4914,6 +5070,16 @@
         .getElementById("newULDBox")
         .classList.toggle("hidden");
 
+      const cargoSelect =
+        document.getElementById("newULDCargoTypeSelect");
+      if(cargoSelect)
+        Array.from(cargoSelect.options).forEach(option => option.selected = false);
+
+      const cargoManual =
+        document.getElementById("newULDCargoTypeManual");
+      if(cargoManual)
+        cargoManual.value = "";
+
       document
         .getElementById("newULDId")
         .focus();
@@ -4932,6 +5098,19 @@
         document
           .getElementById("newULDId");
 
+      const createButton =
+        document
+          .querySelector("#newULDBox button");
+
+      /* ---------------------------------------------------------
+         12.92 - LOCAL DOUBLE-TAP / RETRY PROTECTION
+         If the scanner has poor network connectivity, do not allow
+         another CREATE request while the first one is still pending.
+         --------------------------------------------------------- */
+      if(createNewULDInProgress){
+        return;
+      }
+
       const uldId =
         input.value
           .trim()
@@ -4944,8 +5123,48 @@
 
       }
 
+      const selectedCargoTypes =
+        Array.from(
+          document.getElementById("newULDCargoTypeSelect").selectedOptions
+        )
+        .map(option => option.value)
+        .filter(Boolean);
+
+      const manualCargo =
+        document.getElementById("newULDCargoTypeManual").value.trim();
+
+      if(manualCargo){
+        manualCargo
+          .split(",")
+          .map(value => value.trim())
+          .filter(Boolean)
+          .forEach(value => selectedCargoTypes.push(value));
+      }
+
+      const cargoTypes =
+        [...new Set(selectedCargoTypes)];
+
+      if(cargoTypes.length === 0){
+        alert("Please select at least one Cargo Type or add a manual Cargo Type.");
+        return;
+      }
+
+      createNewULDInProgress = true;
+
+      if(createButton){
+        createButton.disabled = true;
+        createButton.dataset.originalText =
+          createButton.innerText;
+        createButton.innerText = "CREATING ULD...";
+      }
+
       try{
 
+        /* -------------------------------------------------------
+           First check legacy/random-ID ULD records.
+           This preserves compatibility with existing ULDs created
+           by earlier versions of the app.
+           ------------------------------------------------------- */
         const q =
           query(
             collection(db,"ulds"),
@@ -4963,41 +5182,70 @@
           );
 
           input.select();
-
           return;
-
         }
 
-        await addDoc(
-          collection(db,"ulds"),
-          {
+        /* -------------------------------------------------------
+           12.93 - ATOMIC ULD CREATION + CARGO TYPE
 
-            uldId:uldId,
+           The document ID is now the ULD ID itself instead of a
+           random addDoc() ID.
 
-            status:"OPEN",
+           The transaction makes creation atomic:
+           two devices/taps cannot both create the same ULD.
+           If the transaction is retried by Firestore, the second
+           attempt sees the document and does not create another.
+           ------------------------------------------------------- */
+        const uldRef =
+          doc(db,"ulds",uldId);
 
-            allocationPool:"NORMAL",
+        const created =
+          await runTransaction(
+            db,
+            async transaction => {
 
-            purchaseOrders:[],
+              const uldSnap =
+                await transaction.get(uldRef);
 
-            weightLbs:0,
+              if(uldSnap.exists()){
+                return false;
+              }
 
-            weightKg:0,
+              transaction.set(
+                uldRef,
+                {
+                  uldId:uldId,
+                  status:"OPEN",
+                  allocationPool:"NORMAL",
+                  purchaseOrders:[],
+                  cargoTypes:cargoTypes,
+                  cargoType:cargoTypes.join(", "),
+                  weightLbs:0,
+                  weightKg:0,
+                  createdAt:
+                    serverTimestamp(),
+                  createdBy:
+                    currentUser,
+                  closedAt:null,
+                  closedBy:"",
+                  uldLocation:""
+                }
+              );
 
-            createdAt:
-              serverTimestamp(),
+              return true;
+            }
+          );
 
-            createdBy:
-              currentUser,
+        if(!created){
 
-            closedAt:null,
+          alert(
+            "This ULD already exists.\n\n" +
+            "Duplicate ULDs are not allowed."
+          );
 
-            closedBy:"",
-
-            uldLocation:""
-
-          }
-        );
+          input.select();
+          return;
+        }
 
         currentULD = uldId;
         positionId = uldId;
@@ -5005,6 +5253,7 @@
 
         /* Clear the New ULD box immediately after successful creation */
         input.value = "";
+
         document
           .getElementById("newULDBox")
           .classList.add("hidden");
@@ -5016,6 +5265,10 @@
         document
           .getElementById("allocUser")
           .innerText = currentUser;
+
+        document
+          .getElementById("allocCargoType")
+          .innerText = cargoTypes.join(", ");
 
         switchScreen("allocateScan");
 
@@ -5034,10 +5287,26 @@
           error.message
         );
 
+      }finally{
+
+        /* Always release the local guard if the operation returns
+           to this screen because of an error or duplicate. */
+        createNewULDInProgress = false;
+
+        if(createButton){
+
+          createButton.disabled = false;
+
+          createButton.innerText =
+            createButton.dataset.originalText ||
+            "CREATE ULD & NEXT";
+
+          delete createButton.dataset.originalText;
+        }
+
       }
 
     };
-
 
     /* =========================================================
        START ALLOCATE
@@ -5073,6 +5342,8 @@
       document
         .getElementById("allocUser")
         .innerText = currentUser;
+
+      await loadAllocateULDCargoType(uld);
 
       switchScreen("allocateScan");
 
@@ -6140,6 +6411,58 @@
       }
     }
 
+    async function loadAllocateULDCargoType(uldId){
+
+      const label =
+        document.getElementById("allocCargoType");
+
+      if(!label)
+        return;
+
+      label.innerText = "Loading...";
+
+      try{
+        const snapshot = await getDocs(
+          query(
+            collection(db,"ulds"),
+            where("uldId","==",String(uldId || "").trim()),
+            where("status","==","OPEN")
+          )
+        );
+
+        const cargoSet = new Set();
+
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data() || {};
+
+          if(Array.isArray(data.cargoTypes)){
+            data.cargoTypes
+              .map(value => String(value || "").trim())
+              .filter(Boolean)
+              .forEach(value => cargoSet.add(value));
+          }
+
+          if(data.cargoType){
+            String(data.cargoType)
+              .split(",")
+              .map(value => value.trim())
+              .filter(Boolean)
+              .forEach(value => cargoSet.add(value));
+          }
+        });
+
+        label.innerText =
+          cargoSet.size
+            ? [...cargoSet].join(", ")
+            : "—";
+
+      }catch(error){
+        console.error("Allocate ULD Cargo Type load error:",error);
+        label.innerText = "—";
+      }
+    }
+
+
     async function loadAllocateULDPOs(uldId){
 
       const list =
@@ -6299,6 +6622,7 @@
                 ${escapeHTML(
                   awbNumberOnly(d.code)
                 )}
+                ${d.skid ? `<span class="skidBadge">SKID</span>` : ""}
               </td>
 
               <td>
@@ -6376,6 +6700,7 @@
         const isPOULD = pool === "PO_WEIGHT";
 
         let awbWeightKg = null;
+        let awbIsSkid = false;
 
         if(isPOULD){
           /*
@@ -6399,12 +6724,14 @@
 
           finalAWB = result.awb;
           awbWeightKg = result.weightKg;
+          awbIsSkid = !!result.skid;
 
         }else{
           /* Normal ULD uses the existing CHECK AWB popup. */
           const confirmed = await showAWBConfirmation(
             finalAWB,
-            source
+            source,
+            true
           );
 
           if(!confirmed){
@@ -6413,8 +6740,20 @@
             return;
           }
 
+          const confirmedAWB =
+            typeof confirmed === "object"
+              ? confirmed.awb
+              : confirmed;
+
+          const confirmedSkid =
+            typeof confirmed === "object"
+              ? !!confirmed.skid
+              : false;
+
           finalAWB = normalizeAWB(
-            typeof confirmed === "string" ? confirmed : finalAWB
+            typeof confirmedAWB === "string"
+              ? confirmedAWB
+              : finalAWB
           );
 
           if(!finalAWB){
@@ -6427,6 +6766,8 @@
             restartOCR();
             return;
           }
+
+          awbIsSkid = confirmedSkid;
         }
 
         /*
@@ -6470,6 +6811,9 @@
 
         if(awbWeightKg !== null)
           scanData.weightKg = awbWeightKg;
+
+        if(awbIsSkid)
+          scanData.skid = true;
 
         await addDoc(collection(db,"scans"), scanData);
 
@@ -6572,6 +6916,24 @@
         weightInput.style.cssText = "width:100%;box-sizing:border-box;padding:14px;font-size:1.45rem;font-weight:700;text-align:center;margin-bottom:8px;";
         box.appendChild(weightInput);
 
+        const skidWrap = document.createElement("div");
+        skidWrap.style.cssText = "display:flex;justify-content:center;align-items:center;margin:8px 0 12px;";
+
+        const skidLabel = document.createElement("label");
+        skidLabel.style.cssText = "display:flex;align-items:center;gap:10px;font-size:1.15rem;font-weight:800;color:#0B1F3A;cursor:pointer;";
+
+        const skidCheckbox = document.createElement("input");
+        skidCheckbox.type = "checkbox";
+        skidCheckbox.style.cssText = "width:26px;height:26px;margin:0;";
+
+        const skidText = document.createElement("span");
+        skidText.innerText = "SKID";
+
+        skidLabel.appendChild(skidCheckbox);
+        skidLabel.appendChild(skidText);
+        skidWrap.appendChild(skidLabel);
+        box.appendChild(skidWrap);
+
         const status = document.createElement("div");
         status.style.cssText = "min-height:25px;color:#B91C1C;text-align:center;margin:8px 0;font-weight:700;";
         box.appendChild(status);
@@ -6625,7 +6987,8 @@
 
           finish({
             awb: finalAWB,
-            weightKg: Number(weight.toFixed(2))
+            weightKg: Number(weight.toFixed(2)),
+            skid: skidCheckbox.checked
           });
         };
 
@@ -7035,7 +7398,8 @@
 
     function showAWBConfirmation(
       awb,
-      source
+      source,
+      allowSkid = false
     ){
 
       return new Promise(resolve => {
@@ -7048,6 +7412,20 @@
 
         pendingAWBResolve =
           resolve;
+
+        pendingAWBAllowSkid = !!allowSkid;
+        pendingAWBSkid = false;
+
+        const skidContainer =
+          document.getElementById("awbSkidContainer");
+        const skidCheckbox =
+          document.getElementById("awbSkidCheckbox");
+
+        if(skidCheckbox)
+          skidCheckbox.checked = false;
+
+        if(skidContainer)
+          skidContainer.classList.toggle("hidden", !allowSkid);
 
         const overlay =
           document.getElementById(
@@ -7412,6 +7790,13 @@
       const resolve =
         pendingAWBResolve;
 
+      const allowSkid =
+        pendingAWBAllowSkid;
+
+      const skid =
+        allowSkid &&
+        !!document.getElementById("awbSkidCheckbox")?.checked;
+
       closeAWBConfirm();
 
       pendingAWB =
@@ -7423,11 +7808,16 @@
       pendingAWBResolve =
         null;
 
+      pendingAWBAllowSkid = false;
+      pendingAWBSkid = false;
+
       if(typeof resolve === "function"){
 
         resolve(
           accepted
-            ? awb
+            ? allowSkid
+              ? { awb, skid }
+              : awb
             : false
         );
 
@@ -11569,7 +11959,7 @@
             type="button"
             class="backButton liveULDDetailBack"
           >
-            ⬅ BACK TO ULD LIST
+            ←
           </button>
 
         </div>
