@@ -2552,7 +2552,7 @@
       box-sizing:border-box !important;
     }
     #liveView .liveAWBDotMore{
-      font-size:.68rem !important; line-height:1 !important;
+      font-size:.72rem !important; line-height:1 !important;
       font-weight:700 !important; white-space:nowrap !important;
     }
 
@@ -2590,7 +2590,7 @@
 
 
     /* =========================================================
-       12.95 - COMPACT PHONE NAVIGATION
+       12.96 - COMPACT PHONE NAVIGATION
        Option E: rounded-pill "← Back" button.
        Screens whose Back action does not go directly Home also
        receive a separate "⌂ Home" button.
@@ -2630,7 +2630,7 @@
 
     .screen > .backButton.hasHome,
     .screen .liveULDDetailBack.hasHome{
-      right:104px !important;
+      right:125px !important;
     }
 
     .screen > .homeNavButton,
@@ -2638,6 +2638,16 @@
       right:10px !important;
       background:#0B1F3A !important;
       color:#fff !important;
+    }
+
+
+    /* 12.96 - Universal Back buttons for screens that previously had Home only. */
+    .screen > .universalBackButton{
+      right:10px !important;
+    }
+
+    .screen > .universalBackButton.hasHome{
+      right:125px !important;
     }
 
     .logoutButton{
@@ -2687,24 +2697,14 @@
       letter-spacing:0.04em;
     }
 
-    #liveView .liveSkidCell{
-      text-align:center;
-      white-space:nowrap;
-    }
-
-    #liveView .liveSkidCell .skidBadge{
-      display:inline-block;
-      margin:0;
-    }
-
     .skidBadge{
       display:inline-block !important;
       margin-left:6px !important;
-      padding:3px 7px !important;
+      padding:2px 6px !important;
       border-radius:999px !important;
       background:#F59E0B !important;
       color:#111827 !important;
-      font-size:.68rem !important;
+      font-size:.72rem !important;
       font-weight:900 !important;
       vertical-align:middle !important;
     }
@@ -2728,7 +2728,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.95
+        V.12.96
       </div>
 
       <div class="infoBox">
@@ -4028,7 +4028,7 @@
         <div id="awbSkidContainer" class="awbSkidContainer hidden">
           <label class="awbSkidLabel">
             <input id="awbSkidCheckbox" type="checkbox">
-            <span>SKID</span>
+            <span>S</span>
           </label>
         </div>
 
@@ -4453,10 +4453,24 @@
 
 
     /* =========================================================
-       SCREEN
+       SCREEN / NAVIGATION HISTORY - 12.96
+       Keeps a lightweight screen history so every menu can have
+       a working Back button. Home clears the history.
        ========================================================= */
 
+    const screenHistory = [];
+    let currentScreenId = "home";
+    let suppressScreenHistory = false;
+
     function switchScreen(id){
+
+      const target = document.getElementById(id);
+      if(!target) return;
+
+      if(!suppressScreenHistory && currentScreenId && currentScreenId !== id){
+        screenHistory.push(currentScreenId);
+        if(screenHistory.length > 30) screenHistory.shift();
+      }
 
       document
         .querySelectorAll(".screen")
@@ -4465,10 +4479,68 @@
             el.classList.remove("visible")
         );
 
-      document
-        .getElementById(id)
-        .classList.add("visible");
+      target.classList.add("visible");
+      currentScreenId = id;
+      updateUniversalScreenNavigation();
+    }
 
+    function backToPreviousScreen(){
+      if(screenHistory.length === 0){
+        goHome();
+        return;
+      }
+
+      const previous = screenHistory.pop();
+      suppressScreenHistory = true;
+      switchScreen(previous || "home");
+      suppressScreenHistory = false;
+      updateUniversalScreenNavigation();
+    }
+
+    function updateUniversalScreenNavigation(){
+      document.querySelectorAll(".screen").forEach(screen => {
+        const back = screen.querySelector(":scope > .backButton");
+        const home = screen.querySelector(":scope > .homeNavButton");
+        if(screen.id === "home") return;
+
+        if(!back){
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "backButton universalBackButton";
+          btn.innerText = "← Back";
+          btn.addEventListener("click", backToPreviousScreen);
+          screen.appendChild(btn);
+        }
+
+        if(!home){
+          const homeBtn = document.createElement("button");
+          homeBtn.type = "button";
+          homeBtn.className = "homeNavButton universalHomeButton";
+          homeBtn.innerText = "⌂ Home";
+          homeBtn.addEventListener("click", () => goHome());
+          screen.appendChild(homeBtn);
+        }
+      });
+
+      document.querySelectorAll(".screen").forEach(screen => {
+        if(screen.id === "home") return;
+        const back = screen.querySelector(":scope > .backButton");
+        const home = screen.querySelector(":scope > .homeNavButton");
+        if(back){
+          const hasPrevious = screenHistory.length > 0;
+          const previousIsHome = hasPrevious && screenHistory[screenHistory.length - 1] === "home";
+          if(home && hasPrevious && !previousIsHome) back.classList.add("hasHome");
+          else back.classList.remove("hasHome");
+          if(screen.classList.contains("visible") && back.classList.contains("universalBackButton")){
+            back.classList.remove("hidden");
+          }
+        }
+        if(home){
+          const hasPrevious = screenHistory.length > 0;
+          const previousIsHome = hasPrevious && screenHistory[screenHistory.length - 1] === "home";
+          home.classList.toggle("hidden", !(hasPrevious && !previousIsHome));
+        }
+      });
     }
 
 
@@ -4477,6 +4549,9 @@
        ========================================================= */
 
     window.goHome = async () => {
+
+      screenHistory.length = 0;
+      currentScreenId = "home";
 
       closeAWBConfirm();
 
@@ -6672,7 +6747,7 @@
                 ${escapeHTML(
                   awbNumberOnly(d.code)
                 )}
-                ${d.skid ? `<span class="skidBadge">SKID</span>` : ""}
+                ${d.skid ? `<span class="skidBadge">S</span>` : ""}
               </td>
 
               <td>
@@ -6977,7 +7052,7 @@
         skidCheckbox.style.cssText = "width:26px;height:26px;margin:0;";
 
         const skidText = document.createElement("span");
-        skidText.innerText = "SKID";
+        skidText.innerText = "S";
 
         skidLabel.appendChild(skidCheckbox);
         skidLabel.appendChild(skidText);
@@ -11553,7 +11628,7 @@
                   >
                     <td class="liveSummaryULD">
                       ${escapeHTML(uldId)}
-                      ${skidCount > 0 ? `<div class="liveSkidSummary">SKIDS: ${skidCount}</div>` : ""}
+                      ${skidCount > 0 ? `<div class="liveSkidSummary">S: ${skidCount}</div>` : ""}
                     </td>
                     <td>
                       ${escapeHTML(weight)}
@@ -11926,7 +12001,6 @@
               <tr>
                 <th>#</th>
                 <th>AWB</th>
-                <th>SKID</th>
                 <th>SCANNED AT</th>
                 <th>SCANNED BY</th>
               </tr>
@@ -11939,7 +12013,7 @@
 
         html += `
           <tr>
-            <td colspan="5">
+            <td colspan="4">
               No active AWBs
             </td>
           </tr>
@@ -12006,9 +12080,7 @@
                       d.code
                     )
                   )}
-                </td>
-                <td class="liveSkidCell">
-                  ${d.skid === true ? '<span class="skidBadge">SKID</span>' : '—'}
+                  ${d.skid === true ? '<span class="skidBadge">S</span>' : ''}
                 </td>
                 <td>
                   ${escapeHTML(
@@ -12035,9 +12107,16 @@
 
           <button
             type="button"
-            class="backButton liveULDDetailBack"
+            class="backButton liveULDDetailBack hasHome"
           >
             ← Back
+          </button>
+
+          <button
+            type="button"
+            class="homeNavButton liveULDDetailHome"
+          >
+            ⌂ Home
           </button>
 
         </div>
@@ -12082,6 +12161,18 @@
           }
         );
 
+      }
+
+      const homeButton =
+        detail.querySelector(
+          ".liveULDDetailHome"
+        );
+
+      if(homeButton){
+        homeButton.addEventListener(
+          "click",
+          () => goHome()
+        );
       }
 
     };
@@ -13989,3 +14080,4 @@
 
     </body>
     </html>
+<script>document.addEventListener("DOMContentLoaded",()=>setTimeout(updateUniversalScreenNavigation,0));</script>
