@@ -2646,6 +2646,23 @@
       right:112px !important;
     }
 
+    /* 12.99 - LIVE VIEW DETAIL NAVIGATION
+       When a ULD detail is open, hide the parent Live View navigation so
+       there is only one Back button. The detail's Back/Home pair gets its
+       own fixed positions and cannot overlap. */
+    #liveView.liveDetailOpen > .backButton,
+    #liveView.liveDetailOpen > .homeNavButton{
+      display:none !important;
+    }
+
+    #liveView.liveDetailOpen .liveULDDetailBack:not(.hidden){
+      right:112px !important;
+    }
+
+    #liveView.liveDetailOpen .liveULDDetailHome:not(.hidden){
+      right:10px !important;
+    }
+
     /* Never let a hidden camera-specific Back button participate in navigation. */
     .screen > .backButton.hidden{
       display:none !important;
@@ -2729,7 +2746,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.98
+        V.12.99
       </div>
 
       <div class="infoBox">
@@ -3707,7 +3724,7 @@
 
       <button
         class="backButton"
-        onclick="goHome()">
+        onclick="backToPreviousScreen()">
         ← Back
       </button>
 
@@ -3927,7 +3944,7 @@
 
       <button
         class="backButton"
-        onclick="goHome()">
+        onclick="backToPreviousScreen()">
         ← Back
       </button>
 
@@ -4029,7 +4046,7 @@
         <div id="awbSkidContainer" class="awbSkidContainer hidden">
           <label class="awbSkidLabel">
             <input id="awbSkidCheckbox" type="checkbox">
-            <span>S</span>
+            <span>SKID</span>
           </label>
         </div>
 
@@ -4594,6 +4611,11 @@
 
       screenHistory.length = 0;
       currentScreenId = "home";
+
+      const liveViewScreen =
+        document.getElementById("liveView");
+      if(liveViewScreen)
+        liveViewScreen.classList.remove("liveDetailOpen");
 
       closeAWBConfirm();
 
@@ -7587,6 +7609,15 @@
           document.getElementById("awbSkidContainer");
         const skidCheckbox =
           document.getElementById("awbSkidCheckbox");
+
+        /* 12.99: Allocate AWB confirmation must always display SKID.
+           Do this at runtime as well as in the HTML so older cached DOM
+           text cannot leave the confirmation showing only "S". */
+        const skidLabelText =
+          document.querySelector("#awbSkidContainer .awbSkidLabel span");
+
+        if(skidLabelText)
+          skidLabelText.innerText = "SKID";
 
         if(skidCheckbox)
           skidCheckbox.checked = false;
@@ -12179,6 +12210,19 @@
         listWrap.style.display =
           "none";
 
+      const liveViewScreen =
+        document.getElementById("liveView");
+
+      if(liveViewScreen){
+        liveViewScreen.classList.add("liveDetailOpen");
+
+        /* Hide the Live View screen-level Back button while the ULD detail
+           is open. The detail view supplies its own Back + Home pair. */
+        liveViewScreen
+          .querySelectorAll(":scope > .backButton, :scope > .homeNavButton")
+          .forEach(btn => btn.classList.add("hidden"));
+      }
+
       detail.style.display =
         "block";
 
@@ -12195,6 +12239,22 @@
 
             detail.style.display =
               "none";
+
+            const liveViewScreen =
+              document.getElementById("liveView");
+
+            if(liveViewScreen){
+              liveViewScreen.classList.remove("liveDetailOpen");
+
+              /* Restore the screen-level navigation after returning to the
+                 ULD summary list. Universal navigation will decide whether
+                 Back/Home should be visible. */
+              liveViewScreen
+                .querySelectorAll(":scope > .backButton, :scope > .homeNavButton")
+                .forEach(btn => btn.classList.remove("hidden"));
+
+              updateUniversalScreenNavigation();
+            }
 
             if(listWrap)
               listWrap.style.display =
