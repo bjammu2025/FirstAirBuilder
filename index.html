@@ -2663,6 +2663,20 @@
       right:10px !important;
     }
 
+    /* 13.02 - ULD DETAIL BACK MATCHES THE STANDARD BACK BUTTON EXACTLY. */
+    #liveView .liveULDDetailBack:not(.hidden){
+      width:84px !important;
+      height:38px !important;
+      min-width:84px !important;
+      max-width:84px !important;
+      padding:0 14px !important;
+      margin:0 !important;
+      border-radius:19px !important;
+      font-size:1rem !important;
+      line-height:38px !important;
+      box-sizing:border-box !important;
+    }
+
     /* Never let a hidden camera-specific Back button participate in navigation. */
     .screen > .backButton.hidden{
       display:none !important;
@@ -2728,7 +2742,7 @@
     }
 
 
-    /* V13.01 - Cargo type checkbox controls */
+    /* V13.02 - Cargo type checkbox controls */
     .cargoTypeChecks{
       width:95%;
       max-width:900px;
@@ -2773,6 +2787,68 @@
     @media(max-width:600px){
       .cargoTypeChecks{grid-template-columns:1fr;}
       .cargoTypeCheck{font-size:1rem;padding:10px 12px;}
+    }
+
+    /* =========================================================
+       13.02 - CREATE NEW ULD CARGO TYPE CLEANUP
+       Keep the checkbox functionality, but make this section compact,
+       clean and consistent with the other Cargo Type entry screens.
+       ========================================================= */
+    #newULDBox #newULDCargoTypeChecks{
+      width:100% !important;
+      max-width:none !important;
+      margin:8px 0 10px !important;
+      grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+      gap:7px !important;
+    }
+
+    #newULDBox #newULDCargoTypeChecks .cargoTypeCheck{
+      justify-content:center !important;
+      padding:9px 7px !important;
+      min-height:48px !important;
+      border-radius:9px !important;
+      font-size:1rem !important;
+      gap:7px !important;
+      text-align:center !important;
+      white-space:nowrap !important;
+    }
+
+    #newULDBox #newULDCargoTypeChecks .cargoTypeCheck input{
+      width:21px !important;
+      height:21px !important;
+    }
+
+    #newULDBox .newULDCargoManualHint{
+      width:100% !important;
+      margin:4px 0 7px !important;
+      font-size:.95rem !important;
+      line-height:1.25 !important;
+      text-align:left !important;
+    }
+
+    #newULDBox #newULDCargoTypeManual{
+      width:100% !important;
+      margin:4px 0 10px !important;
+      font-size:1.15rem !important;
+      padding:.8rem !important;
+    }
+
+    @media(max-width:900px){
+      #newULDBox #newULDCargoTypeChecks{
+        grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+      }
+    }
+
+    @media(max-width:600px){
+      #newULDBox #newULDCargoTypeChecks{
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+        gap:7px !important;
+      }
+
+      #newULDBox #newULDCargoTypeChecks .cargoTypeCheck{
+        font-size:.98rem !important;
+        padding:9px 6px !important;
+      }
     }
 
 </style>
@@ -2886,8 +2962,8 @@
           <label class="cargoTypeCheck"><input type="checkbox" value="Plank"> Plank</label>
         </div>
 
-        <div class="manualHint">
-          Tick one or more cargo types. Use the field below for any other type.
+        <div class="manualHint newULDCargoManualHint">
+          Tick one or more cargo types, or enter another type below.
         </div>
 
         <input
@@ -4038,8 +4114,9 @@
       </div>
 
       <button
-        class="backButton"
-        onclick="backToPreviousScreen()">
+        type="button"
+        class="backButton liveViewBackButton"
+        onclick="backFromLiveView()">
         ← Back
       </button>
 
@@ -11661,6 +11738,33 @@
 
     window.liveULDCache = new Map();
 
+    /*
+       13.02 - LIVE VIEW BACK
+       Keep Live View navigation explicit. If ULD detail is open, the same
+       action first closes the detail. Otherwise it returns to the actual
+       previous screen.
+    */
+    window.backFromLiveView = () => {
+
+      const detail =
+        document.getElementById("liveULDDetail");
+
+      if(
+        detail &&
+        detail.style.display === "block"
+      ){
+        backFromLiveULDDetail();
+        return;
+      }
+
+      if(typeof liveUnsubscribe === "function"){
+        liveUnsubscribe();
+        liveUnsubscribe = null;
+      }
+
+      backToPreviousScreen();
+    };
+
     window.goToLiveView = () => {
 
       switchScreen("liveView");
@@ -12018,6 +12122,21 @@
                   style="display:none;"
                 ></div>
               `;
+
+              /*
+                 13.02 - Do not rebuild the Live View DOM while a ULD detail
+                 is open. Rebuilding container.innerHTML during a Firestore
+                 update could remove the detail/back button mid-interaction.
+              */
+              const existingDetail =
+                container.querySelector("#liveULDDetail");
+
+              if(
+                existingDetail &&
+                existingDetail.style.display === "block"
+              ){
+                return;
+              }
 
               container.innerHTML =
                 html;
@@ -12469,7 +12588,7 @@
 
           <button
             type="button"
-            class="backButton liveULDDetailBack hasHome"
+            class="backButton liveULDDetailBack"
             onclick="backFromLiveULDDetail()"
           >
             ← Back
