@@ -1154,6 +1154,38 @@
       background:transparent !important;
     }
 
+    #homeUserBar{
+      width:100% !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:space-between !important;
+      box-sizing:border-box !important;
+      margin:0 0 14px 0 !important;
+      padding:0 2px !important;
+      background:transparent !important;
+    }
+
+    #homeUserLabel,
+    #homeStationLabel{
+      color:#1F2937 !important;
+      font-size:16px !important;
+      line-height:20px !important;
+      font-weight:600 !important;
+      background:transparent !important;
+      margin:0 !important;
+      padding:0 !important;
+    }
+
+    #homeUserLabel{ text-align:left !important; }
+    #homeStationLabel{ text-align:right !important; }
+
+    @media(max-width:600px){
+      #homeUserLabel,
+      #homeStationLabel{
+        font-size:14px !important;
+      }
+    }
+
     /* Buttons: flat navy with strong contrast */
     button,
     button:visited,
@@ -2742,7 +2774,7 @@
     }
 
 
-    /* V13.2 - Cargo type checkbox controls */
+    /* V14.0 - Cargo type checkbox controls */
     .cargoTypeChecks{
       width:95%;
       max-width:900px;
@@ -2905,7 +2937,10 @@
 
     <div id="home" class="screen">
 
-      <div id="homeUserLabel"></div>
+      <div id="homeUserBar" class="homeUserBar">
+        <div id="homeUserLabel" class="homeUserLabel"></div>
+        <div id="homeStationLabel" class="homeStationLabel"></div>
+      </div>
 
       <div class="homeSection">
         <div class="homeSectionTitle">ULD OPERATIONS</div>
@@ -3118,6 +3153,13 @@
           id="newUserPasswordConfirm"
           placeholder="Confirm Password"
           autocomplete="new-password">
+
+        <div class="infoTitle">Station</div>
+        <select id="newUserStation">
+          <option value="">Select Station</option>
+          <option value="YWG">YWG</option>
+          <option value="YRT">YRT</option>
+        </select>
       </div>
 
       <button
@@ -3168,8 +3210,15 @@
           placeholder="Confirm New Password"
           autocomplete="new-password">
 
+        <div class="infoTitle">Station</div>
+        <select id="resetUserStation">
+          <option value="">Select Station</option>
+          <option value="YWG">YWG</option>
+          <option value="YRT">YRT</option>
+        </select>
+
         <div class="manualHint">
-          Select the username whose password you want to reset, or delete.
+          Select a username to reset the password, change the station, or delete the user.
         </div>
 
       </div>
@@ -3178,6 +3227,12 @@
         class="confirmButton"
         onclick="resetUserPassword()">
         RESET PASSWORD
+      </button>
+
+      <button
+        class="manualButton"
+        onclick="amendUserStation()">
+        SAVE STATION
       </button>
 
       <button
@@ -4354,7 +4409,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "12.86";
+    const CODE_VERSION = "14.0";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -4511,6 +4566,100 @@
     let currentULD = "";
     let currentULDAllocationPool = "NORMAL";
     let currentUser = "";
+    let currentStation = "";
+
+    const STATIONS = ["YWG","YRT"];
+    const DEFAULT_STATION = "YWG";
+    const STATION_SESSION_KEY = "calmAirBuilderLoggedInStation";
+
+    function normalizeStation(value){
+      const station = String(value || "").trim().toUpperCase();
+      return STATIONS.includes(station) ? station : "";
+    }
+
+    function getCurrentStation(){
+      return currentStation;
+    }
+
+    function requireCurrentStation(){
+      const station = normalizeStation(currentStation);
+      if(!station){
+        throw new Error("No station is assigned to the logged-in user.");
+      }
+      return station;
+    }
+
+    function stationQuery(collectionName, ...constraints){
+      const station = requireCurrentStation();
+      return query(
+        collection(db,collectionName),
+        where("station","==",station),
+        ...constraints
+      );
+    }
+
+    function setHomeUserDisplay(){
+      const userEl = document.getElementById("homeUserLabel");
+      const stationEl = document.getElementById("homeStationLabel");
+      if(userEl) userEl.innerText = currentUser || "";
+      if(stationEl) stationEl.innerText = currentStation || "";
+    }
+
+    function saveStationSession(station){
+      const value = normalizeStation(station);
+      try{
+        if(value) localStorage.setItem(STATION_SESSION_KEY,value);
+        else localStorage.removeItem(STATION_SESSION_KEY);
+      }catch(error){
+        console.warn("Could not save station session:",error);
+      }
+    }
+
+    function clearStationSession(){
+      try{ localStorage.removeItem(STATION_SESSION_KEY); }
+      catch(error){ console.warn("Could not clear station session:",error); }
+    }
+
+    async function loadUserAccountByUsername(username){
+      const q = query(
+        collection(db,USERS_COLLECTION),
+        where("username","==",String(username || "").trim())
+      );
+      const snapshot = await getDocs(q);
+      if(snapshot.empty) return null;
+      const docSnap = snapshot.docs[0];
+      return {id:docSnap.id,data:docSnap.data() || {}};
+    }
+
+    async function applyLoggedInUser(username,userAccount=null){
+      const account = userAccount || await loadUserAccountByUsername(username);
+      if(!account) throw new Error("The logged-in user could not be found.");
+
+      let station = normalizeStation(account.data.station);
+
+      if(!station){
+        if(String(account.data.username || username || "").toLowerCase() === DEFAULT_ADMIN_USERNAME.toLowerCase()){
+          station = DEFAULT_STATION;
+          try{
+            await updateDoc(doc(db,USERS_COLLECTION,account.id),{
+              station:station,
+              stationUpdatedAt:serverTimestamp(),
+              stationUpdatedBy:DEFAULT_ADMIN_USERNAME
+            });
+          }catch(error){
+            console.warn("Could not initialize Admin station:",error);
+          }
+        }else{
+          throw new Error("This username does not have a station assigned. Ask an administrator to assign YWG or YRT.");
+        }
+      }
+
+      currentUser = String(account.data.username || username || "").trim();
+      currentStation = station;
+      saveStationSession(currentStation);
+      saveLoginSession(currentUser);
+      setHomeUserDisplay();
+    }
 
     /* 12.92 - Network-safe CREATE ULD guard.
        Prevents repeated taps while a create request is pending.
@@ -4572,33 +4721,33 @@
       }
     }
 
-    function restoreLoginSession(){
+    async function restoreLoginSession(){
       try{
         let savedUser = "";
-
         if(isZebraLoginMode()){
           savedUser =
             localStorage.getItem(LOGIN_SESSION_KEY) ||
             sessionStorage.getItem(LOGIN_SESSION_KEY) ||
             "";
         }else{
-          savedUser =
-            sessionStorage.getItem(LOGIN_SESSION_KEY) ||
-            "";
+          savedUser = sessionStorage.getItem(LOGIN_SESSION_KEY) || "";
         }
 
         if(savedUser && savedUser.trim()){
-          currentUser = savedUser.trim();
-
-          const homeUserLabel = document.getElementById("homeUserLabel");
-          if(homeUserLabel){
-            homeUserLabel.innerText = currentUser;
+          try{
+            await applyLoggedInUser(savedUser.trim());
+            switchScreen("home");
+          }catch(error){
+            console.warn("Could not restore logged-in user:",error);
+            clearLoginSession();
+            clearStationSession();
+            currentUser = "";
+            currentStation = "";
+            setHomeUserDisplay();
           }
-
-          switchScreen("home");
         }
       }catch(error){
-        console.warn("Could not restore login session:", error);
+        console.warn("Could not restore login session:",error);
       }
     }
 
@@ -4892,7 +5041,8 @@
             username:DEFAULT_ADMIN_USERNAME,
             passwordHash:passwordHash,
             createdAt:serverTimestamp(),
-            createdBy:DEFAULT_ADMIN_USERNAME
+            createdBy:DEFAULT_ADMIN_USERNAME,
+            station:DEFAULT_STATION
           });
         }else if(!snapshot.empty){
           const user = snapshot.docs[0].data();
@@ -4906,9 +5056,17 @@
           return;
         }
 
-        currentUser = username;
-        saveLoginSession(currentUser);
-        document.getElementById("homeUserLabel").innerText = currentUser;
+        try{
+          await applyLoggedInUser(username,snapshot.docs[0] ? {
+            id:snapshot.docs[0].id,
+            data:snapshot.docs[0].data()
+          } : null);
+        }catch(stationError){
+          setLoginStatus(stationError.message,"error");
+          document.getElementById("loginPassword").value = "";
+          return;
+        }
+
         document.getElementById("loginUsername").value = "";
         document.getElementById("loginPassword").value = "";
         setLoginStatus("");
@@ -4934,9 +5092,10 @@
       await closeCamera();
       stopBarcodeScanner();
       clearLoginSession();
+      clearStationSession();
       currentUser = "";
-      const homeUserLabel = document.getElementById("homeUserLabel");
-      if(homeUserLabel) homeUserLabel.innerText = "";
+      currentStation = "";
+      setHomeUserDisplay();
       currentULD = "";
       positionId = "";
       adminMenuUnlocked = false;
@@ -4974,12 +5133,16 @@
     window.openCreateUser = () => {
       if(!adminMenuUnlocked) return;
       ["newUsername","newUserPassword","newUserPasswordConfirm"].forEach(id => document.getElementById(id).value = "");
+      const newUserStation = document.getElementById("newUserStation");
+      if(newUserStation) newUserStation.value = "";
       switchScreen("createUser");
       document.getElementById("newUsername").focus();
     };
 
     window.backToAdminMenuFromCreateUser = () => {
       ["newUsername","newUserPassword","newUserPasswordConfirm"].forEach(id => document.getElementById(id).value = "");
+      const newUserStation = document.getElementById("newUserStation");
+      if(newUserStation) newUserStation.value = "";
       if(adminMenuUnlocked){
         switchScreen("adminMenu");
       }else{
@@ -5017,7 +5180,8 @@
           if(d.username){
             users.push({
               id:docSnap.id,
-              username:String(d.username)
+              username:String(d.username),
+              station:normalizeStation(d.station)
             });
           }
         });
@@ -5031,7 +5195,8 @@
         users.forEach(user => {
           const option = document.createElement("option");
           option.value = user.id;
-          option.textContent = user.username;
+          option.textContent = `${user.username}${user.station ? ` — ${user.station}` : " — NO STATION"}`;
+          option.dataset.station = user.station || "";
           select.appendChild(option);
         });
 
@@ -5058,14 +5223,20 @@
     window.selectResetUser = () => {
       document.getElementById("resetPassword").value = "";
       document.getElementById("resetPasswordConfirm").value = "";
+      const select = document.getElementById("resetUsernameSelect");
+      const stationSelect = document.getElementById("resetUserStation");
+      const station = select?.options?.[select.selectedIndex]?.dataset?.station || "";
+      if(stationSelect) stationSelect.value = station;
     };
 
     window.createUserAccount = async () => {
       const username = document.getElementById("newUsername").value.trim();
       const password = document.getElementById("newUserPassword").value;
       const confirm = document.getElementById("newUserPasswordConfirm").value;
+      const station = normalizeStation(document.getElementById("newUserStation")?.value);
 
       if(!username || !password){ alert("Enter a username and password."); return; }
+      if(!station){ alert("Please select a station: YWG or YRT."); return; }
       if(password !== confirm){ alert("Passwords do not match."); return; }
       if(username.length < 2){ alert("Username must be at least 2 characters."); return; }
 
@@ -5077,6 +5248,7 @@
         await addDoc(collection(db,USERS_COLLECTION),{
           username:username,
           passwordHash:await hashPassword(password),
+          station:station,
           createdAt:serverTimestamp(),
           createdBy:currentUser
         });
@@ -5126,6 +5298,43 @@
         alert("Could not reset password.\n\n" + error.message);
       }
     };
+
+    window.amendUserStation = async () => {
+      const selected = getSelectedResetUser();
+      const station = normalizeStation(document.getElementById("resetUserStation")?.value);
+
+      if(!selected.id){
+        alert("Please select a username.");
+        return;
+      }
+      if(!station){
+        alert("Please select a station: YWG or YRT.");
+        return;
+      }
+
+      try{
+        await updateDoc(
+          doc(db,USERS_COLLECTION,selected.id),
+          {
+            station:station,
+            stationUpdatedAt:serverTimestamp(),
+            stationUpdatedBy:currentUser
+          }
+        );
+
+        alert(`Station for ${selected.username} updated to ${station}.`);
+        await loadUsersForReset();
+
+        const select = document.getElementById("resetUsernameSelect");
+        if(select) select.value = selected.id;
+        const stationSelect = document.getElementById("resetUserStation");
+        if(stationSelect) stationSelect.value = station;
+      }catch(error){
+        console.error("Amend user station error:",error);
+        alert("Could not update user station.\n\n" + error.message);
+      }
+    };
+
 
     window.deleteSelectedUser = async () => {
       const selected = getSelectedResetUser();
@@ -5261,7 +5470,7 @@
 
         const q =
           query(
-            collection(db,"ulds"),
+            stationQuery("ulds"),
             where("status","==","OPEN")
           );
 
@@ -5336,7 +5545,7 @@
 
         const q =
           query(
-            collection(db,"ulds"),
+            stationQuery("ulds"),
             where("status","==","OPEN")
           );
 
@@ -5394,7 +5603,7 @@
 
 
     /* =========================================================
-       V13.2 - CARGO TYPE HELPERS
+       V14.0 - CARGO TYPE HELPERS
        ========================================================= */
     const STANDARD_CARGO_TYPES = ["Cooler","Frozen","Dry","DG","Plank"];
 
@@ -5564,7 +5773,7 @@
            ------------------------------------------------------- */
         const q =
           query(
-            collection(db,"ulds"),
+            stationQuery("ulds"),
             where("uldId","==",uldId)
           );
 
@@ -5593,8 +5802,11 @@
            If the transaction is retried by Firestore, the second
            attempt sees the document and does not create another.
            ------------------------------------------------------- */
+        const uldDocId =
+          `${requireCurrentStation()}__${uldId}`;
+
         const uldRef =
-          doc(db,"ulds",uldId);
+          doc(db,"ulds",uldDocId);
 
         const created =
           await runTransaction(
@@ -5612,6 +5824,7 @@
                 uldRef,
                 {
                   uldId:uldId,
+                  station:requireCurrentStation(),
                   status:"OPEN",
                   allocationPool:"NORMAL",
                   purchaseOrders:[],
@@ -6769,7 +6982,7 @@
 
         const snapshot = await getDocs(
           query(
-            collection(db,"ulds"),
+            stationQuery("ulds"),
             where("uldId","==",id),
             where("status","==","OPEN")
           )
@@ -6821,7 +7034,7 @@
       try{
         const snapshot = await getDocs(
           query(
-            collection(db,"ulds"),
+            stationQuery("ulds"),
             where("uldId","==",String(uldId || "").trim()),
             where("status","==","OPEN")
           )
@@ -6885,7 +7098,7 @@
         const snapshot =
           await getDocs(
             query(
-              collection(db,"ulds"),
+              stationQuery("ulds"),
               where("uldId","==",uldId),
               where("status","==","OPEN")
             )
@@ -6983,7 +7196,7 @@
 
         const q =
           query(
-            collection(db,"scans"),
+            stationQuery("scans"),
             where("uldId","==",uldId)
           );
 
@@ -7173,7 +7386,7 @@
         */
         const duplicateSnapshot = await getDocs(
           query(
-            collection(db,"scans"),
+            stationQuery("scans"),
             where("code","==",finalAWB)
           )
         );
@@ -7202,6 +7415,7 @@
           code: finalAWB,
           positionId: currentULD,
           uldId: currentULD,
+          station: requireCurrentStation(),
           scannedAt: serverTimestamp(),
           scannedBy: currentUser
         };
@@ -7433,7 +7647,7 @@
 
         const q =
           query(
-            collection(db,"ulds"),
+            stationQuery("ulds"),
             where("uldId","==",uld),
             where("status","==","OPEN")
           );
@@ -7506,7 +7720,7 @@
 
         const q =
           query(
-            collection(db,"scans"),
+            stationQuery("scans"),
             where("uldId","==",uldId)
           );
 
@@ -7614,7 +7828,7 @@
 
         const q =
           query(
-            collection(db,"scans"),
+            stationQuery("scans"),
             where("code","==",code)
           );
 
@@ -8742,7 +8956,7 @@
 
         const q =
           query(
-            collection(db,"ulds"),
+            stationQuery("ulds"),
             where("status","==","OPEN")
           );
 
@@ -8827,7 +9041,7 @@
       loadCloseULDLocation("");
 
       try{
-        const snapshot = await getDocs(query(collection(db,"ulds"),where("uldId","==",uld),where("status","==","OPEN")));
+        const snapshot = await getDocs(query(stationQuery("ulds"),where("uldId","==",uld),where("status","==","OPEN")));
         if(!snapshot.empty){
           const data = snapshot.docs[0].data();
           const oldLbs = Number(data.weightLbs || 0);
@@ -9062,7 +9276,7 @@
 
         const q =
           query(
-            collection(db,"ulds"),
+            stationQuery("ulds"),
             where("uldId","==",selectedCloseULD),
             where("status","==","OPEN")
           );
@@ -9162,7 +9376,7 @@
 
 
     /* =========================================================
-       V13.2 - AMEND CARGO TYPE
+       V14.0 - AMEND CARGO TYPE
        ========================================================= */
 
     window.openAmendCargoType = async () => {
@@ -9187,7 +9401,7 @@
       if(info) info.innerText = "";
 
       try{
-        const snapshot = await getDocs(collection(db,"ulds"));
+        const snapshot = await getDocs(stationQuery("ulds"));
         const ulds = [];
 
         snapshot.forEach(docSnap => {
@@ -9346,7 +9560,7 @@
       info.innerText = "";
 
       try{
-        const snapshot = await getDocs(query(collection(db,"ulds"),where("status","==","CLOSED")));
+        const snapshot = await getDocs(query(stationQuery("ulds"),where("status","==","CLOSED")));
         if(snapshot.empty){
           select.innerHTML = `<option value="">No CLOSED ULDs available</option>`;
           return;
@@ -9454,7 +9668,7 @@
 
         const snapshot =
           await getDocs(
-            collection(db,"ulds")
+            stationQuery("ulds")
           );
 
         const ulds = [];
@@ -9624,7 +9838,7 @@
 
         const duplicateQuery =
           query(
-            collection(db,"ulds"),
+            stationQuery("ulds"),
             where("uldId","==",newULD)
           );
 
@@ -9681,7 +9895,7 @@
         const byULD =
           await getDocs(
             query(
-              collection(db,"scans"),
+              stationQuery("scans"),
               where("uldId","==",oldULD)
             )
           );
@@ -9699,7 +9913,7 @@
         const byPosition =
           await getDocs(
             query(
-              collection(db,"scans"),
+              stationQuery("scans"),
               where("positionId","==",oldULD)
             )
           );
@@ -9859,7 +10073,7 @@
         const snapshot =
           await getDocs(
             query(
-              collection(db,"ulds"),
+              stationQuery("ulds"),
               where("status","==","CLOSED")
             )
           );
@@ -10126,7 +10340,7 @@
         const closedSnapshot =
           await getDocs(
             query(
-              collection(db,"ulds"),
+              stationQuery("ulds"),
               where("status","==","CLOSED")
             )
           );
@@ -10275,7 +10489,7 @@
 
       try{
         const q = query(
-          collection(db,"scans"),
+          stationQuery("scans"),
           where("uldId","==",uldId)
         );
 
@@ -10322,7 +10536,7 @@
       if(!select||!box) return;
       select.innerHTML=`<option value="">Loading OPEN ULDs...</option>`; box.innerHTML="";
       try{
-        const snapshot=await getDocs(query(collection(db,"ulds"),where("status","==","OPEN")));
+        const snapshot=await getDocs(query(stationQuery("ulds"),where("status","==","OPEN")));
         if(snapshot.empty){ select.innerHTML=`<option value="">No OPEN ULDs available</option>`; return; }
         const ulds=[]; snapshot.forEach(d=>{const x=d.data(); const id=String(x.uldId||d.id).trim(); if(id) ulds.push({id,docId:d.id,data:x});});
         ulds.sort((a,b)=>a.id.localeCompare(b.id));
@@ -10603,7 +10817,7 @@
       try{
         const snapshot=await getDocs(
           query(
-            collection(db,"ulds"),
+            stationQuery("ulds"),
             where("uldId","==",select.value),
             where("status","==","OPEN")
           )
@@ -10687,7 +10901,7 @@
 
       try{
         const snapshot = await getDocs(
-          query(collection(db,"ulds"),where("status","==","CLOSED"))
+          query(stationQuery("ulds"),where("status","==","CLOSED"))
         );
 
         const ulds = [];
@@ -10856,7 +11070,7 @@
         if(uldSnap.exists()) uldData = uldSnap.data();
 
         const scanSnap = await getDocs(
-          query(collection(db,"scans"),where("uldId","==",uldId))
+          query(stationQuery("scans"),where("uldId","==",uldId))
         );
 
         scanSnap.forEach(scanDoc => {
@@ -11036,7 +11250,7 @@
         const duplicateSnapshot =
           await getDocs(
             query(
-              collection(db,"scans"),
+              stationQuery("scans"),
               where("code","==",awb)
             )
           );
@@ -11105,6 +11319,7 @@
             code:awb,
             positionId:uldId,
             uldId:uldId,
+            station:requireCurrentStation(),
             scannedAt:serverTimestamp(),
             scannedBy:currentUser
           }
@@ -11218,7 +11433,7 @@
         const snapshot =
           await getDocs(
             query(
-              collection(db,LEFTOVER_COLLECTION),
+              stationQuery(LEFTOVER_COLLECTION),
               where("inventoryType","==",LEFTOVER_TYPE)
             )
           );
@@ -11320,7 +11535,7 @@
         const allocatedSnapshot =
           await getDocs(
             query(
-              collection(db,"scans"),
+              stationQuery("scans"),
               where("code","==",code)
             )
           );
@@ -11372,7 +11587,7 @@
         const leftoverSnapshot =
           await getDocs(
             query(
-              collection(db,LEFTOVER_COLLECTION),
+              stationQuery(LEFTOVER_COLLECTION),
               where("code","==",code)
             )
           );
@@ -11405,10 +11620,11 @@
         }
 
         await addDoc(
-          collection(db,LEFTOVER_COLLECTION),
+          stationQuery(LEFTOVER_COLLECTION),
           {
             code:code,
-            scannedAt:serverTimestamp(),
+            station:requireCurrentStation(),
+             scannedAt:serverTimestamp(),
             scannedBy:currentUser,
             inventoryType:LEFTOVER_TYPE,
             positionId:"[LEFTOVER]",
@@ -11486,7 +11702,7 @@
       const snapshot =
         await getDocs(
           query(
-            collection(db,LEFTOVER_COLLECTION),
+            stationQuery(LEFTOVER_COLLECTION),
             where("inventoryType","==",LEFTOVER_TYPE)
           )
         );
@@ -11800,7 +12016,7 @@
 
       liveUnsubscribe =
         onSnapshot(
-          collection(db,"ulds"),
+          stationQuery("ulds"),
           async uldSnapshot => {
 
             try{
@@ -11844,7 +12060,7 @@
               const liveAWBCounts = new Map();
               const liveSkidCounts = new Map();
               try{
-                const scanSnapshot = await getDocs(collection(db,"scans"));
+                const scanSnapshot = await getDocs(stationQuery("scans"));
                 scanSnapshot.forEach(docSnap => {
                   const d = docSnap.data();
                   if(d.positionId === "[REMOVED]") return;
@@ -12287,7 +12503,7 @@
           const scanSnapshot =
             await getDocs(
               query(
-                collection(db,"scans"),
+                stationQuery("scans"),
                 where("uldId","==",key)
               )
             );
@@ -12707,7 +12923,7 @@
 
         const uldSnapshot =
           await getDocs(
-            collection(db,"ulds")
+            stationQuery("ulds")
           );
 
         const closedULDs = [];
@@ -12752,7 +12968,7 @@
 
           const q =
             query(
-              collection(db,"scans"),
+              stationQuery("scans"),
               where("uldId","==",uldId)
             );
 
@@ -12929,7 +13145,7 @@
 
         const snapshot =
           await getDocs(
-            collection(db,"ulds")
+            stationQuery("ulds")
           );
 
         const ulds = [];
@@ -13103,7 +13319,7 @@
 
         const snapshot =
           await getDocs(
-            collection(db,"ulds")
+            stationQuery("ulds")
           );
 
         if(snapshot.empty){
@@ -13707,12 +13923,12 @@
         */
         const scanSnapshot =
           await getDocs(
-            collection(db,"scans")
+            stationQuery("scans")
           );
 
         const uldSnapshot =
           await getDocs(
-            collection(db,"ulds")
+            stationQuery("ulds")
           );
 
         const exportResult =
@@ -14089,7 +14305,7 @@
 
         const snapshot =
           await getDocs(
-            collection(db,"ulds")
+            stationQuery("ulds")
           );
 
         const ulds = [];
@@ -14320,7 +14536,7 @@
         const snap =
           await getDocs(
             query(
-              collection(db,"scans"),
+              stationQuery("scans"),
               where(
                 "uldId",
                 "==",
@@ -14349,7 +14565,7 @@
         const snap =
           await getDocs(
             query(
-              collection(db,"scans"),
+              stationQuery("scans"),
               where(
                 "positionId",
                 "==",
