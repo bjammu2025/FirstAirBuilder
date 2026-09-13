@@ -2590,30 +2590,32 @@
 
 
     /* =========================================================
-       12.96 - COMPACT PHONE NAVIGATION
-       Option E: rounded-pill "← Back" button.
-       Screens whose Back action does not go directly Home also
-       receive a separate "⌂ Home" button.
+       12.97 - COMPACT PHONE NAVIGATION / NO OVERLAP
+       Back and Home use fixed-width pills with a guaranteed gap.
+       Navigation visibility is controlled by updateUniversalScreenNavigation().
        ========================================================= */
     .screen{
       padding-top:58px !important;
       box-sizing:border-box !important;
     }
 
+    /* Primary navigation buttons on every screen.
+       Fixed widths + fixed gap prevent Back/Home from ever overlapping. */
     .screen > .backButton,
-    .screen .liveULDDetailBack,
     .screen > .homeNavButton,
+    .screen .liveULDDetailBack,
     .screen .liveULDDetailHome{
       position:fixed !important;
       top:10px !important;
-      left:auto !important;
       bottom:auto !important;
       z-index:25000 !important;
+      box-sizing:border-box !important;
+      width:auto !important;
       min-width:0 !important;
       max-width:none !important;
-      margin:0 !important;
       height:38px !important;
       padding:0 14px !important;
+      margin:0 !important;
       border-radius:19px !important;
       font-size:1rem !important;
       line-height:38px !important;
@@ -2623,31 +2625,30 @@
       box-shadow:0 2px 6px rgba(0,0,0,.18) !important;
     }
 
-    .screen > .backButton,
-    .screen .liveULDDetailBack{
+    /* Back = 84px wide; Home = 92px wide; 10px guaranteed gap. */
+    .screen > .backButton:not(.hidden),
+    .screen .liveULDDetailBack:not(.hidden){
       right:10px !important;
+      width:84px !important;
     }
 
-    .screen > .backButton.hasHome,
-    .screen .liveULDDetailBack.hasHome{
-      right:125px !important;
-    }
-
-    .screen > .homeNavButton,
-    .screen .liveULDDetailHome{
+    .screen > .homeNavButton:not(.hidden),
+    .screen .liveULDDetailHome:not(.hidden){
       right:10px !important;
+      width:92px !important;
       background:#0B1F3A !important;
       color:#fff !important;
     }
 
-
-    /* 12.96 - Universal Back buttons for screens that previously had Home only. */
-    .screen > .universalBackButton{
-      right:10px !important;
+    /* JS adds navWithHome only when Home is actually visible. */
+    .screen.navWithHome > .backButton:not(.hidden),
+    .screen.navWithHome .liveULDDetailBack:not(.hidden){
+      right:112px !important;
     }
 
-    .screen > .universalBackButton.hasHome{
-      right:125px !important;
+    /* Never let a hidden camera-specific Back button participate in navigation. */
+    .screen > .backButton.hidden{
+      display:none !important;
     }
 
     .logoutButton{
@@ -2728,7 +2729,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.96
+        V.12.98
       </div>
 
       <div class="infoBox">
@@ -4498,50 +4499,91 @@
     }
 
     function updateUniversalScreenNavigation(){
+
+      /*
+         12.97 FIX:
+         Some screens (notably leftoverScan) contain a hidden camera Back
+         button before their real screen-navigation Back button. The old
+         querySelector() picked that hidden button and therefore failed to
+         create/show a usable Back button.
+
+         Always look for a NON-HIDDEN direct child first. If none exists,
+         create a universal Back button. Do the same for Home.
+      */
       document.querySelectorAll(".screen").forEach(screen => {
-        const back = screen.querySelector(":scope > .backButton");
-        const home = screen.querySelector(":scope > .homeNavButton");
-        if(screen.id === "home") return;
+
+        if(screen.id === "home" || screen.id === "login")
+          return;
+
+        let back =
+          screen.querySelector(
+            ":scope > .backButton:not(.hidden)"
+          );
 
         if(!back){
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "backButton universalBackButton";
-          btn.innerText = "← Back";
-          btn.addEventListener("click", backToPreviousScreen);
-          screen.appendChild(btn);
+          back = document.createElement("button");
+          back.type = "button";
+          back.className = "backButton universalBackButton";
+          back.innerText = "← Back";
+          back.addEventListener("click", backToPreviousScreen);
+          screen.appendChild(back);
         }
+
+        let home =
+          screen.querySelector(
+            ":scope > .homeNavButton"
+          );
 
         if(!home){
-          const homeBtn = document.createElement("button");
-          homeBtn.type = "button";
-          homeBtn.className = "homeNavButton universalHomeButton";
-          homeBtn.innerText = "⌂ Home";
-          homeBtn.addEventListener("click", () => goHome());
-          screen.appendChild(homeBtn);
+          home = document.createElement("button");
+          home.type = "button";
+          home.className = "homeNavButton universalHomeButton";
+          home.innerText = "⌂ Home";
+          home.addEventListener("click", () => goHome());
+          screen.appendChild(home);
         }
-      });
 
-      document.querySelectorAll(".screen").forEach(screen => {
-        if(screen.id === "home") return;
-        const back = screen.querySelector(":scope > .backButton");
-        const home = screen.querySelector(":scope > .homeNavButton");
-        if(back){
-          const hasPrevious = screenHistory.length > 0;
-          const previousIsHome = hasPrevious && screenHistory[screenHistory.length - 1] === "home";
-          if(home && hasPrevious && !previousIsHome) back.classList.add("hasHome");
-          else back.classList.remove("hasHome");
-          if(screen.classList.contains("visible") && back.classList.contains("universalBackButton")){
-            back.classList.remove("hidden");
-          }
-        }
-        if(home){
-          const hasPrevious = screenHistory.length > 0;
-          const previousIsHome = hasPrevious && screenHistory[screenHistory.length - 1] === "home";
-          home.classList.toggle("hidden", !(hasPrevious && !previousIsHome));
-        }
+        const hasPrevious =
+          screenHistory.length > 0;
+
+        const previousIsHome =
+          hasPrevious &&
+          screenHistory[screenHistory.length - 1] === "home";
+
+        /* Home is only shown when Back would NOT return to Home. */
+        const shouldShowHome =
+          hasPrevious && !previousIsHome;
+
+        home.classList.toggle(
+          "hidden",
+          !shouldShowHome
+        );
+
+        /* Keep hidden camera Back controls hidden. */
+        screen
+          .querySelectorAll(":scope > .backButton.hidden")
+          .forEach(btn => btn.classList.add("hidden"));
+
+        /*
+           navWithHome is used by CSS to position Back 112px from the
+           right whenever Home is visible. This is independent of the
+           original hasHome class, so old screens cannot cause overlap.
+        */
+        screen.classList.toggle(
+          "navWithHome",
+          shouldShowHome
+        );
+
+        if(back.classList.contains("universalBackButton"))
+          back.classList.remove("hidden");
       });
     }
+
+    /* Build navigation once after all screen elements exist. */
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => updateUniversalScreenNavigation()
+    );
 
 
     /* =========================================================
@@ -7052,7 +7094,7 @@
         skidCheckbox.style.cssText = "width:26px;height:26px;margin:0;";
 
         const skidText = document.createElement("span");
-        skidText.innerText = "S";
+        skidText.innerText = "SKID";
 
         skidLabel.appendChild(skidCheckbox);
         skidLabel.appendChild(skidText);
@@ -11628,7 +11670,7 @@
                   >
                     <td class="liveSummaryULD">
                       ${escapeHTML(uldId)}
-                      ${skidCount > 0 ? `<div class="liveSkidSummary">S: ${skidCount}</div>` : ""}
+                      ${skidCount > 0 ? `<div class="liveSkidSummary">SKID: ${skidCount}</div>` : ""}
                     </td>
                     <td>
                       ${escapeHTML(weight)}
