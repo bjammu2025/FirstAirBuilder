@@ -2774,7 +2774,7 @@
     }
 
 
-    /* V14.0 - Cargo type checkbox controls */
+    /* V14.1 - Cargo type checkbox controls */
     .cargoTypeChecks{
       width:95%;
       max-width:900px;
@@ -4409,7 +4409,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "14.0";
+    const CODE_VERSION = "14.1";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -5603,7 +5603,7 @@
 
 
     /* =========================================================
-       V14.0 - CARGO TYPE HELPERS
+       V14.1 - CARGO TYPE HELPERS
        ========================================================= */
     const STANDARD_CARGO_TYPES = ["Cooler","Frozen","Dry","DG","Plank"];
 
@@ -9376,7 +9376,7 @@
 
 
     /* =========================================================
-       V14.0 - AMEND CARGO TYPE
+       V14.1 - AMEND CARGO TYPE
        ========================================================= */
 
     window.openAmendCargoType = async () => {
@@ -11620,7 +11620,7 @@
         }
 
         await addDoc(
-          stationQuery(LEFTOVER_COLLECTION),
+          collection(db,LEFTOVER_COLLECTION),
           {
             code:code,
             station:requireCurrentStation(),
