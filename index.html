@@ -2663,7 +2663,7 @@
       right:10px !important;
     }
 
-    /* 13.02 - ULD DETAIL BACK MATCHES THE STANDARD BACK BUTTON EXACTLY. */
+    /* 13.2 - ULD DETAIL BACK MATCHES THE STANDARD BACK BUTTON EXACTLY. */
     #liveView .liveULDDetailBack:not(.hidden){
       width:84px !important;
       height:38px !important;
@@ -2742,7 +2742,7 @@
     }
 
 
-    /* V13.02 - Cargo type checkbox controls */
+    /* V13.2 - Cargo type checkbox controls */
     .cargoTypeChecks{
       width:95%;
       max-width:900px;
@@ -2790,7 +2790,7 @@
     }
 
     /* =========================================================
-       13.02 - CREATE NEW ULD CARGO TYPE CLEANUP
+       13.2 - CREATE NEW ULD CARGO TYPE CLEANUP
        Keep the checkbox functionality, but make this section compact,
        clean and consistent with the other Cargo Type entry screens.
        ========================================================= */
@@ -2870,7 +2870,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.13.01
+        V.13.2
       </div>
 
       <div class="infoBox">
@@ -5394,7 +5394,7 @@
 
 
     /* =========================================================
-       V13.01 - CARGO TYPE HELPERS
+       V13.2 - CARGO TYPE HELPERS
        ========================================================= */
     const STANDARD_CARGO_TYPES = ["Cooler","Frozen","Dry","DG","Plank"];
 
@@ -9162,7 +9162,7 @@
 
 
     /* =========================================================
-       V13.01 - AMEND CARGO TYPE
+       V13.2 - AMEND CARGO TYPE
        ========================================================= */
 
     window.openAmendCargoType = async () => {
@@ -11739,7 +11739,7 @@
     window.liveULDCache = new Map();
 
     /*
-       13.02 - LIVE VIEW BACK
+       13.2 - LIVE VIEW BACK
        Keep Live View navigation explicit. If ULD detail is open, the same
        action first closes the detail. Otherwise it returns to the actual
        previous screen.
@@ -12124,7 +12124,7 @@
               `;
 
               /*
-                 13.02 - Do not rebuild the Live View DOM while a ULD detail
+                 13.2 - Do not rebuild the Live View DOM while a ULD detail
                  is open. Rebuilding container.innerHTML during a Firestore
                  update could remove the detail/back button mid-interaction.
               */
