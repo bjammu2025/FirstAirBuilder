@@ -503,21 +503,6 @@
       color:#ffca28;
     }
 
-    .cargoTypeChecks{
-      width:95%; max-width:900px; margin:8px auto 12px;
-      display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:8px; box-sizing:border-box;
-    }
-    .cargoTypeCheck{
-      display:flex; align-items:center; gap:10px; padding:12px 14px;
-      background:#FFFFFF; color:#111827 !important; border:1px solid #6B7280;
-      border-radius:10px; box-sizing:border-box; text-align:left;
-      cursor:pointer; font-size:1.15rem; font-weight:600;
-    }
-    .cargoTypeCheck input[type="checkbox"]{
-      width:28px !important; height:28px !important; margin:0 !important;
-      padding:0 !important; flex:0 0 auto; accent-color:#0B1F3A;
-    }
     @media(max-width:600px){
 
       input,select,button{
@@ -2742,6 +2727,54 @@
       vertical-align:middle !important;
     }
 
+
+    /* V13.01 - Cargo type checkbox controls */
+    .cargoTypeChecks{
+      width:95%;
+      max-width:900px;
+      margin:8px auto 12px;
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+      box-sizing:border-box;
+    }
+    .cargoTypeCheck{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 14px;
+      background:#FFFFFF;
+      border:1px solid #6B7280;
+      border-radius:10px;
+      box-sizing:border-box;
+      text-align:left;
+      font-size:1.15rem;
+      font-weight:600;
+      color:#111827;
+      cursor:pointer;
+    }
+    .cargoTypeCheck input{
+      width:24px !important;
+      height:24px;
+      margin:0 !important;
+      padding:0 !important;
+      accent-color:#0B1F3A;
+      flex:0 0 auto;
+    }
+    .cargoTypeManualRow{
+      width:95%;
+      max-width:900px;
+      margin:0 auto 10px;
+    }
+    .cargoTypeManualRow input{
+      width:100%;
+      box-sizing:border-box;
+    }
+    @media(max-width:600px){
+      .cargoTypeChecks{grid-template-columns:1fr;}
+      .cargoTypeCheck{font-size:1rem;padding:10px 12px;}
+    }
+
 </style>
     </head>
 
@@ -2761,7 +2794,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.13.00
+        V.13.01
       </div>
 
       <div class="infoBox">
@@ -2846,13 +2879,16 @@
         </div>
 
         <div id="newULDCargoTypeChecks" class="cargoTypeChecks">
-          <label class="cargoTypeCheck"><input type="checkbox" name="newULDCargoType" value="Cooler"> <span>Cooler</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="newULDCargoType" value="Frozen"> <span>Frozen</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="newULDCargoType" value="Dry"> <span>DRY</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="newULDCargoType" value="DG"> <span>DG</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="newULDCargoType" value="Plank"> <span>Plank</span></label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Cooler"> Cooler</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Frozen"> Frozen</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Dry"> Dry</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="DG"> DG</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Plank"> Plank</label>
         </div>
-        <div class="manualHint">Tick one or more cargo types. Use the field below for any other type.</div>
+
+        <div class="manualHint">
+          Tick one or more cargo types. Use the field below for any other type.
+        </div>
 
         <input
           type="text"
@@ -2894,29 +2930,6 @@
       </button>
       </div>
 
-    </div>
-
-    <div id="amendCargoType" class="screen">
-      <h3>Amend Cargo Type</h3>
-      <div class="infoBox">
-        <div class="infoTitle">Select ULD</div>
-        <select id="amendCargoTypeULDSelect" onchange="loadAmendCargoTypeForULD()">
-          <option value="">Loading ULDs...</option>
-        </select>
-        <div id="amendCargoTypeCurrent" class="manualHint"></div>
-        <div class="infoTitle">Cargo Type</div>
-        <div id="amendCargoTypeChecks" class="cargoTypeChecks">
-          <label class="cargoTypeCheck"><input type="checkbox" name="amendCargoType" value="Cooler"> <span>Cooler</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="amendCargoType" value="Frozen"> <span>Frozen</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="amendCargoType" value="Dry"> <span>DRY</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="amendCargoType" value="DG"> <span>DG</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="amendCargoType" value="Plank"> <span>Plank</span></label>
-        </div>
-        <div class="manualHint">Existing manual cargo types will appear here as checked boxes.</div>
-      </div>
-      <button class="confirmButton" onclick="saveAmendedCargoType()">SAVE CARGO TYPE</button>
-      <button class="backButton hasHome" onclick="backFromAmendCargoType()">← Back</button>
-      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
     </div>
 
     <div id="adminMenu" class="screen">
@@ -3215,6 +3228,50 @@
       <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
+
+    <!-- =========================================================
+         AMEND CARGO TYPE
+         ========================================================= -->
+    <div id="amendCargoType" class="screen">
+      <h3>Amend Cargo Type</h3>
+
+      <div class="infoBox">
+        <div class="infoTitle">Select ULD</div>
+        <select id="amendCargoTypeULDSelect">
+          <option value="">Loading ULDs...</option>
+        </select>
+
+        <div class="infoTitle">Cargo Type</div>
+        <div id="amendCargoTypeChecks" class="cargoTypeChecks">
+          <label class="cargoTypeCheck"><input type="checkbox" value="Cooler"> Cooler</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Frozen"> Frozen</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Dry"> Dry</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="DG"> DG</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Plank"> Plank</label>
+        </div>
+
+        <div id="amendCargoTypeManualChecks" class="cargoTypeChecks"></div>
+
+        <div class="cargoTypeManualRow">
+          <input type="text" id="amendCargoTypeManual"
+                 placeholder="Add cargo type manually (optional)"
+                 autocomplete="off">
+        </div>
+
+        <div id="amendCargoTypeCurrentInfo" class="manualHint"></div>
+      </div>
+
+      <button class="confirmButton" onclick="saveAmendedCargoType()">
+        SAVE CARGO TYPE
+      </button>
+
+      <button class="backButton hasHome" onclick="backFromAmendCargoType()">
+        ← Back
+      </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
+    </div>
+
 
     <!-- =========================================================
          ADMIN MENU PASSWORD
@@ -3691,13 +3748,16 @@
         </div>
 
         <div id="cargoTypeChecks" class="cargoTypeChecks">
-          <label class="cargoTypeCheck"><input type="checkbox" name="cargoType" value="Cooler"> <span>Cooler</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="cargoType" value="Frozen"> <span>Frozen</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="cargoType" value="Dry"> <span>DRY</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="cargoType" value="DG"> <span>DG</span></label>
-          <label class="cargoTypeCheck"><input type="checkbox" name="cargoType" value="Plank"> <span>Plank</span></label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Cooler"> Cooler</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Frozen"> Frozen</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Dry"> Dry</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="DG"> DG</label>
+          <label class="cargoTypeCheck"><input type="checkbox" value="Plank"> Plank</label>
         </div>
-        <div class="manualHint">Tick one or more cargo types. Use the manual field for any other type.</div>
+
+        <div class="manualHint">
+          Tick one or more cargo types. Use the manual field for any other type.
+        </div>
 
         <input type="text" id="cargoTypeManual" placeholder="Manual cargo type (optional)" autocomplete="off">
 
@@ -4217,7 +4277,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "13.00";
+    const CODE_VERSION = "12.86";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -4690,7 +4750,7 @@
         .getElementById("newULDId")
         .value = "";
 
-      resetCargoCheckboxes("newULDCargoTypeChecks","newULDCargoType");
+      clearCargoCheckboxes("newULDCargoTypeChecks");
 
       const newCargoManual = document.getElementById("newULDCargoTypeManual");
       if(newCargoManual)
@@ -5145,18 +5205,17 @@
         const ulds = [];
 
         snapshot.forEach(docSnap => {
-          const d = docSnap.data() || {};
-          const uldId = String(d.uldId || docSnap.id).trim();
-          if(uldId) ulds.push({uldId,data:d});
+          const d = docSnap.data();
+          const id = String(d.uldId || docSnap.id).trim();
+          if(id) ulds.push({id, data:d});
         });
 
-        ulds.sort((a,b)=>a.uldId.localeCompare(b.uldId));
+        ulds.sort((a,b) => a.id.localeCompare(b.id));
 
-        ulds.forEach(item => {
+        ulds.forEach(uld => {
           const option = document.createElement("option");
-          option.value = item.uldId;
-          const display = cargoTypeDisplay(item.data);
-          option.textContent = item.uldId + (display ? " - " + display : "");
+          option.value = uld.id;
+          option.textContent = uld.id + cargoDisplaySuffix(uld.data);
           select.appendChild(option);
         });
 
@@ -5221,18 +5280,17 @@
         const ulds = [];
 
         snapshot.forEach(docSnap => {
-          const d = docSnap.data() || {};
-          const uldId = String(d.uldId || docSnap.id).trim();
-          if(uldId) ulds.push({uldId,data:d});
+          const d = docSnap.data();
+          const id = String(d.uldId || docSnap.id).trim();
+          if(id) ulds.push({id, data:d});
         });
 
-        ulds.sort((a,b)=>a.uldId.localeCompare(b.uldId));
+        ulds.sort((a,b) => a.id.localeCompare(b.id));
 
-        ulds.forEach(item => {
+        ulds.forEach(uld => {
           const option = document.createElement("option");
-          option.value = item.uldId;
-          const display = cargoTypeDisplay(item.data);
-          option.textContent = item.uldId + (display ? " - " + display : "");
+          option.value = uld.id;
+          option.textContent = uld.id + cargoDisplaySuffix(uld.data);
           select.appendChild(option);
         });
 
@@ -5258,66 +5316,77 @@
     }
 
 
+    /* =========================================================
+       V13.01 - CARGO TYPE HELPERS
+       ========================================================= */
     const STANDARD_CARGO_TYPES = ["Cooler","Frozen","Dry","DG","Plank"];
-    const CARGO_TYPE_ABBREVIATIONS = {Cooler:"CLR",Frozen:"FRZ",Dry:"DRY",DG:"DG",Plank:"PLK"};
 
-    function normalizeCargoTypes(data){
-      let values=[];
-      if(Array.isArray(data?.cargoTypes)) values.push(...data.cargoTypes);
-      if(data?.cargoType) values.push(...String(data.cargoType).split(","));
-      return [...new Set(values.map(v=>String(v||"").trim()).filter(Boolean))];
+    function cargoTypesFromData(data){
+      const result = [];
+      if(Array.isArray(data?.cargoTypes)){
+        data.cargoTypes.forEach(v => {
+          const s = String(v || "").trim();
+          if(s) result.push(s);
+        });
+      }
+      if(data?.cargoType){
+        String(data.cargoType).split(",").map(v => v.trim()).filter(Boolean)
+          .forEach(v => result.push(v));
+      }
+      return [...new Map(result.map(v => [v.toUpperCase(), v])).values()];
     }
 
-    function cargoTypeDisplay(data){
-      const result=[];
-      normalizeCargoTypes(data).forEach(value=>{
-        const standard=STANDARD_CARGO_TYPES.find(type=>type.toUpperCase()===value.toUpperCase());
-        if(standard) result.push(CARGO_TYPE_ABBREVIATIONS[standard]);
-      });
-      return [...new Set(result)].join(" / ");
+    function cargoDisplayCode(value){
+      const map = {"COOLER":"CLR","FROZEN":"FRZ","DRY":"DRY","DG":"DG","PLANK":"PLK"};
+      return map[String(value || "").trim().toUpperCase()] || "";
     }
 
-    function getCheckedCargoTypes(name){
-      return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
-        .map(input=>input.value).filter(Boolean);
+    function cargoDisplaySuffix(data){
+      const codes = [...new Set(cargoTypesFromData(data).map(cargoDisplayCode).filter(Boolean))];
+      return codes.length ? ` - ${codes.join(", ")}` : "";
     }
 
-    function clearCargoCheckboxes(containerId,name){
-      const container=document.getElementById(containerId);
-      if(!container) return;
-      Array.from(container.querySelectorAll(`input[name="${name}"]`)).forEach(input=>input.checked=false);
-      container.querySelectorAll(".manualCargoDynamic").forEach(el=>el.remove());
+    function getCheckedCargoTypes(containerId){
+      const box = document.getElementById(containerId);
+      if(!box) return [];
+      return Array.from(box.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(input => input.value).filter(Boolean);
     }
 
-    function renderCargoCheckboxes(containerId,name,cargoTypes){
-      const container=document.getElementById(containerId);
-      if(!container) return;
-      clearCargoCheckboxes(containerId,name);
-      [...new Set((cargoTypes||[]).map(v=>String(v||"").trim()).filter(Boolean))].forEach(value=>{
-        const standard=STANDARD_CARGO_TYPES.find(type=>type.toUpperCase()===value.toUpperCase());
-        if(standard){
-          const input=container.querySelector(`input[name="${name}"][value="${standard}"]`);
-          if(input) input.checked=true;
-          return;
-        }
-        if(value.toUpperCase()==="BELLY") return;
-        const label=document.createElement("label");
-        label.className="cargoTypeCheck manualCargoDynamic";
-        const input=document.createElement("input");
-        input.type="checkbox"; input.name=name; input.value=value; input.checked=true;
-        const span=document.createElement("span"); span.textContent=value;
-        label.appendChild(input); label.appendChild(document.createTextNode(" ")); label.appendChild(span);
-        container.appendChild(label);
+    function clearCargoCheckboxes(containerId){
+      const box = document.getElementById(containerId);
+      if(!box) return;
+      box.querySelectorAll('input[type="checkbox"]').forEach(input => input.checked = false);
+    }
+
+    function setCargoCheckboxes(containerId, cargoTypes){
+      const box = document.getElementById(containerId);
+      if(!box) return;
+      const wanted = new Set(cargoTypes.map(v => String(v).trim().toUpperCase()));
+      box.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.checked = wanted.has(String(input.value).trim().toUpperCase());
       });
     }
 
-    function resetCargoCheckboxes(containerId,name){ clearCargoCheckboxes(containerId,name); }
+    function renderManualCargoCheckboxes(containerId, customTypes){
+      const box = document.getElementById(containerId);
+      if(!box) return;
+      box.innerHTML = "";
+      [...new Set(customTypes.map(v => String(v || "").trim()).filter(Boolean))].forEach(type => {
+        const label = document.createElement("label");
+        label.className = "cargoTypeCheck";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = type;
+        input.checked = true;
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(` ${type}`));
+        box.appendChild(label);
+      });
+    }
 
-    function cargoTypesForSave(name,manualFieldId){
-      const values=getCheckedCargoTypes(name);
-      const manual=document.getElementById(manualFieldId)?.value.trim()||"";
-      if(manual) manual.split(",").map(v=>v.trim()).filter(Boolean).forEach(v=>values.push(v));
-      return [...new Set(values.filter(v=>String(v).trim() && String(v).toUpperCase()!=="BELLY")];
+    function splitManualCargoTypes(value){
+      return String(value || "").split(",").map(v => v.trim()).filter(Boolean);
     }
 
     /* =========================================================
@@ -5330,7 +5399,7 @@
         .getElementById("newULDBox")
         .classList.toggle("hidden");
 
-      resetCargoCheckboxes("newULDCargoTypeChecks","newULDCargoType");
+      clearCargoCheckboxes("newULDCargoTypeChecks");
 
       const cargoManual =
         document.getElementById("newULDCargoTypeManual");
@@ -5380,21 +5449,20 @@
 
       }
 
-      const selectedCargoTypes = getCheckedCargoTypes("newULDCargoType");
+      const selectedCargoTypes =
+        getCheckedCargoTypes("newULDCargoTypeChecks");
 
       const manualCargo =
         document.getElementById("newULDCargoTypeManual").value.trim();
 
       if(manualCargo){
-        manualCargo
-          .split(",")
-          .map(value => value.trim())
-          .filter(Boolean)
-          .forEach(value => selectedCargoTypes.push(value));
+        selectedCargoTypes.push(...splitManualCargoTypes(manualCargo));
       }
 
       const cargoTypes =
-        [...new Set(selectedCargoTypes)];
+        [...new Map(
+          selectedCargoTypes.map(v => [String(v).trim().toUpperCase(), String(v).trim()])
+        ).values()];
 
       if(cargoTypes.length === 0){
         alert("Please select at least one Cargo Type or add a manual Cargo Type.");
@@ -8616,18 +8684,19 @@
         }
 
         const ulds = [];
-        snapshot.forEach(docSnap => {
-          const d = docSnap.data() || {};
-          const uldId = String(d.uldId || docSnap.id).trim();
-          if(uldId) ulds.push({uldId,data:d});
-        });
-        ulds.sort((a,b)=>a.uldId.localeCompare(b.uldId));
 
-        ulds.forEach(item => {
+        snapshot.forEach(docSnap => {
+          const d = docSnap.data();
+          const id = String(d.uldId || docSnap.id).trim();
+          if(id) ulds.push({id, data:d});
+        });
+
+        ulds.sort((a,b) => a.id.localeCompare(b.id));
+
+        ulds.forEach(uld => {
           const option = document.createElement("option");
-          option.value = item.uldId;
-          const display = cargoTypeDisplay(item.data);
-          option.textContent = item.uldId + (display ? " - " + display : "");
+          option.value = uld.id;
+          option.textContent = uld.id + cargoDisplaySuffix(uld.data);
           select.appendChild(option);
         });
 
@@ -8653,7 +8722,7 @@
       selectedCloseULD = "";
       document.getElementById("weightLbs").value = "";
       document.getElementById("weightKgDisplay").innerText = "0 KG";
-      resetCargoCheckboxes("cargoTypeChecks","cargoType");
+      clearCargoCheckboxes("cargoTypeChecks");
       document.getElementById("cargoTypeManual").value = "";
 
       loadCloseULDLocation("");
@@ -8676,7 +8745,7 @@
       document.getElementById("closeULDName").innerText = uld;
       document.getElementById("weightLbs").value = "";
       document.getElementById("weightKgDisplay").innerText = "0 KG";
-      resetCargoCheckboxes("cargoTypeChecks","cargoType");
+      clearCargoCheckboxes("cargoTypeChecks");
       document.getElementById("cargoTypeManual").value = "";
       loadCloseULDLocation("");
 
@@ -8696,12 +8765,12 @@
             document.getElementById("weightKgDisplay").innerText = Math.round(oldKg || oldLbs * 0.45359237) + " KG";
           }
 
-          renderCargoCheckboxes("cargoTypeChecks","cargoType",oldCargo);
+          setCargoCheckboxes("cargoTypeChecks", oldCargo);
           const customTypes = oldCargo.filter(type =>
-            !STANDARD_CARGO_TYPES.some(x=>x.toUpperCase()===String(type).toUpperCase()) &&
-            String(type).toUpperCase()!=="BELLY"
+            !STANDARD_CARGO_TYPES.some(x => x.toUpperCase() === String(type).toUpperCase())
           );
-          if(customTypes.length) document.getElementById("cargoTypeManual").value = customTypes.join(", ");
+          if(customTypes.length)
+            document.getElementById("cargoTypeManual").value = customTypes.join(", ");
         }
       }catch(error){
         console.error("Load existing ULD close data error:",error);
@@ -8876,7 +8945,19 @@
       const kg =
         Math.round(lbs * 0.45359237);
 
-      const cargoTypes = cargoTypesForSave("cargoType","cargoTypeManual");
+      const selectedCargoTypes =
+        getCheckedCargoTypes("cargoTypeChecks");
+
+      const manualCargo =
+        document.getElementById("cargoTypeManual").value.trim();
+
+      if(manualCargo){
+        selectedCargoTypes.push(...splitManualCargoTypes(manualCargo));
+      }
+
+      const cargoTypes = [...new Map(
+        selectedCargoTypes.map(v => [String(v).trim().toUpperCase(), String(v).trim()])
+      ).values()];
 
       if(cargoTypes.length === 0){
         alert("Please select at least one Cargo Type or enter a manual Cargo Type.");
@@ -9004,6 +9085,174 @@
 
 
     /* =========================================================
+       V13.01 - AMEND CARGO TYPE
+       ========================================================= */
+
+    window.openAmendCargoType = async () => {
+      switchScreen("amendCargoType");
+      await loadULDsForAmendCargoType();
+    };
+
+    async function loadULDsForAmendCargoType(){
+      const select = document.getElementById("amendCargoTypeULDSelect");
+      if(!select) return;
+
+      select.innerHTML = `<option value="">Loading ULDs...</option>`;
+      clearCargoCheckboxes("amendCargoTypeChecks");
+
+      const manualChecks = document.getElementById("amendCargoTypeManualChecks");
+      if(manualChecks) manualChecks.innerHTML = "";
+
+      const manualInput = document.getElementById("amendCargoTypeManual");
+      if(manualInput) manualInput.value = "";
+
+      const info = document.getElementById("amendCargoTypeCurrentInfo");
+      if(info) info.innerText = "";
+
+      try{
+        const snapshot = await getDocs(collection(db,"ulds"));
+        const ulds = [];
+
+        snapshot.forEach(docSnap => {
+          const d = docSnap.data() || {};
+          const id = String(
+            d.uldId || d.positionId || d.uld || d.ULD || docSnap.id || ""
+          ).trim();
+
+          if(id){
+            ulds.push({
+              docId:docSnap.id,
+              uldId:id,
+              status:String(d.status || "OPEN").toUpperCase(),
+              data:d
+            });
+          }
+        });
+
+        ulds.sort((a,b) => a.uldId.localeCompare(b.uldId));
+        select.innerHTML = `<option value="">Select ULD</option>`;
+
+        ulds.forEach(uld => {
+          const option = document.createElement("option");
+          option.value = uld.docId;
+          option.dataset.uldId = uld.uldId;
+          option.textContent =
+            `${uld.uldId}${cargoDisplaySuffix(uld.data)} (${uld.status})`;
+          select.appendChild(option);
+        });
+
+        if(!ulds.length){
+          select.innerHTML = `<option value="">No ULDs available</option>`;
+          return;
+        }
+
+        select.onchange = () => {
+          const item = ulds.find(x => x.docId === select.value);
+
+          if(!item){
+            clearCargoCheckboxes("amendCargoTypeChecks");
+            const box = document.getElementById("amendCargoTypeManualChecks");
+            if(box) box.innerHTML = "";
+            if(manualInput) manualInput.value = "";
+            if(info) info.innerText = "";
+            return;
+          }
+
+          const cargoTypes = cargoTypesFromData(item.data);
+          setCargoCheckboxes("amendCargoTypeChecks", cargoTypes);
+
+          const customTypes = cargoTypes.filter(type =>
+            !STANDARD_CARGO_TYPES.some(x =>
+              x.toUpperCase() === String(type).toUpperCase()
+            )
+          );
+
+          renderManualCargoCheckboxes("amendCargoTypeManualChecks", customTypes);
+
+          if(manualInput) manualInput.value = "";
+
+          if(info){
+            info.innerText = cargoTypes.length
+              ? `Current Cargo Type: ${cargoTypes.join(", ")}`
+              : "Current Cargo Type: Not Set";
+          }
+        };
+
+      }catch(error){
+        console.error("Load Amend Cargo Type error:", error);
+        select.innerHTML = `<option value="">Unable to load ULDs</option>`;
+        alert("Could not load ULDs.\n\n" + error.message);
+      }
+    }
+
+    window.saveAmendedCargoType = async () => {
+      const select = document.getElementById("amendCargoTypeULDSelect");
+      if(!select || !select.value){
+        alert("Please select a ULD.");
+        return;
+      }
+
+      const selected = getCheckedCargoTypes("amendCargoTypeChecks");
+      const manualExisting = getCheckedCargoTypes("amendCargoTypeManualChecks");
+      const manualNew = splitManualCargoTypes(
+        document.getElementById("amendCargoTypeManual")?.value || ""
+      );
+
+      const cargoTypes = [...new Map(
+        [...selected, ...manualExisting, ...manualNew]
+          .map(v => [String(v).trim().toUpperCase(), String(v).trim()])
+      ).values()];
+
+      if(!cargoTypes.length){
+        alert("Please tick at least one Cargo Type or enter a manual Cargo Type.");
+        return;
+      }
+
+      const docId = select.value;
+      const uldId =
+        select.options[select.selectedIndex]?.dataset?.uldId || "";
+
+      try{
+        await updateDoc(doc(db,"ulds",docId),{
+          cargoTypes,
+          cargoType:cargoTypes.join(", "),
+          cargoTypeUpdatedAt:serverTimestamp(),
+          cargoTypeUpdatedBy:currentUser
+        });
+
+        await showVerification(
+          true,
+          uldId,
+          "CARGO TYPE UPDATED",
+          `Cargo Type for ULD ${uldId} was updated to:\n${cargoTypes.join(", ")}`
+        );
+
+        await loadULDsForAmendCargoType();
+
+        const fresh = Array.from(select.options).find(
+          option => option.dataset.uldId === uldId
+        );
+        if(fresh){
+          select.value = fresh.value;
+          select.dispatchEvent(new Event("change"));
+        }
+
+      }catch(error){
+        console.error("Save amended cargo type error:", error);
+        alert("Could not update Cargo Type.\n\n" + error.message);
+      }
+    };
+
+    window.backFromAmendCargoType = () => {
+      clearCargoCheckboxes("amendCargoTypeChecks");
+      const box = document.getElementById("amendCargoTypeManualChecks");
+      if(box) box.innerHTML = "";
+      const input = document.getElementById("amendCargoTypeManual");
+      if(input) input.value = "";
+      switchScreen("home");
+    };
+
+    /* =========================================================
        REOPEN CLOSED ULD
        ========================================================= */
 
@@ -9033,7 +9282,8 @@
             uldId:d.uldId || docSnap.id,
             weightLbs:Number(d.weightLbs || 0),
             weightKg:Number(d.weightKg || 0),
-            cargoType:d.cargoType || (Array.isArray(d.cargoTypes) ? d.cargoTypes.join(", ") : "")
+            cargoType:d.cargoType || (Array.isArray(d.cargoTypes) ? d.cargoTypes.join(", ") : ""),
+          cargoDisplay:cargoDisplaySuffix(d)
           });
         });
         ulds.sort((a,b) => a.uldId.localeCompare(b.uldId));
@@ -9041,7 +9291,7 @@
         ulds.forEach(uld => {
           const option = document.createElement("option");
           option.value = uld.id;
-          option.textContent = uld.uldId;
+          option.textContent = uld.uldId + (uld.cargoDisplay || "");
           option.dataset.info = `${uld.weightLbs.toFixed(2)} LBS / ${Math.round(uld.weightKg)} KGS${uld.cargoType ? " / " + uld.cargoType : ""}`;
           select.appendChild(option);
         });
@@ -9090,108 +9340,6 @@
       else goHome();
     };
 
-
-    /* =========================================================
-       13.00 AMEND CARGO TYPE
-       ========================================================= */
-    window.openAmendCargoType = async () => {
-      if(!getCurrentUser()){ alert("Please enter user name"); return; }
-      switchScreen("amendCargoType");
-      resetCargoCheckboxes("amendCargoTypeChecks","amendCargoType");
-      const info=document.getElementById("amendCargoTypeCurrent");
-      if(info) info.innerText="";
-      await loadULDsForAmendCargoType();
-    };
-
-    async function loadULDsForAmendCargoType(){
-      const select=document.getElementById("amendCargoTypeULDSelect");
-      if(!select) return;
-      select.innerHTML=`<option value="">Loading ULDs...</option>`;
-      try{
-        const snapshot=await getDocs(collection(db,"ulds"));
-        const ulds=[];
-        snapshot.forEach(docSnap=>{
-          const d=docSnap.data()||{};
-          const uldId=String(d.uldId||d.positionId||d.uld||d.ULD||docSnap.id||"").trim();
-          if(uldId) ulds.push({docId:docSnap.id,uldId,data:d});
-        });
-        ulds.sort((a,b)=>a.uldId.localeCompare(b.uldId));
-        select.innerHTML=`<option value="">Select ULD</option>`;
-        ulds.forEach(uld=>{
-          const option=document.createElement("option");
-          option.value=uld.docId;
-          option.dataset.uldId=uld.uldId;
-          const display=cargoTypeDisplay(uld.data);
-          option.textContent=`${uld.uldId}${display ? " - "+display : ""}`;
-          select.appendChild(option);
-        });
-        if(!ulds.length) select.innerHTML=`<option value="">No ULDs available</option>`;
-      }catch(error){
-        console.error("Load Amend Cargo Type ULD error:",error);
-        select.innerHTML=`<option value="">Unable to load ULDs</option>`;
-        alert("Could not load ULDs.\n\n"+error.message);
-      }
-    }
-
-    window.loadAmendCargoTypeForULD = async () => {
-      const select=document.getElementById("amendCargoTypeULDSelect");
-      const info=document.getElementById("amendCargoTypeCurrent");
-      const docId=select?.value||"";
-      resetCargoCheckboxes("amendCargoTypeChecks","amendCargoType");
-      if(info) info.innerText="";
-      if(!docId) return;
-      try{
-        const snap=await getDoc(doc(db,"ulds",docId));
-        if(!snap.exists()) return;
-        const data=snap.data()||{};
-        const cargoTypes=normalizeCargoTypes(data).filter(v=>String(v).toUpperCase()!=="BELLY");
-        renderCargoCheckboxes("amendCargoTypeChecks","amendCargoType",cargoTypes);
-        const display=cargoTypeDisplay(data);
-        if(info) info.innerText=display ? `Displayed cargo type: ${display}` : "No standard cargo type is displayed.";
-      }catch(error){
-        console.error("Load Amend Cargo Type details error:",error);
-        alert("Could not load the ULD cargo type.\n\n"+error.message);
-      }
-    };
-
-    window.saveAmendedCargoType = async () => {
-      const select=document.getElementById("amendCargoTypeULDSelect");
-      const docId=select?.value||"";
-      if(!docId){ alert("Please select a ULD."); return; }
-      const cargoTypes=cargoTypesForSave("amendCargoType","__no_manual_field__");
-      if(!cargoTypes.length){ alert("Please tick at least one Cargo Type."); return; }
-      const option=select.options[select.selectedIndex];
-      const uldId=option?.dataset?.uldId||"";
-      const confirmed=await showConfirmation(
-        "AMEND CARGO TYPE",
-        `Update cargo type for ULD ${uldId}?\n\nCargo Type: ${cargoTypes.join(", ")}`
-      );
-      if(!confirmed) return;
-      try{
-        await updateDoc(doc(db,"ulds",docId),{
-          cargoTypes:[...cargoTypes],
-          cargoType:cargoTypes.join(", "),
-          cargoTypeAmendedAt:serverTimestamp(),
-          cargoTypeAmendedBy:currentUser
-        });
-        await showVerification(true,uldId,"CARGO TYPE AMENDED",`Cargo type for ULD ${uldId} has been updated.`);
-        await loadULDsForAmendCargoType();
-        select.value="";
-        resetCargoCheckboxes("amendCargoTypeChecks","amendCargoType");
-        const info=document.getElementById("amendCargoTypeCurrent");
-        if(info) info.innerText="";
-      }catch(error){
-        console.error("Amend Cargo Type error:",error);
-        alert("Could not amend Cargo Type.\n\n"+error.message);
-      }
-    };
-
-    window.backFromAmendCargoType = () => {
-      resetCargoCheckboxes("amendCargoTypeChecks","amendCargoType");
-      const select=document.getElementById("amendCargoTypeULDSelect");
-      if(select) select.value="";
-      goHome();
-    };
 
     /* =========================================================
        AMEND ULD - ADMIN
@@ -9256,7 +9404,8 @@
               uldId:uldId,
               status:String(
                 d.status || "OPEN"
-              ).toUpperCase()
+              ).toUpperCase(),
+                cargoDisplay:cargoDisplaySuffix(d)
             });
 
           }
@@ -9285,7 +9434,7 @@
             uld.uldId;
 
           option.textContent =
-            `${uld.uldId} (${uld.status})`;
+            `${uld.uldId}${uld.cargoDisplay || ""} (${uld.status})`;
 
           select.appendChild(option);
 
@@ -9657,8 +9806,8 @@
               ulds.push({
                 docId:docSnap.id,
                 uldId:uldId,
-                location:
-                  d.uldLocation || ""
+                location:d.uldLocation || "",
+                cargoDisplay:cargoDisplaySuffix(d)
               });
 
             }
@@ -9688,7 +9837,7 @@
             uld.location;
 
           option.textContent =
-            uld.uldId;
+            uld.uldId + (uld.cargoDisplay || "");
 
           select.appendChild(
             option
@@ -10098,10 +10247,10 @@
       try{
         const snapshot=await getDocs(query(collection(db,"ulds"),where("status","==","OPEN")));
         if(snapshot.empty){ select.innerHTML=`<option value="">No OPEN ULDs available</option>`; return; }
-        const ulds=[]; snapshot.forEach(d=>{const x=d.data(); const id=String(x.uldId||d.id).trim(); if(id) ulds.push({id,docId:d.id});});
+        const ulds=[]; snapshot.forEach(d=>{const x=d.data(); const id=String(x.uldId||d.id).trim(); if(id) ulds.push({id,docId:d.id,data:x});});
         ulds.sort((a,b)=>a.id.localeCompare(b.id));
         select.innerHTML=`<option value="">Select an OPEN ULD</option>`;
-        ulds.forEach(u=>{const o=document.createElement("option");o.value=u.id;o.textContent=u.id;o.dataset.docId=u.docId;select.appendChild(o);});
+        ulds.forEach(u=>{const o=document.createElement("option");o.value=u.id;o.textContent=u.id+cargoDisplaySuffix(u.data);o.dataset.docId=u.docId;select.appendChild(o);});
 
         if(preselectULD && ulds.some(u => u.id === preselectULD)){
           select.value = preselectULD;
@@ -10488,7 +10637,8 @@
               docId:docSnap.id,
               uldId,
               purchaseOrders,
-              poCommodities
+              poCommodities,
+              cargoDisplay:cargoDisplaySuffix(d)
             });
           }
         });
@@ -10507,7 +10657,7 @@
         ulds.forEach(uld => {
           const option = document.createElement("option");
           option.value = uld.docId;
-          option.textContent = `${uld.uldId} (${uld.purchaseOrders.length} PO${uld.purchaseOrders.length === 1 ? "" : "s"})`;
+          option.textContent = `${uld.uldId}${uld.cargoDisplay || ""} (${uld.purchaseOrders.length} PO${uld.purchaseOrders.length === 1 ? "" : "s"})`;
           option.dataset.uldId = uld.uldId;
           option.dataset.purchaseOrders = JSON.stringify(uld.purchaseOrders);
           option.dataset.poCommodities = JSON.stringify(uld.poCommodities || {});
@@ -11691,7 +11841,17 @@
                       ]
                     : [];
 
-                const cargoType = cargoTypeDisplay(uld);
+                const cargoType =
+                  uld.cargoType ||
+                  (
+                    Array.isArray(
+                      uld.cargoTypes
+                    )
+                      ? uld.cargoTypes
+                          .filter(Boolean)
+                          .join(", ")
+                      : ""
+                  );
 
                 window.liveULDCache.set(
                   uldId,
@@ -13839,7 +13999,8 @@
                 status:String(
                   d.status ||
                   "OPEN"
-                ).toUpperCase()
+                ).toUpperCase(),
+                cargoDisplay:cargoDisplaySuffix(d)
               });
 
             }
@@ -13877,7 +14038,7 @@
               uld.uldId;
 
             option.textContent =
-              `${uld.uldId} (${uld.status})`;
+              `${uld.uldId}${uld.cargoDisplay || ""} (${uld.status})`;
 
             select.appendChild(
               option
