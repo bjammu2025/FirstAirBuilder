@@ -2590,9 +2590,10 @@
 
 
     /* =========================================================
-       12.93 - PHONE STYLE BACK BUTTONS
-       Keep BACK controls small and fixed at the top-right on
-       every application screen. Home LOG OUT remains separate.
+       12.95 - COMPACT PHONE NAVIGATION
+       Option E: rounded-pill "← Back" button.
+       Screens whose Back action does not go directly Home also
+       receive a separate "⌂ Home" button.
        ========================================================= */
     .screen{
       padding-top:58px !important;
@@ -2600,34 +2601,43 @@
     }
 
     .screen > .backButton,
-    .screen .liveULDDetailBack{
+    .screen .liveULDDetailBack,
+    .screen > .homeNavButton,
+    .screen .liveULDDetailHome{
       position:fixed !important;
       top:10px !important;
-      right:10px !important;
       left:auto !important;
+      bottom:auto !important;
       z-index:25000 !important;
-      width:auto !important;
       min-width:0 !important;
       max-width:none !important;
       margin:0 !important;
-      width:42px !important;
-      height:42px !important;
-      padding:0 !important;
-      border-radius:50% !important;
-      font-size:1.45rem !important;
-      line-height:42px !important;
-      font-weight:800 !important;
+      height:38px !important;
+      padding:0 14px !important;
+      border-radius:19px !important;
+      font-size:1rem !important;
+      line-height:38px !important;
+      font-weight:700 !important;
+      white-space:nowrap !important;
+      text-align:center !important;
       box-shadow:0 2px 6px rgba(0,0,0,.18) !important;
     }
 
-    .screen > .backButton{
-      white-space:nowrap !important;
-      text-align:center !important;
-    }
-
+    .screen > .backButton,
     .screen .liveULDDetailBack{
       right:10px !important;
-      bottom:auto !important;
+    }
+
+    .screen > .backButton.hasHome,
+    .screen .liveULDDetailBack.hasHome{
+      right:104px !important;
+    }
+
+    .screen > .homeNavButton,
+    .screen .liveULDDetailHome{
+      right:10px !important;
+      background:#0B1F3A !important;
+      color:#fff !important;
     }
 
     .logoutButton{
@@ -2669,6 +2679,24 @@
       cursor:pointer !important;
     }
 
+    /* 12.94 - LIVE VIEW SKID VISIBILITY */
+    #liveView .liveSkidSummary{
+      margin-top:3px;
+      font-size:0.78rem;
+      font-weight:900;
+      letter-spacing:0.04em;
+    }
+
+    #liveView .liveSkidCell{
+      text-align:center;
+      white-space:nowrap;
+    }
+
+    #liveView .liveSkidCell .skidBadge{
+      display:inline-block;
+      margin:0;
+    }
+
     .skidBadge{
       display:inline-block !important;
       margin-left:6px !important;
@@ -2700,7 +2728,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.93
+        V.12.95
       </div>
 
       <div class="infoBox">
@@ -2913,7 +2941,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ←
+        ← Back
       </button>
 
     </div>
@@ -2953,10 +2981,12 @@
       </button>
 
       <button
-        class="backButton"
+        class="backButton hasHome"
         onclick="backToAdminMenuFromCreateUser()">
-        ←
+        ← Back
       </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
 
@@ -3011,10 +3041,12 @@
       </button>
 
       <button
-        class="backButton"
+        class="backButton hasHome"
         onclick="backToAdminMenu()">
-        ←
+        ← Back
       </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
 
@@ -3040,9 +3072,11 @@
         OPEN ULD
       </button>
 
-      <button class="backButton" onclick="backToAdminMenuFromReopen()">
-        ←
+      <button class="backButton hasHome" onclick="backToAdminMenuFromReopen()">
+        ← Back
       </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
 
@@ -3074,10 +3108,12 @@
       </button>
 
       <button
-        class="backButton"
+        class="backButton hasHome"
         onclick="backToAdminMenuFromDeleteULD()">
-        ←
+        ← Back
       </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
 
@@ -3114,10 +3150,12 @@
       </button>
 
       <button
-        class="backButton"
+        class="backButton hasHome"
         onclick="backToAdminMenuFromAmendULD()">
-        ←
+        ← Back
       </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
 
@@ -3208,10 +3246,12 @@
       </button>
 
       <button
-        class="backButton"
+        class="backButton hasHome"
         onclick="backFromUpdateULDLocation()">
-        ←
+        ← Back
       </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
 
@@ -3250,7 +3290,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ←
+        ← Back
       </button>
 
     </div>
@@ -3379,7 +3419,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ←
+        ← Back
       </button>
 
     </div>
@@ -3416,7 +3456,7 @@
     <button
         class="backButton"
         onclick="goHome()">
-        ←
+        ← Back
       </button>
 
     </div>
@@ -3513,7 +3553,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ←
+        ← Back
       </button>
 
     </div>
@@ -3542,7 +3582,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ←
+        ← Back
       </button>
 
     </div>
@@ -3635,10 +3675,12 @@
       </button>
 
       <button
-        class="backButton"
+        class="backButton hasHome"
         onclick="backFromCloseULDWeight()">
-        ←
+        ← Back
       </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
 
@@ -3665,7 +3707,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ←
+        ← Back
       </button>
 
     </div>
@@ -3684,7 +3726,9 @@
         <button class="manualButton" onclick="addPOInput()">+ ADD PO</button>
       </div>
       <button class="confirmButton" onclick="saveYFBPOs()">SAVE POs</button>
-      <button class="backButton" onclick="backFromYFBPOUpdate()">←</button>
+      <button class="backButton hasHome" onclick="backFromYFBPOUpdate()">← Back</button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
     </div>
 
     <!-- =========================================================
@@ -3712,10 +3756,12 @@
       </div>
 
       <button
-        class="backButton"
+        class="backButton hasHome"
         onclick="backToAdminMenuFromDeletePOs()">
-        ←
+        ← Back
       </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
     </div>
 
 
@@ -3776,7 +3822,7 @@
         id="leftoverCameraBackButton"
         class="backButton hidden"
         onclick="backFromLeftoverCamera()">
-        ←
+        ← Back
       </button>
 
       <div
@@ -3801,10 +3847,12 @@
       </table>
 
       <button
-        class="backButton"
+        class="backButton hasHome"
         onclick="backFromLeftoverInventory()">
-        ←
+        ← Back
       </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
 
@@ -3854,10 +3902,12 @@
       </button>
 
       <button
-        class="backButton"
+        class="backButton hasHome"
         onclick="backToAdminMenuFromLeftoverReport()">
-        ←
+        ← Back
       </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
 
@@ -3877,7 +3927,7 @@
       <button
         class="backButton"
         onclick="goHome()">
-        ←
+        ← Back
       </button>
 
     </div>
@@ -5186,7 +5236,7 @@
         }
 
         /* -------------------------------------------------------
-           12.93 - ATOMIC ULD CREATION + CARGO TYPE
+           12.94 - ATOMIC ULD CREATION + CARGO TYPE
 
            The document ID is now the ULD ID itself instead of a
            random addDoc() ID.
@@ -11249,8 +11299,9 @@
                   ).trim() !== ""
                 );
 
-              /* v12.83: Count active AWBs with one scans read. */
+              /* v12.94: Count active AWBs and SKIDs with one scans read. */
               const liveAWBCounts = new Map();
+              const liveSkidCounts = new Map();
               try{
                 const scanSnapshot = await getDocs(collection(db,"scans"));
                 scanSnapshot.forEach(docSnap => {
@@ -11259,6 +11310,9 @@
                   const scanULD = String(d.uldId || d.positionId || "").trim();
                   if(!scanULD) return;
                   liveAWBCounts.set(scanULD,(liveAWBCounts.get(scanULD) || 0) + 1);
+                  if(d.skid === true){
+                    liveSkidCounts.set(scanULD,(liveSkidCounts.get(scanULD) || 0) + 1);
+                  }
                 });
               }catch(scanError){
                 console.warn("Live View AWB count load failed:",scanError);
@@ -11372,7 +11426,8 @@
                     scans:[],
                     scansLoaded:false,
                     purchaseOrders,
-                    cargoType
+                    cargoType,
+                    skidCount: liveSkidCounts.get(uldId) || 0
                   }
                 );
 
@@ -11469,6 +11524,9 @@
                 const allocatedAWBCount =
                   isClosed ? 0 : (liveAWBCounts.get(uldId) || 0);
 
+                const skidCount =
+                  isClosed ? 0 : (liveSkidCounts.get(uldId) || 0);
+
                 let locationDisplay = escapeHTML(uldLocation);
 
                 if(!isClosed && allocatedAWBCount > 0){
@@ -11495,6 +11553,7 @@
                   >
                     <td class="liveSummaryULD">
                       ${escapeHTML(uldId)}
+                      ${skidCount > 0 ? `<div class="liveSkidSummary">SKIDS: ${skidCount}</div>` : ""}
                     </td>
                     <td>
                       ${escapeHTML(weight)}
@@ -11716,12 +11775,27 @@
 
       }
 
-      const scans =
+      let scans =
         Array.isArray(
           uld.scans
         )
-          ? uld.scans
+          ? [...uld.scans]
           : [];
+
+      /* v12.94: SKIDs always appear first in the ULD detail list. */
+      scans.sort((a,b) => {
+        const aSkid = a.skid === true ? 1 : 0;
+        const bSkid = b.skid === true ? 1 : 0;
+        if(aSkid !== bSkid) return bSkid - aSkid;
+
+        const aTime = a.scannedAt && typeof a.scannedAt.seconds === "number"
+          ? a.scannedAt.seconds
+          : (a.scannedAt && typeof a.scannedAt.toMillis === "function" ? a.scannedAt.toMillis()/1000 : 0);
+        const bTime = b.scannedAt && typeof b.scannedAt.seconds === "number"
+          ? b.scannedAt.seconds
+          : (b.scannedAt && typeof b.scannedAt.toMillis === "function" ? b.scannedAt.toMillis()/1000 : 0);
+        return aTime - bTime;
+      });
 
       const purchaseOrders =
         Array.isArray(
@@ -11852,6 +11926,7 @@
               <tr>
                 <th>#</th>
                 <th>AWB</th>
+                <th>SKID</th>
                 <th>SCANNED AT</th>
                 <th>SCANNED BY</th>
               </tr>
@@ -11864,7 +11939,7 @@
 
         html += `
           <tr>
-            <td colspan="4">
+            <td colspan="5">
               No active AWBs
             </td>
           </tr>
@@ -11932,6 +12007,9 @@
                     )
                   )}
                 </td>
+                <td class="liveSkidCell">
+                  ${d.skid === true ? '<span class="skidBadge">SKID</span>' : '—'}
+                </td>
                 <td>
                   ${escapeHTML(
                     scannedAt
@@ -11959,7 +12037,7 @@
             type="button"
             class="backButton liveULDDetailBack"
           >
-            ←
+            ← Back
           </button>
 
         </div>
