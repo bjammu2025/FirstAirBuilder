@@ -2646,7 +2646,7 @@
       right:112px !important;
     }
 
-    /* 12.99 - LIVE VIEW DETAIL NAVIGATION
+    /* 13.00 - LIVE VIEW DETAIL NAVIGATION
        When a ULD detail is open, hide the parent Live View navigation so
        there is only one Back button. The detail's Back/Home pair gets its
        own fixed positions and cannot overlap. */
@@ -2746,7 +2746,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.12.99
+        V.13.00
       </div>
 
       <div class="infoBox">
@@ -3724,7 +3724,7 @@
 
       <button
         class="backButton"
-        onclick="backToPreviousScreen()">
+        onclick="backFromCloseFlight()">
         ← Back
       </button>
 
@@ -7610,7 +7610,7 @@
         const skidCheckbox =
           document.getElementById("awbSkidCheckbox");
 
-        /* 12.99: Allocate AWB confirmation must always display SKID.
+        /* 13.00: Allocate AWB confirmation must always display SKID.
            Do this at runtime as well as in the HTML so older cached DOM
            text cannot leave the confirmation showing only "S". */
         const skidLabelText =
@@ -12181,6 +12181,7 @@
           <button
             type="button"
             class="backButton liveULDDetailBack hasHome"
+            onclick="backFromLiveULDDetail()"
           >
             ← Back
           </button>
@@ -12188,6 +12189,7 @@
           <button
             type="button"
             class="homeNavButton liveULDDetailHome"
+            onclick="goHome()"
           >
             ⌂ Home
           </button>
@@ -12226,58 +12228,62 @@
       detail.style.display =
         "block";
 
-      const backButton =
-        detail.querySelector(
-          ".liveULDDetailBack"
-        );
+      /*
+         13.00: Live View ULD-detail Back is a named global handler.
+         The previous version attached a listener to a dynamically-created
+         button, which made navigation fragile when the detail DOM was
+         rebuilt. The button now calls this function directly.
+      */
+      window.backFromLiveULDDetail = () => {
 
-      if(backButton){
+        const detailEl =
+          document.getElementById("liveULDDetail");
 
-        backButton.addEventListener(
-          "click",
-          () => {
+        if(detailEl)
+          detailEl.style.display = "none";
 
-            detail.style.display =
-              "none";
+        const liveViewScreen =
+          document.getElementById("liveView");
 
-            const liveViewScreen =
-              document.getElementById("liveView");
+        if(liveViewScreen){
+          liveViewScreen.classList.remove("liveDetailOpen");
 
-            if(liveViewScreen){
-              liveViewScreen.classList.remove("liveDetailOpen");
+          liveViewScreen
+            .querySelectorAll(":scope > .backButton, :scope > .homeNavButton")
+            .forEach(btn => btn.classList.remove("hidden"));
 
-              /* Restore the screen-level navigation after returning to the
-                 ULD summary list. Universal navigation will decide whether
-                 Back/Home should be visible. */
-              liveViewScreen
-                .querySelectorAll(":scope > .backButton, :scope > .homeNavButton")
-                .forEach(btn => btn.classList.remove("hidden"));
+          updateUniversalScreenNavigation();
+        }
 
-              updateUniversalScreenNavigation();
-            }
+        const listWrap =
+          document.querySelector("#liveView .liveULDListWrap");
 
-            if(listWrap)
-              listWrap.style.display =
-                "block";
-
-          }
-        );
-
-      }
-
-      const homeButton =
-        detail.querySelector(
-          ".liveULDDetailHome"
-        );
-
-      if(homeButton){
-        homeButton.addEventListener(
-          "click",
-          () => goHome()
-        );
-      }
+        if(listWrap)
+          listWrap.style.display = "block";
+      };
 
     };
+
+    /* =========================================================
+       13.00 - CLOSE FLIGHT BACK
+       Always return to the actual previous screen.
+       Do not use goHome(), because Close Flight can be opened from
+       different menus.
+       ========================================================= */
+
+    window.backFromCloseFlight = () => {
+
+      /* If there is a previous screen, use the same history used by
+         every other screen. This preserves the user's actual path. */
+      if(screenHistory.length > 0){
+        backToPreviousScreen();
+        return;
+      }
+
+      /* Safe fallback if Close Flight was opened without history. */
+      goHome();
+    };
+
 
     /* =========================================================
        EXPORT CLOSED ULDs
