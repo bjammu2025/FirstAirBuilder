@@ -2902,7 +2902,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.14.02
+        V.14.01
       </div>
 
       <div class="infoBox">
@@ -3057,6 +3057,12 @@
       </button>
 
         <button
+        class="manualButton"
+        onclick="openMaxPayload()">
+        ADD / UPDATE MAX PAYLOAD
+      </button>
+
+        <button
         class="closeFlightButton"
         onclick="goToCloseFlight()">
         CLOSE FLIGHT
@@ -3124,6 +3130,55 @@
         onclick="goHome()">
         ← Back
       </button>
+
+    </div>
+
+    <!-- =========================================================
+         MAX PAYLOAD
+         ========================================================= -->
+
+    <div id="maxPayload" class="screen">
+
+      <h3>Max Payload</h3>
+
+      <div class="infoBox">
+
+        <div class="infoTitle">Flight Max Payload (LBS)</div>
+
+        <input
+          type="number"
+          id="maxPayloadInput"
+          min="0"
+          step="0.01"
+          inputmode="decimal"
+          autocomplete="off"
+          placeholder="Enter Max Payload in LBS">
+
+        <div class="manualHint">
+          This value is saved separately for the logged-in station.
+        </div>
+
+      </div>
+
+      <button
+        class="confirmButton"
+        onclick="saveMaxPayload()">
+        SAVE MAX PAYLOAD
+      </button>
+
+      <button
+        class="manualButton"
+        onclick="clearMaxPayload()">
+        CLEAR MAX PAYLOAD
+      </button>
+
+      <button
+        class="backButton hasHome"
+        onclick="backToAdminMenuFromMaxPayload()">
+        ← Back
+      </button>
+
+      <button class="homeNavButton" type="button" onclick="goHome()">⌂ Home</button>
 
     </div>
 
@@ -4475,6 +4530,7 @@
     const DEFAULT_ADMIN_USERNAME = "Admin";
     const DEFAULT_ADMIN_PASSWORD = "Admin";
     const USERS_COLLECTION = "appUsers";
+    const FLIGHT_SETTINGS_COLLECTION = "flightSettings";
 
 
     /* =========================================================
@@ -4513,6 +4569,7 @@
       onSnapshot,
       doc,
       updateDoc,
+      setDoc,
       serverTimestamp,
       query,
       where,
@@ -4598,6 +4655,23 @@
       );
     }
 
+    /* Usernames are case-insensitive throughout the application.
+       Firestore string equality is case-sensitive, so user accounts are
+       matched locally after loading the small appUsers collection. */
+    async function findUserByUsernameCaseInsensitive(username){
+      const normalized = String(username || "").trim().toLowerCase();
+      if(!normalized) return null;
+
+      const snapshot = await getDocs(collection(db,USERS_COLLECTION));
+      for(const docSnap of snapshot.docs){
+        const data = docSnap.data() || {};
+        if(String(data.username || "").trim().toLowerCase() === normalized){
+          return {id:docSnap.id,data};
+        }
+      }
+      return null;
+    }
+
     function setHomeUserDisplay(){
       const userEl = document.getElementById("homeUserLabel");
       const stationEl = document.getElementById("homeStationLabel");
@@ -4621,14 +4695,7 @@
     }
 
     async function loadUserAccountByUsername(username){
-      const q = query(
-        collection(db,USERS_COLLECTION),
-        where("username","==",String(username || "").trim())
-      );
-      const snapshot = await getDocs(q);
-      if(snapshot.empty) return null;
-      const docSnap = snapshot.docs[0];
-      return {id:docSnap.id,data:docSnap.data() || {}};
+      return await findUserByUsernameCaseInsensitive(username);
     }
 
     async function applyLoggedInUser(username,userAccount=null){
@@ -5025,18 +5092,13 @@
       setLoginStatus("Checking login...","scanning");
 
       try{
-        const q = query(
-          collection(db,USERS_COLLECTION),
-          where("username","==",username)
-        );
-        const snapshot = await getDocs(q);
+        let account = await findUserByUsernameCaseInsensitive(username);
         const passwordHash = await hashPassword(password);
         let valid = false;
 
-        if(snapshot.empty &&
-           username === DEFAULT_ADMIN_USERNAME &&
+        if(!account &&
+           username.toLowerCase() === DEFAULT_ADMIN_USERNAME.toLowerCase() &&
            password === DEFAULT_ADMIN_PASSWORD){
-          valid = true;
           await addDoc(collection(db,USERS_COLLECTION),{
             username:DEFAULT_ADMIN_USERNAME,
             passwordHash:passwordHash,
@@ -5044,9 +5106,10 @@
             createdBy:DEFAULT_ADMIN_USERNAME,
             station:DEFAULT_STATION
           });
-        }else if(!snapshot.empty){
-          const user = snapshot.docs[0].data();
-          valid = user.passwordHash === passwordHash;
+          account = await findUserByUsernameCaseInsensitive(DEFAULT_ADMIN_USERNAME);
+          valid = true;
+        }else if(account){
+          valid = account.data.passwordHash === passwordHash;
         }
 
         if(!valid){
@@ -5057,10 +5120,7 @@
         }
 
         try{
-          await applyLoggedInUser(username,snapshot.docs[0] ? {
-            id:snapshot.docs[0].id,
-            data:snapshot.docs[0].data()
-          } : null);
+          await applyLoggedInUser(username,account);
         }catch(stationError){
           setLoginStatus(stationError.message,"error");
           document.getElementById("loginPassword").value = "";
@@ -5166,6 +5226,122 @@
       switchScreen("adminMenu");
     };
 
+    /* =========================================================
+       MAX PAYLOAD
+       One setting document per station.
+       ========================================================= */
+
+    async function getMaxPayloadLbs(station = requireCurrentStation()){
+      const normalizedStation = normalizeStation(station);
+      if(!normalizedStation) return null;
+
+      try{
+        const snap = await getDoc(
+          doc(db,FLIGHT_SETTINGS_COLLECTION,normalizedStation)
+        );
+
+        if(!snap.exists()) return null;
+
+        const value = Number(snap.data()?.maxPayloadLbs);
+        return Number.isFinite(value) && value >= 0 ? value : null;
+      }catch(error){
+        console.error("Max payload load error:",error);
+        return null;
+      }
+    }
+
+    window.openMaxPayload = async () => {
+      if(!adminMenuUnlocked) return;
+
+      const input = document.getElementById("maxPayloadInput");
+      if(input) input.value = "";
+
+      const current = await getMaxPayloadLbs();
+      if(input && current !== null){
+        input.value = Number(current).toString();
+      }
+
+      switchScreen("maxPayload");
+      if(input){
+        setTimeout(() => {
+          input.focus();
+          input.select();
+        },100);
+      }
+    };
+
+    window.saveMaxPayload = async () => {
+      if(!adminMenuUnlocked) return;
+
+      const input = document.getElementById("maxPayloadInput");
+      const raw = String(input?.value || "").trim();
+      const value = Number(raw);
+
+      if(!raw || !Number.isFinite(value) || value <= 0){
+        alert("Enter a Max Payload greater than 0 LBS.");
+        return;
+      }
+
+      try{
+        const station = requireCurrentStation();
+
+        await setDoc(
+          doc(db,FLIGHT_SETTINGS_COLLECTION,station),
+          {
+            station:station,
+            maxPayloadLbs:value,
+            updatedAt:serverTimestamp(),
+            updatedBy:currentUser
+          },
+          {merge:true}
+        );
+
+        alert(`Max Payload saved: ${value.toFixed(2)} LBS`);
+        switchScreen("adminMenu");
+      }catch(error){
+        console.error("Save Max Payload error:",error);
+        alert("Could not save Max Payload.\n\n" + error.message);
+      }
+    };
+
+    window.clearMaxPayload = async () => {
+      if(!adminMenuUnlocked) return;
+
+      const confirmed = await showConfirmation(
+        "CLEAR MAX PAYLOAD",
+        "Remove the Max Payload for the current station?"
+      );
+
+      if(!confirmed) return;
+
+      try{
+        const station = requireCurrentStation();
+        await setDoc(
+          doc(db,FLIGHT_SETTINGS_COLLECTION,station),
+          {
+            station:station,
+            maxPayloadLbs:deleteField(),
+            updatedAt:serverTimestamp(),
+            updatedBy:currentUser
+          },
+          {merge:true}
+        );
+
+        const input = document.getElementById("maxPayloadInput");
+        if(input) input.value = "";
+
+        alert("Max Payload cleared.");
+      }catch(error){
+        console.error("Clear Max Payload error:",error);
+        alert("Could not clear Max Payload.\n\n" + error.message);
+      }
+    };
+
+    window.backToAdminMenuFromMaxPayload = () => {
+      if(adminMenuUnlocked) switchScreen("adminMenu");
+      else goHome();
+    };
+
     async function loadUsersForReset(){
       const select = document.getElementById("resetUsernameSelect");
 
@@ -5241,9 +5417,8 @@
       if(username.length < 2){ alert("Username must be at least 2 characters."); return; }
 
       try{
-        const q = query(collection(db,USERS_COLLECTION),where("username","==",username));
-        const existing = await getDocs(q);
-        if(!existing.empty){ alert("That username already exists."); return; }
+        const existing = await findUserByUsernameCaseInsensitive(username);
+        if(existing){ alert("That username already exists (usernames are not case-sensitive)."); return; }
 
         await addDoc(collection(db,USERS_COLLECTION),{
           username:username,
@@ -12208,6 +12383,29 @@
                   0
                 );
 
+              /* Belly is still included in total flight weight, but it is
+                 excluded from the Total ULDs Built count. */
+              const isBellyULD = uld => {
+                const uldId = String(uld.uldId || uld.id || "");
+                const description = String(uld.description || "");
+                const cargoType = String(
+                  uld.cargoType ||
+                  (Array.isArray(uld.cargoTypes) ? uld.cargoTypes.join(", ") : "")
+                );
+                return /\bBELLY\b/i.test(uldId) ||
+                       /\bBELLY\b/i.test(description) ||
+                       /\bBELLY\b/i.test(cargoType);
+              };
+
+              const totalULDsBuilt =
+                validULDS.filter(uld => !isBellyULD(uld)).length;
+
+              const maxPayloadLbs = await getMaxPayloadLbs();
+              const hasMaxPayload = maxPayloadLbs !== null && maxPayloadLbs > 0;
+              const leftoverFlightWeightLbs = hasMaxPayload
+                ? maxPayloadLbs - totalFlightWeightLbs
+                : null;
+
               /*
                  Main Live View is a lightweight ULD summary table.
                  Each row is clickable and opens the full ULD details.
@@ -12216,7 +12414,10 @@
 
               html += `
                 <div class="liveFlightTotalWeight">
-                  TOTAL FLIGHT WEIGHT: ${totalFlightWeightLbs.toFixed(2)} LBS / ${Math.round(totalFlightWeightKg)} KGS
+                  <div>TOTAL FLIGHT WEIGHT: ${totalFlightWeightLbs.toFixed(2)} LBS / ${Math.round(totalFlightWeightKg)} KGS</div>
+                  ${hasMaxPayload ? `<div>MAX PAYLOAD: ${maxPayloadLbs.toFixed(2)} LBS / ${Math.round(maxPayloadLbs * 0.45359237)} KGS</div>` : ""}
+                  ${hasMaxPayload ? `<div>LEFTOVER FLIGHT WEIGHT: ${leftoverFlightWeightLbs.toFixed(2)} LBS / ${Math.round(leftoverFlightWeightLbs * 0.45359237)} KGS</div>` : ""}
+                  <div>TOTAL ULDs BUILT: ${totalULDsBuilt}</div>
                 </div>
                 <div class="liveULDListWrap">
                   <table class="liveULDList">
