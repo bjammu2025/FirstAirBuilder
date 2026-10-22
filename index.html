@@ -2902,7 +2902,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.14.2
+        V.14.3
       </div>
 
       <div class="infoBox">
@@ -2946,6 +2946,9 @@
         <div class="homeSectionTitle">ULD OPERATIONS</div>
         <button onclick="goToAllocate()">
         ALLOCATE
+      </button>
+        <button onclick="goToSplitAllocate()">
+        SPLIT ALLOCATE
       </button>
         <button onclick="goToOffload()">
         OFFLOAD
@@ -3622,7 +3625,7 @@
       <button
         id="openAllocateBarcodeButton"
         class="barcodeButton"
-        onclick="openBarcodeScanner('allocate')">
+        onclick="openBarcodeScanner(currentAllocationMode)">
         ▣ BARCODE SCANNER
       </button>
 
@@ -3636,7 +3639,7 @@
       <button
         id="openAllocateManualButton"
         class="manualButton"
-        onclick="openManualAWB('allocate')">
+        onclick="openManualAWB(currentAllocationMode)">
         ⌨ MANUAL AWB INPUT
       </button>
 
@@ -3679,6 +3682,8 @@
           <tr>
             <th>#</th>
             <th>AWB</th>
+            <th>Pieces</th>
+            <th>Weight (KG)</th>
             <th>Scanned At</th>
             <th>Scanned By</th>
           </tr>
@@ -4420,7 +4425,20 @@
          GENERAL CONFIRMATION POPUP
          ========================================================= -->
 
-    <div
+        <div id="splitAllocationOverlay" class="confirmOverlay">
+      <div class="confirmBox">
+        <div class="confirmTitle">Split Allocate</div>
+        <div class="confirmText" id="splitAllocationAWBLabel">Enter pieces and weight for this AWB.</div>
+        <label for="splitAllocationPieces" style="display:block;text-align:left;font-weight:bold;">Pieces</label>
+        <input id="splitAllocationPieces" type="number" min="1" step="1" inputmode="numeric" placeholder="Number of pieces">
+        <label for="splitAllocationWeight" style="display:block;text-align:left;font-weight:bold;">Total weight (KG)</label>
+        <input id="splitAllocationWeight" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Total allocated weight in KG">
+        <button id="splitAllocationSaveButton" class="confirmButton">SAVE ALLOCATION</button>
+        <button id="splitAllocationCancelButton" class="confirmCancel">CANCEL</button>
+      </div>
+    </div>
+
+<div
       id="confirmOverlay"
       class="confirmOverlay">
 
@@ -4464,7 +4482,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "14.2";
+    const CODE_VERSION = "14.3";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -5618,7 +5636,14 @@
        ALLOCATE
        ========================================================= */
 
-    window.goToAllocate = async () => {
+    let currentAllocationMode = "allocate";
+
+    window.goToSplitAllocate = async () => {
+      await window.goToAllocate("splitallocate");
+    };
+
+    window.goToAllocate = async (allocationMode = "allocate") => {
+      currentAllocationMode = allocationMode === "splitallocate" ? "splitallocate" : "allocate";
 
       if(!getCurrentUser()){
 
@@ -6206,7 +6231,18 @@
       await loadAllocateULDPOs(uld);
 
       /* Barcode scanner is the default AWB input method */
-      openBarcodeScanner("allocate");
+      openBarcodeScanner(currentAllocationMode);
+
+      const heading = document.querySelector("#allocateScan h3");
+      const oldModeLabel = document.getElementById("allocationModeLabel");
+      if(oldModeLabel) oldModeLabel.remove();
+      if(heading && currentAllocationMode === "splitallocate"){
+        const modeLabel = document.createElement("div");
+        modeLabel.id = "allocationModeLabel";
+        modeLabel.className = "infoBox";
+        modeLabel.textContent = "SPLIT ALLOCATE — enter pieces and total weight for each AWB.";
+        heading.insertAdjacentElement("afterend", modeLabel);
+      }
 
     };
 
@@ -6541,7 +6577,7 @@
 
     function setStatus(message,type=""){
 
-      if(currentCameraMode === "allocate"){
+      if(currentCameraMode === "allocate" || currentCameraMode === "splitallocate"){
 
         const el =
           document.getElementById(
@@ -6749,7 +6785,7 @@
     window.openAllocateCamera =
     async () => {
 
-      await startCamera("allocate");
+      await startCamera(currentAllocationMode);
 
     };
 
@@ -7121,13 +7157,14 @@
                - No PO's -> use the normal AWB confirmation popup
           */
           if(
-            currentCameraMode ===
-            "allocate"
+            currentCameraMode === "allocate" ||
+            currentCameraMode === "splitallocate"
           ){
 
             await processAllocateAWB(
               number,
-              "camera"
+              "camera",
+              currentCameraMode
             );
 
             return;
@@ -7434,7 +7471,7 @@
         );
 
       table.innerHTML =
-        "<tr><td colspan='4'>Loading...</td></tr>";
+        "<tr><td colspan='6'>Loading...</td></tr>";
 
       try{
 
@@ -7479,6 +7516,9 @@
                 ${d.skid ? `<span class="skidBadge">S</span>` : ""}
               </td>
 
+              <td>${d.splitAllocation ? escapeHTML(String(d.pieces || "")) : ""}</td>
+              <td>${d.splitAllocation && d.allocationWeightKg != null ? escapeHTML(String(d.allocationWeightKg)) : (d.weightKg != null ? escapeHTML(String(d.weightKg)) : "")}</td>
+
               <td>
                 ${escapeHTML(scannedAt)}
               </td>
@@ -7495,7 +7535,7 @@
 
         table.innerHTML =
           html ||
-          "<tr><td colspan='4'>No AWBs allocated</td></tr>";
+          "<tr><td colspan='6'>No AWBs allocated</td></tr>";
 
       }catch(error){
 
@@ -7503,7 +7543,7 @@
 
         table.innerHTML =
           `<tr>
-            <td colspan="4" class="error">
+            <td colspan="6" class="error">
               ${escapeHTML(error.message)}
             </td>
           </tr>`;
@@ -7527,7 +7567,135 @@
          AWB -> CONFIRM AWB + ENTER WEIGHT popup -> SAVE
        ========================================================= */
 
-    async function processAllocateAWB(code, source="allocate"){
+    function showSplitAllocationDetails(awb){
+      return new Promise(resolve => {
+        const overlay = document.getElementById("splitAllocationOverlay");
+        const label = document.getElementById("splitAllocationAWBLabel");
+        const piecesInput = document.getElementById("splitAllocationPieces");
+        const weightInput = document.getElementById("splitAllocationWeight");
+        const saveButton = document.getElementById("splitAllocationSaveButton");
+        const cancelButton = document.getElementById("splitAllocationCancelButton");
+
+        label.textContent = `AWB ${awb} — enter the pieces and total weight being allocated to ULD ${currentULD}. Weight is in KG.`;
+        piecesInput.value = "";
+        weightInput.value = "";
+        overlay.classList.add("active");
+
+        const cleanup = () => {
+          overlay.classList.remove("active");
+          saveButton.onclick = null;
+          cancelButton.onclick = null;
+        };
+
+        saveButton.onclick = () => {
+          const pieces = Number(piecesInput.value);
+          const weightKg = Number(weightInput.value);
+          if(!Number.isInteger(pieces) || pieces < 1){
+            alert("Enter a whole number of pieces greater than 0.");
+            piecesInput.focus();
+            return;
+          }
+          if(!Number.isFinite(weightKg) || weightKg <= 0){
+            alert("Enter a total weight greater than 0 KG.");
+            weightInput.focus();
+            return;
+          }
+          cleanup();
+          resolve({pieces, weightKg});
+        };
+
+        cancelButton.onclick = () => {
+          cleanup();
+          resolve(null);
+        };
+        piecesInput.focus();
+      });
+    }
+
+    async function processSplitAllocateAWB(awb, source){
+      try{
+        stopContinuousOCR();
+        const confirmed = await showAWBConfirmation(awb, source, true);
+        if(!confirmed){
+          setStatus("Split allocation cancelled", "scanning");
+          restartOCR();
+          return;
+        }
+
+        const confirmedAWB = typeof confirmed === "object" ? confirmed.awb : confirmed;
+        const skid = typeof confirmed === "object" ? !!confirmed.skid : false;
+        const finalAWB = normalizeAWB(confirmedAWB || awb);
+        if(!finalAWB){
+          await showVerification(false, awb, "INVALID AWB", "The confirmed AWB is not valid.");
+          restartOCR();
+          return;
+        }
+
+        const details = await showSplitAllocationDetails(finalAWB);
+        if(!details){
+          setStatus("Split allocation cancelled", "scanning");
+          restartOCR();
+          return;
+        }
+
+        const duplicateSnapshot = await getDocs(
+          query(stationQuery("scans"), where("code","==",finalAWB))
+        );
+        const activeMatches = [];
+        duplicateSnapshot.forEach(docSnap => {
+          const d = docSnap.data() || {};
+          if(d.positionId && d.positionId !== "[REMOVED]") activeMatches.push(d);
+        });
+
+        const sameULD = activeMatches.find(d => (d.uldId || d.positionId) === currentULD);
+        const nonSplitExisting = activeMatches.find(d => !d.splitAllocation);
+        if(sameULD || nonSplitExisting){
+          const existing = sameULD || nonSplitExisting;
+          await showVerification(
+            false,
+            finalAWB,
+            "DUPLICATE AWB",
+            sameULD
+              ? `This AWB already has an allocation in ULD ${currentULD}.`
+              : `This AWB is already allocated through regular Allocate to ULD ${existing.uldId || existing.positionId}. Split Allocate can only split an AWB that has not been regularly allocated.`
+          );
+          setStatus("Duplicate AWB", "error");
+          vibrate();
+          restartOCR();
+          return;
+        }
+
+        await addDoc(collection(db,"scans"), {
+          code: finalAWB,
+          positionId: currentULD,
+          uldId: currentULD,
+          station: requireCurrentStation(),
+          scannedAt: serverTimestamp(),
+          scannedBy: currentUser,
+          splitAllocation: true,
+          pieces: details.pieces,
+          allocationWeightKg: details.weightKg,
+          ...(skid ? {skid:true} : {})
+        });
+
+        await loadAllocateAWBs(currentULD);
+        await showVerification(
+          true,
+          finalAWB,
+          "SPLIT ALLOCATION SAVED",
+          `${details.pieces} piece(s) allocated to ULD ${currentULD}.\nWeight: ${details.weightKg} KG`
+        );
+        setStatus("Ready for next AWB", "scanning");
+        vibrate();
+      }catch(error){
+        console.error("Split Allocate error:", error);
+        await showVerification(false, awb, "SAVE ERROR", "The split allocation could not be saved.\n\n" + error.message);
+      }
+      restartOCR();
+    }
+
+
+    async function processAllocateAWB(code, source="allocate", allocationMode=currentAllocationMode){
 
       let finalAWB = normalizeAWB(code);
 
@@ -7539,6 +7707,11 @@
           "The AWB is not a valid 8-digit AWB."
         );
         restartOCR();
+        return;
+      }
+
+      if(allocationMode === "splitallocate"){
+        await processSplitAllocateAWB(finalAWB, source);
         return;
       }
 
@@ -8825,11 +8998,12 @@
              ALLOCATE decides which popup is required after checking
              whether the selected ULD already contains PO's.
           */
-          if(mode === "allocate"){
+          if(mode === "allocate" || mode === "splitallocate"){
 
             await processAllocateAWB(
               code,
-              "manual"
+              "manual",
+              mode
             );
 
             return;
@@ -9097,6 +9271,7 @@
 
       if(
         mode !== "allocate" &&
+        mode !== "splitallocate" &&
         mode !== "offload" &&
         mode !== "leftover"
       )
@@ -9108,11 +9283,12 @@
          ALLOCATE must check the selected ULD for PO's before
          showing any confirmation popup.
       */
-      if(mode === "allocate"){
+      if(mode === "allocate" || mode === "splitallocate"){
 
         await processAllocateAWB(
           code,
-          "barcode"
+          "barcode",
+          mode
         );
 
         barcodeMode = mode;
@@ -13325,6 +13501,12 @@
                 awb:
                   awbNumberOnly(d.code),
 
+                pieces:
+                  d.splitAllocation ? Number(d.pieces || 0) : "",
+
+                allocationWeightKg:
+                  d.splitAllocation ? Number(d.allocationWeightKg || 0) : "",
+
                 scannedAt:
                   scannedAt,
 
@@ -13745,12 +13927,15 @@
       */
 
       const data = [
-        ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (KG)", "Weight (LBS)", "ULD Commodity", "Trailer #"]
+        ["", "Airway Bill", "", "", "", "Pieces", "Weight (KG)", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (KG)", "Weight (LBS)", "ULD Commodity", "Trailer #"]
       ];
 
       rows.forEach(row => {
         data.push([
-          "", row.awb || "", "", "", "", "", "", "", "", "",
+          "", row.awb || "", "", "", "",
+          (row.pieces !== "" && row.pieces != null ? Number(row.pieces) : ""),
+          (row.allocationWeightKg !== "" && row.allocationWeightKg != null ? Number(row.allocationWeightKg) : ""),
+          "", "", "",
           row.scannedAt || "", row.scannedBy || "", row.uldId || "",
           (row.weightKg !== "" && row.weightKg != null ? Number(row.weightKg) : ""),
           (row.weightLbs !== "" && row.weightLbs != null ? Number(row.weightLbs) : ""),
@@ -13761,8 +13946,20 @@
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
 
-      /* Keep Weight (KG) and Weight (LBS) as real Excel numbers. */
+      /* Keep split pieces and allocation weight as real Excel numbers. */
       for(let r = 1; r < data.length; r++){
+        const piecesCell = worksheet[XLSX.utils.encode_cell({r:r,c:5})];
+        if(piecesCell && piecesCell.v !== "" && piecesCell.v != null){
+          piecesCell.t = "n";
+          piecesCell.v = Number(piecesCell.v);
+          piecesCell.z = "0";
+        }
+        const allocationWeightCell = worksheet[XLSX.utils.encode_cell({r:r,c:6})];
+        if(allocationWeightCell && allocationWeightCell.v !== "" && allocationWeightCell.v != null){
+          allocationWeightCell.t = "n";
+          allocationWeightCell.v = Number(allocationWeightCell.v);
+          allocationWeightCell.z = "0.00";
+        }
 
         const kgCell = worksheet[XLSX.utils.encode_cell({r:r,c:13})];
         if(kgCell && kgCell.v !== "" && kgCell.v != null){
@@ -13780,10 +13977,10 @@
       }
 
       worksheet["!cols"] = [
-        { wch: 3 },
-        { wch: 18 },
-        { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
-        { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
+        { wch: 3 }, { wch: 18 },
+        { hidden: true }, { hidden: true }, { hidden: true },
+        { wch: 10 }, { wch: 14 },
+        { hidden: true }, { hidden: true }, { hidden: true },
         { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 16 },
         { wch: 20 }, { wch: 18 }
       ];
@@ -14065,6 +14262,8 @@
           rows.push({
 
             awb:"",
+            pieces:"",
+            allocationWeightKg:"",
             scannedAt:"",
             scannedBy:"",
             uldId:uldId,
@@ -14109,6 +14308,12 @@
 
             awb:
               awbNumberOnly(d.code),
+
+            pieces:
+              d.splitAllocation ? Number(d.pieces || 0) : "",
+
+            allocationWeightKg:
+              d.splitAllocation ? Number(d.allocationWeightKg || 0) : "",
 
             scannedAt:
               scannedAt,
