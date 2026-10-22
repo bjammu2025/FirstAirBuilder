@@ -2902,7 +2902,7 @@
       <h2>Calm Air Builder</h2>
 
       <div class="version">
-        V.14.2
+        V.14.3
       </div>
 
       <div class="infoBox">
@@ -2946,6 +2946,9 @@
         <div class="homeSectionTitle">ULD OPERATIONS</div>
         <button onclick="goToAllocate()">
         ALLOCATE
+      </button>
+        <button onclick="goToSplitAllocate()">
+        SPLIT ALLOCATE
       </button>
         <button onclick="goToOffload()">
         OFFLOAD
@@ -4464,7 +4467,7 @@
        VERSION
        ========================================================= */
 
-    const CODE_VERSION = "14.2";
+    const CODE_VERSION = "14.3";
 
     /* =========================================================
        ZEBRA / ANDROID FULLSCREEN
@@ -4621,6 +4624,8 @@
     let positionId = "";
     let currentULD = "";
     let currentULDAllocationPool = "NORMAL";
+    // Split allocation mode is enabled only after choosing SPLIT ALLOCATE.
+    let currentAllocationMode = "NORMAL";
     let currentUser = "";
     let currentStation = "";
 
@@ -5620,6 +5625,8 @@
 
     window.goToAllocate = async () => {
 
+      currentAllocationMode = "NORMAL";
+
       if(!getCurrentUser()){
 
         alert("Please enter user name");
@@ -5644,6 +5651,26 @@
 
       await loadOpenULDsForAllocate();
 
+    };
+
+
+    window.goToSplitAllocate = async () => {
+
+      currentAllocationMode = "SPLIT";
+
+      if(!getCurrentUser()){
+        alert("Please enter user name");
+        return;
+      }
+
+      document.getElementById("newULDId").value = "";
+      document.getElementById("newULDBox").classList.add("hidden");
+
+      const allocCargoLabel = document.getElementById("allocCargoType");
+      if(allocCargoLabel) allocCargoLabel.innerText = "—";
+
+      switchScreen("allocateStart");
+      await loadOpenULDsForAllocate();
     };
 
 
@@ -7527,6 +7554,48 @@
          AWB -> CONFIRM AWB + ENTER WEIGHT popup -> SAVE
        ========================================================= */
 
+    function showSplitAllocatePopup(awb, uldId, source){
+      return new Promise(resolve => {
+        const overlay = document.createElement("div");
+        overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;z-index:30000;padding:16px;box-sizing:border-box;";
+        const box = document.createElement("div");
+        box.style.cssText = "width:95%;max-width:620px;max-height:90vh;overflow:auto;background:#fff;border:3px solid #0B1F3A;border-radius:18px;padding:22px;box-sizing:border-box;color:#111827;";
+        const title = document.createElement("div");
+        title.innerText = "SPLIT ALLOCATE";
+        title.style.cssText = "font-size:1.65rem;font-weight:800;color:#0B1F3A;margin-bottom:10px;text-align:center;";
+        box.appendChild(title);
+        const sub = document.createElement("div");
+        sub.innerText = `ULD: ${uldId}\nEnter the pieces and weight being allocated to this ULD.`;
+        sub.style.cssText = "white-space:pre-line;font-size:1.05rem;font-weight:700;text-align:center;margin-bottom:14px;color:#374151;";
+        box.appendChild(sub);
+        const makeLabel = (text) => { const el=document.createElement("div"); el.innerText=text; el.style.cssText="font-weight:800;margin:10px 0 6px;color:#0B1F3A;"; box.appendChild(el); };
+        makeLabel("AWB NUMBER");
+        const awbInput=document.createElement("input"); awbInput.type="text"; awbInput.inputMode="numeric"; awbInput.autocomplete="off"; awbInput.maxLength=8; awbInput.value=awb; awbInput.style.cssText="width:100%;box-sizing:border-box;padding:14px;font-size:1.4rem;font-weight:800;text-align:center;letter-spacing:2px;"; box.appendChild(awbInput);
+        makeLabel("PIECES ALLOCATED");
+        const piecesInput=document.createElement("input"); piecesInput.type="number"; piecesInput.min="1"; piecesInput.step="1"; piecesInput.inputMode="numeric"; piecesInput.placeholder="Enter number of pieces"; piecesInput.style.cssText="width:100%;box-sizing:border-box;padding:14px;font-size:1.4rem;font-weight:700;text-align:center;"; box.appendChild(piecesInput);
+        makeLabel("WEIGHT ALLOCATED (KG)");
+        const weightInput=document.createElement("input"); weightInput.type="number"; weightInput.min="0.01"; weightInput.step="0.01"; weightInput.inputMode="decimal"; weightInput.placeholder="Enter weight in KG"; weightInput.style.cssText="width:100%;box-sizing:border-box;padding:14px;font-size:1.4rem;font-weight:700;text-align:center;"; box.appendChild(weightInput);
+        const skidWrap=document.createElement("label"); skidWrap.style.cssText="display:flex;justify-content:center;align-items:center;gap:10px;margin:12px 0;font-size:1.05rem;font-weight:800;color:#0B1F3A;";
+        const skid=document.createElement("input"); skid.type="checkbox"; skid.style.cssText="width:24px;height:24px;margin:0;"; skidWrap.appendChild(skid); const skidText=document.createElement("span"); skidText.innerText="SKID"; skidWrap.appendChild(skidText); box.appendChild(skidWrap);
+        const save=document.createElement("button"); save.type="button"; save.innerText="CONFIRM & ALLOCATE"; save.style.cssText="width:100%;margin-top:8px;padding:14px;background:#0B1F3A;color:#fff;border:0;border-radius:10px;font-weight:800;";
+        const cancel=document.createElement("button"); cancel.type="button"; cancel.innerText="CANCEL / RESCAN"; cancel.style.cssText="width:100%;margin-top:8px;padding:14px;background:#4B5563;color:#fff;border:0;border-radius:10px;font-weight:800;";
+        const finish=(result)=>{overlay.remove();resolve(result);};
+        save.onclick=()=>{
+          const finalNumber=normalizeAWB(awbInput.value);
+          const pieces=Number(piecesInput.value);
+          const weightKg=Number(weightInput.value);
+          if(!finalNumber){alert("Enter a valid 8-digit AWB.");awbInput.focus();return;}
+          if(!Number.isInteger(pieces)||pieces<1){alert("Pieces must be a whole number greater than 0.");piecesInput.focus();return;}
+          if(!Number.isFinite(weightKg)||weightKg<=0){alert("Weight must be greater than 0 KG.");weightInput.focus();return;}
+          finish({awb:finalNumber,pieces,weightKg,skid:skid.checked});
+        };
+        cancel.onclick=()=>finish(null);
+        box.appendChild(save); box.appendChild(cancel); overlay.appendChild(box); document.body.appendChild(overlay);
+        setTimeout(()=>awbInput.focus(),50);
+      });
+    }
+
+
     async function processAllocateAWB(code, source="allocate"){
 
       let finalAWB = normalizeAWB(code);
@@ -7545,6 +7614,65 @@
       setStatus("⏳ Checking ULD...", "scanning");
 
       try{
+        // Split Allocate has its own pieces + weight prompt and does not
+        // use the standard PO/normal allocation popup.
+        if(currentAllocationMode === "SPLIT"){
+          stopContinuousOCR();
+          const splitResult = await showSplitAllocatePopup(finalAWB, currentULD, source);
+          if(!splitResult){
+            setStatus("🔎 AWB not saved", "scanning");
+            restartOCR();
+            return;
+          }
+
+          finalAWB = normalizeAWB(splitResult.awb);
+          if(!finalAWB){
+            await showVerification(false, code || "", "INVALID AWB", "The confirmed AWB is not valid.");
+            restartOCR();
+            return;
+          }
+
+          const duplicateSnapshot = await getDocs(
+            query(stationQuery("scans"), where("code", "==", finalAWB))
+          );
+          let duplicateReason = "";
+          duplicateSnapshot.forEach(docSnap => {
+            const d = docSnap.data() || {};
+            if(!d.positionId || d.positionId === "[REMOVED]") return;
+            if(d.inventoryType === LEFTOVER_TYPE) return;
+            if(d.allocationType !== "SPLIT") duplicateReason = `This AWB is already allocated through regular Allocate to ULD ${d.uldId || d.positionId}.`;
+            else if((d.uldId || d.positionId) === currentULD) duplicateReason = `This AWB already has a split allocation in ULD ${currentULD}.`;
+          });
+
+          if(duplicateReason){
+            await showVerification(false, finalAWB, "DUPLICATE AWB", duplicateReason);
+            setStatus("❌ Duplicate AWB", "error");
+            vibrate();
+            restartOCR();
+            return;
+          }
+
+          const splitScanData = {
+            code: finalAWB,
+            positionId: currentULD,
+            uldId: currentULD,
+            station: requireCurrentStation(),
+            scannedAt: serverTimestamp(),
+            scannedBy: currentUser,
+            allocationType: "SPLIT",
+            pieces: splitResult.pieces,
+            weightKg: splitResult.weightKg
+          };
+          if(splitResult.skid) splitScanData.skid = true;
+          await addDoc(collection(db, "scans"), splitScanData);
+          await loadAllocateAWBs(currentULD);
+          await showVerification(true, finalAWB, "SPLIT ALLOCATION SAVED", `AWB ${finalAWB} allocated to ULD ${currentULD}.\n\nPieces: ${splitResult.pieces}\nWeight: ${splitResult.weightKg} KG`);
+          setStatus("🔎 Ready for next AWB", "scanning");
+          vibrate();
+          restartOCR();
+          return;
+        }
+
         /*
            ALWAYS determine the ULD pool before ANY AWB popup is shown.
            PO_WEIGHT is persistent on the ULD document.  Existing ULDs
@@ -13325,6 +13453,9 @@
                 awb:
                   awbNumberOnly(d.code),
 
+
+              pieces: d.allocationType === "SPLIT" ? Number(d.pieces || 0) : "",
+              splitWeightKg: d.allocationType === "SPLIT" ? Number(d.weightKg || 0) : "",
                 scannedAt:
                   scannedAt,
 
@@ -13745,12 +13876,15 @@
       */
 
       const data = [
-        ["", "Airway Bill", "", "", "", "", "", "", "", "", "Scanned At", "Scanned By", "ULD ID", "Weight (KG)", "Weight (LBS)", "ULD Commodity", "Trailer #"]
+        ["", "Airway Bill", "", "", "", "Pieces", "Weight (KG)", "", "", "", "Scanned At", "Scanned By", "ULD ID", "ULD Weight (KG)", "ULD Weight (LBS)", "ULD Commodity", "Trailer #"]
       ];
 
       rows.forEach(row => {
         data.push([
-          "", row.awb || "", "", "", "", "", "", "", "", "",
+          "", row.awb || "", "", "", "",
+          (row.pieces !== "" && row.pieces != null ? Number(row.pieces) : ""),
+          (row.splitWeightKg !== "" && row.splitWeightKg != null ? Number(row.splitWeightKg) : ""),
+          "", "", "",
           row.scannedAt || "", row.scannedBy || "", row.uldId || "",
           (row.weightKg !== "" && row.weightKg != null ? Number(row.weightKg) : ""),
           (row.weightLbs !== "" && row.weightLbs != null ? Number(row.weightLbs) : ""),
@@ -13763,6 +13897,15 @@
 
       /* Keep Weight (KG) and Weight (LBS) as real Excel numbers. */
       for(let r = 1; r < data.length; r++){
+
+        const piecesCell = worksheet[XLSX.utils.encode_cell({r:r,c:5})];
+        if(piecesCell && piecesCell.v !== "" && piecesCell.v != null){
+          piecesCell.t = "n"; piecesCell.v = Number(piecesCell.v); piecesCell.z = "0";
+        }
+        const splitWeightCell = worksheet[XLSX.utils.encode_cell({r:r,c:6})];
+        if(splitWeightCell && splitWeightCell.v !== "" && splitWeightCell.v != null){
+          splitWeightCell.t = "n"; splitWeightCell.v = Number(splitWeightCell.v); splitWeightCell.z = "0.00";
+        }
 
         const kgCell = worksheet[XLSX.utils.encode_cell({r:r,c:13})];
         if(kgCell && kgCell.v !== "" && kgCell.v != null){
@@ -13782,9 +13925,10 @@
       worksheet["!cols"] = [
         { wch: 3 },
         { wch: 18 },
-        { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
-        { hidden: true }, { hidden: true }, { hidden: true }, { hidden: true },
-        { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 16 },
+        { hidden: true }, { hidden: true }, { hidden: true },
+        { wch: 12 }, { wch: 16 },
+        { hidden: true }, { hidden: true }, { hidden: true },
+        { wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 16 },
         { wch: 20 }, { wch: 18 }
       ];
 
@@ -13995,7 +14139,7 @@
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Closed ULDs");
       XLSX.utils.book_append_sheet(workbook, loadSheet, "ULD Data");
-      XLSX.writeFile(workbook, "FirstAirBuilder_Closed_ULDs.xlsx");
+      XLSX.writeFile(workbook, "CalmAirBuilder_Closed_ULDs.xlsx");
     }
 
     async function exportEntireFlightData(
@@ -14110,6 +14254,9 @@
             awb:
               awbNumberOnly(d.code),
 
+
+              pieces: d.allocationType === "SPLIT" ? Number(d.pieces || 0) : "",
+              splitWeightKg: d.allocationType === "SPLIT" ? Number(d.weightKg || 0) : "",
             scannedAt:
               scannedAt,
 
